@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>__MSPM0G3507__</Define>
               <Undefine></Undefine>
-              <IncludePath>E:\ti\mspm0_sdk_2_01_00_03\source\third_party\CMSIS\Core\Include,E:\ti\mspm0_sdk_2_01_00_03\source,../app,../board,../control,../drivers,../generated</IncludePath>
+              <IncludePath>E:\ti\mspm0_sdk_2_01_00_03\source\third_party\CMSIS\Core\Include,E:\ti\mspm0_sdk_2_01_00_03\source,../app,../board,../communication,../control,../drivers,../generated</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -392,6 +392,16 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>Communication</GroupName>
+          <Files>
+            <File>
+              <FileName>bluetooth_service.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../communication/bluetooth_service.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>Control</GroupName>
           <Files>
             <File>
@@ -423,6 +433,16 @@
               <FileName>oled_driver.c</FileName>
               <FileType>1</FileType>
               <FilePath>../drivers/oled_driver.c</FilePath>
+            </File>
+            <File>
+              <FileName>bluetooth_uart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../drivers/bluetooth_uart.c</FilePath>
+            </File>
+            <File>
+              <FileName>debug_uart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../drivers/debug_uart.c</FilePath>
             </File>
           </Files>
         </Group>

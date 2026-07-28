@@ -115,6 +115,12 @@ OLED 模块的接口命名和是否有板载 CS 可能不同。若实物是 7 �
 
 串口参数为 9600 baud、8 数据位、无校验、1 停止位。蓝牙模块的 RX 电平必须能承受 C07A 的输出电平；裸 HC-05/HC-06 模块和带底板模块的供电/电平要求可能不同。
 
+当前固件启动时发送 `CAR_MASTER:BOOT`，之后每秒发送
+`CAR_MASTER:HELLO`。蓝牙收到的字节原样转发到 115200 baud 的 Type-C
+调试串口。实现分别位于 `drivers/bluetooth_uart.c`、
+`drivers/debug_uart.c` 和 `communication/bluetooth_service.c`，不与巡线或
+电机控制代码混合。
+
 ### 3.5 电池电压检测
 
 S28A 原理图为 `12V -> 10 kOhm -> PA15 -> 1 kOhm -> GND`，PA15 同时是 `ADC1 channel 0`。因此：

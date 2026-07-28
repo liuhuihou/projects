@@ -1,9 +1,10 @@
-../build/keil/objects/app_main.o: ..\app\app_main.c \
-  ..\generated\ti_msp_dl_config.h \
+../build/keil/objects/bluetooth_uart.o: ..\drivers\bluetooth_uart.c \
+  ..\drivers\bluetooth_uart.h \
+  E:\MDK_ARM\Keil_v5\ARM\ARMCLANG\include\stdint.h \
+  ..\board\board_hardware.h ..\generated\ti_msp_dl_config.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\devices\msp\msp.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\devices\DeviceFamily.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\devices\msp\m0p\mspm0g350x.h \
-  E:\MDK_ARM\Keil_v5\ARM\ARMCLANG\include\stdint.h \
   E:\MDK_ARM\Keil_v5\ARM\ARMCLANG\include\stdbool.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\third_party\CMSIS\Core\Include\core_cm0plus.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\third_party\CMSIS\Core\Include\cmsis_version.h \
@@ -81,9 +82,4 @@
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\dl_vref.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\dl_wwdt.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\m0p\dl_interrupt.h \
-  E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\m0p\dl_systick.h \
-  ..\app\app_config.h ..\control\control_config.h \
-  ..\communication\bluetooth_service.h ..\control\vehicle_controller.h \
-  ..\drivers\encoder_driver.h ..\drivers\line_sensor.h \
-  ..\drivers\motor_driver.h ..\board\board_hardware.h \
-  ..\drivers\oled_driver.h
+  E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\m0p\dl_systick.h

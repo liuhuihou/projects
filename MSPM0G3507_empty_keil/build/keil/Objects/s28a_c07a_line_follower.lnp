@@ -1,10 +1,13 @@
 --cpu Cortex-M0+
 "..\build\keil\objects\app_main.o"
+"..\build\keil\objects\bluetooth_service.o"
 "..\build\keil\objects\vehicle_controller.o"
 "..\build\keil\objects\line_sensor.o"
 "..\build\keil\objects\encoder_driver.o"
 "..\build\keil\objects\motor_driver.o"
 "..\build\keil\objects\oled_driver.o"
+"..\build\keil\objects\bluetooth_uart.o"
+"..\build\keil\objects\debug_uart.o"
 "..\build\keil\objects\ti_msp_dl_config.o"
 "..\build\keil\objects\startup_mspm0g350x_uvision.o"
 --strict --scatter "./mspm0g3507_flash.sct"

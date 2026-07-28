@@ -32,12 +32,24 @@
 
 #include "ti_msp_dl_config.h"
 #include "app_config.h"
+#include "control_config.h"
+#include "bluetooth_service.h"
 #include "vehicle_controller.h"
 #include "encoder_driver.h"
 #include "line_sensor.h"
 #include "motor_driver.h"
 #include "board_hardware.h"
 #include "oled_driver.h"
+
+static uint32_t app_time_ms(void)
+{
+    return Control_GetTickCount() * CONTROL_PERIOD_MS;
+}
+
+static void app_process_background(void)
+{
+    BluetoothService_Process(app_time_ms());
+}
 
 static int32_t speed_to_cm_s_x10(float rpm)
 {
@@ -67,10 +79,12 @@ static void oled_show_status(uint8_t running)
 static void wait_for_start_key(void)
 {
     while (!HW_GPIO_READ(HW_BLS_KEY_PORT, HW_BLS_KEY_PIN)) {
+        app_process_background();
         __WFI();
     }
 
     while (HW_GPIO_READ(HW_BLS_KEY_PORT, HW_BLS_KEY_PIN)) {
+        app_process_background();
         __WFI();
     }
 
@@ -88,6 +102,7 @@ int main(void)
     Encoder_Init();
     Motor_Init();
     Control_Init();
+    BluetoothService_Init(app_time_ms());
     OLED_Init();
     OLED_Clear();
     OLED_ShowString(0, 0, "LINE FOLLOW");
@@ -115,6 +130,7 @@ int main(void)
         while (1) {
             const uint32_t now = Control_GetTickCount();
 
+            app_process_background();
             if ((uint32_t)(now - last_oled_tick) >= 50U) {
                 last_oled_tick = now;
                 oled_show_status(1U);

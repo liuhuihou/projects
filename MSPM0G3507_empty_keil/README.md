@@ -9,9 +9,10 @@ This directory contains one application project: `s28a_c07a_line_follower`.
 ```text
 app/       Application entry point and user-facing speed configuration
 board/     Stable board-level pin and peripheral aliases
+communication/ Bluetooth service behavior and protocol policy
 config/    SysConfig source of truth
 control/   Line-following and per-wheel speed control
-drivers/   Encoder, motor, RYZD sensor, and OLED drivers
+drivers/   UART, encoder, motor, RYZD sensor, and OLED hardware drivers
 generated/ SysConfig-generated C/H files; do not edit manually
 docs/      Wiring and control documentation
 keil/      Keil uVision project definition
@@ -36,4 +37,5 @@ The last verified Keil build used ARMCLANG V6.21 and completed with 0 errors
 and 0 warnings.
 
 See `docs/hardware_wiring.md` for S28A/C07A wiring and
-`docs/line_following.md` for the six-channel control algorithm.
+`docs/line_following.md` for the six-channel control algorithm. Bluetooth
+module behavior is documented in `docs/bluetooth.md`.
