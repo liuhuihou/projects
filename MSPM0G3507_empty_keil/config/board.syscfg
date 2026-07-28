@@ -1,0 +1,250 @@
+/**
+ * S28A + C07A car hardware configuration.
+ *
+ * Generated for MSPM0G350X, LQFP-64(PM), MSPM0 SDK 2.01.00.03.
+ * The previously unconnected peripherals are assigned as follows:
+ *   - K230 UART2: PB17 (TX), PB18 (RX)
+ *   - Six RYZD digital IR inputs (physical channels 2 through 7):
+ *     PA22, PA24, PA27, PA9, PA12, PB16
+ */
+// @cliArgs --device "MSPM0G350X" --package "LQFP-64(PM)" --part "Default"
+// @cliArgs --board /ti/boards/LP_MSPM0G3507 --rtos nortos
+
+const GPIO = scripting.addModule("/ti/driverlib/GPIO", {}, false);
+const GPIO1 = GPIO.addInstance();
+const GPIO2 = GPIO.addInstance();
+const GPIO3 = GPIO.addInstance();
+const GPIO4 = GPIO.addInstance();
+const GPIO5 = GPIO.addInstance();
+const GPIO6 = GPIO.addInstance();
+const GPIO7 = GPIO.addInstance();
+const GPIO8 = GPIO.addInstance();
+const GPIO9 = GPIO.addInstance();
+const GPIO10 = GPIO.addInstance();
+
+const PWM = scripting.addModule("/ti/driverlib/PWM", {}, false);
+const PWM1 = PWM.addInstance();
+
+const SYSCTL = scripting.addModule("/ti/driverlib/SYSCTL");
+const SYSTICK = scripting.addModule("/ti/driverlib/SYSTICK");
+
+const TIMER = scripting.addModule("/ti/driverlib/TIMER", {}, false);
+const TIMER1 = TIMER.addInstance();
+
+const UART = scripting.addModule("/ti/driverlib/UART", {}, false);
+const UART1 = UART.addInstance();
+const UART2 = UART.addInstance();
+const UART3 = UART.addInstance();
+
+const I2C = scripting.addModule("/ti/driverlib/I2C", {}, false);
+const I2C1 = I2C.addInstance();
+
+const ADC12 = scripting.addModule("/ti/driverlib/ADC12", {}, false);
+const ADC121 = ADC12.addInstance();
+
+const Board = scripting.addModule("/ti/driverlib/Board", {}, false);
+
+/* BLS key on C07A, and the independent key on S28A. */
+GPIO1.$name = "KEY";
+GPIO1.associatedPins[0].$name = "BLS";
+GPIO1.associatedPins[0].direction = "INPUT";
+/* C07A BLS is pulled down externally and goes high when pressed. */
+GPIO1.associatedPins[0].internalResistor = "PULL_DOWN";
+GPIO1.associatedPins[0].pin.$assign = "PA18";
+
+GPIO2.$name = "S28A_BUTTON";
+GPIO2.associatedPins[0].$name = "S28A_KEY";
+GPIO2.associatedPins[0].direction = "INPUT";
+GPIO2.associatedPins[0].internalResistor = "PULL_UP";
+GPIO2.associatedPins[0].pin.$assign = "PB8";
+
+GPIO3.$name = "LED";
+GPIO3.associatedPins[0].$name = "led";
+GPIO3.associatedPins[0].pin.$assign = "PB9";
+
+/* TB6612 direction inputs: motor A = PA14/PA13, motor B = PA16/PA17. */
+GPIO4.$name = "MOTOR_A_DIR";
+GPIO4.port = "PORTA";
+GPIO4.associatedPins.create(2);
+GPIO4.associatedPins[0].$name = "AIN1";
+GPIO4.associatedPins[0].pin.$assign = "PA14";
+GPIO4.associatedPins[1].$name = "AIN2";
+GPIO4.associatedPins[1].pin.$assign = "PA13";
+
+GPIO5.$name = "MOTOR_B_DIR";
+GPIO5.port = "PORTA";
+GPIO5.associatedPins.create(2);
+GPIO5.associatedPins[0].$name = "BIN1";
+GPIO5.associatedPins[0].pin.$assign = "PA16";
+GPIO5.associatedPins[1].$name = "BIN2";
+GPIO5.associatedPins[1].pin.$assign = "PA17";
+
+/* Quadrature encoder inputs. Both phases use rising-edge GPIO interrupts. */
+GPIO6.$name = "ENCODERA";
+GPIO6.associatedPins.create(2);
+GPIO6.associatedPins[0].$name = "E1A";
+GPIO6.associatedPins[0].direction = "INPUT";
+GPIO6.associatedPins[0].internalResistor = "PULL_UP";
+GPIO6.associatedPins[0].polarity = "RISE";
+GPIO6.associatedPins[0].interruptPriority = "0";
+GPIO6.associatedPins[0].interruptEn = true;
+GPIO6.associatedPins[0].pin.$assign = "PA25";
+GPIO6.associatedPins[1].$name = "E1B";
+GPIO6.associatedPins[1].direction = "INPUT";
+GPIO6.associatedPins[1].internalResistor = "PULL_UP";
+GPIO6.associatedPins[1].polarity = "RISE";
+GPIO6.associatedPins[1].interruptPriority = "0";
+GPIO6.associatedPins[1].interruptEn = true;
+GPIO6.associatedPins[1].pin.$assign = "PA26";
+
+GPIO7.$name = "ENCODERB";
+GPIO7.associatedPins.create(2);
+GPIO7.associatedPins[0].$name = "E2A";
+GPIO7.associatedPins[0].direction = "INPUT";
+GPIO7.associatedPins[0].internalResistor = "PULL_UP";
+GPIO7.associatedPins[0].polarity = "RISE";
+GPIO7.associatedPins[0].interruptPriority = "0";
+GPIO7.associatedPins[0].interruptEn = true;
+GPIO7.associatedPins[0].pin.$assign = "PB20";
+GPIO7.associatedPins[1].$name = "E2B";
+GPIO7.associatedPins[1].direction = "INPUT";
+GPIO7.associatedPins[1].internalResistor = "PULL_UP";
+GPIO7.associatedPins[1].polarity = "RISE";
+GPIO7.associatedPins[1].interruptPriority = "0";
+GPIO7.associatedPins[1].interruptEn = true;
+GPIO7.associatedPins[1].pin.$assign = "PB24";
+
+/* MPU6050 interrupt input. The I2C bus itself is configured below. */
+GPIO8.$name = "MPU6050_INT";
+GPIO8.associatedPins[0].$name = "INT";
+GPIO8.associatedPins[0].direction = "INPUT";
+GPIO8.associatedPins[0].internalResistor = "PULL_DOWN";
+GPIO8.associatedPins[0].pin.$assign = "PA7";
+
+/* 0.96 inch SSD1306 software SPI: RST/DC on B, clock/data on A. */
+GPIO9.$name = "OLED";
+GPIO9.associatedPins.create(4);
+GPIO9.associatedPins[0].$name = "RST";
+GPIO9.associatedPins[0].pin.$assign = "PB14";
+GPIO9.associatedPins[1].$name = "DC";
+GPIO9.associatedPins[1].pin.$assign = "PB15";
+GPIO9.associatedPins[2].$name = "SCL";
+GPIO9.associatedPins[2].pin.$assign = "PA28";
+GPIO9.associatedPins[3].$name = "SDA";
+GPIO9.associatedPins[3].pin.$assign = "PA31";
+
+/* RYZD physical channels 2 through 7 on S28A J6/J10. Keep PB17/PB18 for K230 UART2. */
+GPIO10.$name = "IR_SENSORS";
+GPIO10.associatedPins.create(6);
+GPIO10.associatedPins[0].$name = "IR1";
+GPIO10.associatedPins[0].direction = "INPUT";
+GPIO10.associatedPins[0].internalResistor = "PULL_UP";
+GPIO10.associatedPins[0].pin.$assign = "PA22";
+GPIO10.associatedPins[1].$name = "IR2";
+GPIO10.associatedPins[1].direction = "INPUT";
+GPIO10.associatedPins[1].internalResistor = "PULL_UP";
+GPIO10.associatedPins[1].pin.$assign = "PA24";
+GPIO10.associatedPins[2].$name = "IR3";
+GPIO10.associatedPins[2].direction = "INPUT";
+GPIO10.associatedPins[2].internalResistor = "PULL_UP";
+GPIO10.associatedPins[2].pin.$assign = "PA27";
+GPIO10.associatedPins[3].$name = "IR4";
+GPIO10.associatedPins[3].direction = "INPUT";
+GPIO10.associatedPins[3].internalResistor = "PULL_UP";
+GPIO10.associatedPins[3].pin.$assign = "PA9";
+GPIO10.associatedPins[4].$name = "IR5";
+GPIO10.associatedPins[4].direction = "INPUT";
+GPIO10.associatedPins[4].internalResistor = "PULL_UP";
+GPIO10.associatedPins[4].pin.$assign = "PA12";
+GPIO10.associatedPins[5].$name = "IR6";
+GPIO10.associatedPins[5].direction = "INPUT";
+GPIO10.associatedPins[5].internalResistor = "PULL_UP";
+GPIO10.associatedPins[5].pin.$assign = "PB16";
+
+/* Two motor PWM channels on TIMA1. */
+PWM1.$name = "PWM_0";
+PWM1.timerStartTimer = true;
+PWM1.pwmMode = "EDGE_ALIGN_UP";
+PWM1.timerCount = 8000;
+PWM1.peripheral.$assign = "TIMA1";
+PWM1.peripheral.ccp0Pin.$assign = "PB2";
+PWM1.peripheral.ccp1Pin.$assign = "PB3";
+PWM1.PWM_CHANNEL_0.$name = "ti_driverlib_pwm_PWMTimerCC0";
+PWM1.PWM_CHANNEL_1.$name = "ti_driverlib_pwm_PWMTimerCC1";
+
+SYSCTL.forceDefaultClkConfig = true;
+SYSCTL.clockTreeEn = true;
+
+/* Preserve the 80 MHz clock used by the original project timing constants. */
+const divider7 = system.clockTree["PLL_PDIV"];
+divider7.divideValue = 2;
+
+const divider9 = system.clockTree["UDIV"];
+divider9.divideValue = 2;
+
+const gate7 = system.clockTree["MFCLKGATE"];
+gate7.enable = true;
+
+const multiplier2 = system.clockTree["PLL_QDIV"];
+multiplier2.multiplyValue = 5;
+
+const mux8 = system.clockTree["HSCLKMUX"];
+mux8.inputSelect = "HSCLKMUX_SYSPLL2X";
+
+SYSTICK.periodEnable = true;
+SYSTICK.systickEnable = true;
+SYSTICK.period = 16777216;
+
+TIMER1.$name = "TIMER_0";
+TIMER1.timerClkPrescale = 32;
+TIMER1.timerMode = "PERIODIC";
+TIMER1.timerStartTimer = true;
+TIMER1.interrupts = ["ZERO"];
+TIMER1.timerPeriod = "10 ms";
+TIMER1.peripheral.$assign = "TIMG0";
+
+/* USB serial, Bluetooth serial, and K230 serial. */
+UART1.$name = "USB";
+UART1.targetBaudRate = 115200;
+UART1.enableFIFO = true;
+UART1.enableInternalLoopback = false;
+UART1.peripheral.$assign = "UART0";
+UART1.peripheral.rxPin.$assign = "PA11";
+UART1.peripheral.txPin.$assign = "PA10";
+
+UART2.$name = "BLUETOOTH";
+UART2.targetBaudRate = 9600;
+UART2.enableFIFO = true;
+UART2.enableInternalLoopback = false;
+UART2.peripheral.$assign = "UART1";
+UART2.peripheral.rxPin.$assign = "PB7";
+UART2.peripheral.txPin.$assign = "PB6";
+
+UART3.$name = "K230";
+UART3.targetBaudRate = 115200;
+UART3.enableFIFO = true;
+UART3.enableInternalLoopback = false;
+UART3.peripheral.$assign = "UART2";
+UART3.peripheral.rxPin.$assign = "PB18";
+UART3.peripheral.txPin.$assign = "PB17";
+
+/* MPU6050 controller bus: SDA=PA0, SCL=PA1, standard-mode 100 kHz. */
+I2C1.$name = "I2C_MPU";
+I2C1.basicEnableController = true;
+I2C1.basicControllerStandardBusSpeed = "Standard";
+I2C1.peripheral.$assign = "I2C0";
+I2C1.peripheral.sdaPin.$assign = "PA0";
+I2C1.peripheral.sclPin.$assign = "PA1";
+
+/* S28A battery divider is connected to PA15 / ADC1 input channel 0. */
+ADC121.$name = "BATTERY_ADC";
+ADC121.sampClkSrc = "DL_ADC12_CLOCK_ULPCLK";
+ADC121.sampClkDiv = "DL_ADC12_CLOCK_DIVIDE_8";
+ADC121.adcMem0chansel = "DL_ADC12_INPUT_CHAN_0";
+ADC121.sampleTime0 = "125 us";
+ADC121.peripheral.$assign = "ADC1";
+ADC121.peripheral.adcPin0.$assign = "PA15";
+
+Board.peripheral.$assign = "DEBUGSS";
+Board.peripheral.swclkPin.$assign = "PA20";
+Board.peripheral.swdioPin.$assign = "PA19";
