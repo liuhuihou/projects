@@ -1,0 +1,20 @@
+--cpu Cortex-M0+
+"..\build\keil\objects\app_main.o"
+"..\build\keil\objects\competition_mode.o"
+"..\build\keil\objects\line_follow_task.o"
+"..\build\keil\objects\balance_controller.o"
+"..\build\keil\objects\button_input.o"
+"..\build\keil\objects\bluetooth_service.o"
+"..\build\keil\objects\vehicle_controller.o"
+"..\build\keil\objects\line_sensor.o"
+"..\build\keil\objects\encoder_driver.o"
+"..\build\keil\objects\motor_driver.o"
+"..\build\keil\objects\oled_driver.o"
+"..\build\keil\objects\bluetooth_uart.o"
+"..\build\keil\objects\debug_uart.o"
+"..\build\keil\objects\ti_msp_dl_config.o"
+"..\build\keil\objects\startup_mspm0g350x_uvision.o"
+--strict --scatter "./mspm0g3507_flash.sct"
+E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\lib\keil\m0p\mspm0g1x0x_g3x0x\driverlib.a --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "..\build\keil\s28a_c07a_line_follower.map" -o ..\build\keil\Objects\s28a_c07a_line_follower.axf
