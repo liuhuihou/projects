@@ -1,6 +1,8 @@
-../build/keil/objects/button_input.o: ..\app\button_input.c \
-  ..\app\button_input.h E:\MDK_ARM\Keil_v5\ARM\ARMCLANG\include\stdint.h \
-  ..\board\board_hardware.h ..\generated\ti_msp_dl_config.h \
+../build/keil/objects/button_input.o: ..\drivers\button_input.c \
+  ..\drivers\button_input.h \
+  E:\MDK_ARM\Keil_v5\ARM\ARMCLANG\include\stdint.h \
+  ..\board\board_hardware.h ..\ti_msp_dl_config.h \
+  ..\generated\ti_msp_dl_config.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\devices\msp\msp.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\devices\DeviceFamily.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\devices\msp\m0p\mspm0g350x.h \

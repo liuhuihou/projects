@@ -1,5 +1,4 @@
 #include "oled_driver.h"
-
 #include "board_hardware.h"
 
 #define OLED_COLS       (128U)
@@ -18,21 +17,17 @@
 static void oled_delay(void)
 {
     volatile uint32_t i;
-    for (i = 0U; i < 24U; ++i) {
-        __NOP();
-    }
+    for (i = 0U; i < 24U; ++i) __NOP();
 }
 
-static void oled_delay_ms(uint32_t milliseconds)
+static void oled_delay_ms(uint32_t ms)
 {
-    while (milliseconds-- > 0U) {
-        delay_cycles(HW_CPU_CLOCK_HZ / 1000U);
-    }
+    while (ms-- > 0U) delay_cycles(HW_CPU_CLOCK_HZ / 1000U);
 }
 
 static const uint8_t *font_for(char ch)
 {
-    static const uint8_t blank[5] = {0, 0, 0, 0, 0};
+    static const uint8_t blank[5] = {0,0,0,0,0};
     static const uint8_t digits[10][5] = {
         {0x3E,0x51,0x49,0x45,0x3E},{0x00,0x42,0x7F,0x40,0x00},
         {0x42,0x61,0x51,0x49,0x46},{0x21,0x41,0x45,0x4B,0x31},
@@ -74,7 +69,6 @@ static const uint8_t *font_for(char ch)
 static void oled_write_byte(uint8_t value, uint8_t command)
 {
     uint8_t i;
-
     __disable_irq();
     if (command) OLED_DC_LOW(); else OLED_DC_HIGH();
     for (i = 0U; i < 8U; ++i) {
@@ -89,12 +83,12 @@ static void oled_write_byte(uint8_t value, uint8_t command)
     __enable_irq();
 }
 
-static void oled_cmd(uint8_t value) { oled_write_byte(value, 1U); }
-static void oled_data(uint8_t value) { oled_write_byte(value, 0U); }
+static void oled_cmd(uint8_t v) { oled_write_byte(v, 1U); }
+static void oled_data(uint8_t v) { oled_write_byte(v, 0U); }
 
 static void oled_cursor(uint8_t x, uint8_t y)
 {
-    uint8_t col = (uint8_t)(x * OLED_CHAR_W);
+    uint8_t col;
     if (x > 20U) x = 20U;
     if (y >= OLED_PAGES) y = OLED_PAGES - 1U;
     col = (uint8_t)(x * OLED_CHAR_W);
@@ -102,12 +96,10 @@ static void oled_cursor(uint8_t x, uint8_t y)
     oled_cmd((uint8_t)(col & 0x0FU));
     oled_cmd((uint8_t)(0x10U | (col >> 4)));
 }
-
 void OLED_ShowChar(uint8_t x, uint8_t y, char ch)
 {
     const uint8_t *glyph = font_for(ch);
     uint8_t i;
-
     oled_cursor(x, y);
     for (i = 0U; i < 5U; ++i) oled_data(glyph[i]);
     oled_data(0U);
@@ -122,9 +114,7 @@ void OLED_ShowString(uint8_t x, uint8_t y, const char *str)
 
 void OLED_Clear(void)
 {
-    uint8_t page;
-    uint8_t col;
-
+    uint8_t page, col;
     for (page = 0U; page < OLED_PAGES; ++page) {
         oled_cursor(0U, page);
         for (col = 0U; col < OLED_COLS; ++col) oled_data(0U);
@@ -134,33 +124,20 @@ void OLED_Clear(void)
 void OLED_ShowTenths(uint8_t x, uint8_t y, int32_t value_x10, uint8_t int_len)
 {
     char buf[16];
-    uint32_t magnitude;
-    uint32_t integer;
-    uint8_t pos = 0U;
-    uint8_t digits = 0U;
-    uint8_t i;
+    uint32_t magnitude, integer;
+    uint8_t pos = 0U, digits = 0U, i;
 
-    if (value_x10 < 0) {
-        buf[pos++] = '-';
-        magnitude = (uint32_t)(-value_x10);
-    } else {
-        magnitude = (uint32_t)value_x10;
-    }
+    if (value_x10 < 0) { buf[pos++] = '-'; magnitude = (uint32_t)(-value_x10); }
+    else { magnitude = (uint32_t)value_x10; }
     integer = magnitude / 10U;
-    do {
-        buf[pos + digits] = (char)('0' + integer % 10U);
-        integer /= 10U;
-        ++digits;
-    } while (integer != 0U && digits < 5U);
+    do { buf[pos + digits] = (char)('0' + integer % 10U); integer /= 10U; ++digits; }
+    while (integer != 0U && digits < 5U);
     for (i = 0U; i < digits / 2U; ++i) {
-        char t = buf[pos + i];
-        buf[pos + i] = buf[pos + digits - 1U - i];
-        buf[pos + digits - 1U - i] = t;
+        char t = buf[pos+i]; buf[pos+i] = buf[pos+digits-1U-i]; buf[pos+digits-1U-i] = t;
     }
     while (digits < int_len) {
-        for (i = digits; i > 0U; --i) buf[pos + i] = buf[pos + i - 1U];
-        buf[pos] = ' ';
-        ++digits;
+        for (i = digits; i > 0U; --i) buf[pos+i] = buf[pos+i-1U];
+        buf[pos] = ' '; ++digits;
     }
     pos += digits;
     buf[pos++] = '.';
@@ -172,45 +149,46 @@ void OLED_ShowTenths(uint8_t x, uint8_t y, int32_t value_x10, uint8_t int_len)
 void OLED_ShowSignedInt(uint8_t x, uint8_t y, int value, uint8_t width)
 {
     char buf[12];
-    uint8_t pos = 0U;
-    uint8_t digits = 0U;
+    uint8_t pos = 0U, digits = 0U, i;
     uint32_t magnitude;
-    uint8_t i;
 
-    if (value < 0) {
-        buf[pos++] = '-';
-        magnitude = (uint32_t)(-value);
-    } else {
-        buf[pos++] = '+';
-        magnitude = (uint32_t)value;
-    }
-    do {
-        buf[pos + digits] = (char)('0' + magnitude % 10U);
-        magnitude /= 10U;
-        ++digits;
-    } while (magnitude != 0U && digits < 8U);
+    if (value < 0) { buf[pos++] = '-'; magnitude = (uint32_t)(-value); }
+    else { buf[pos++] = '+'; magnitude = (uint32_t)value; }
+    do { buf[pos+digits] = (char)('0' + magnitude % 10U); magnitude /= 10U; ++digits; }
+    while (magnitude != 0U && digits < 8U);
     for (i = 0U; i < digits / 2U; ++i) {
-        char t = buf[pos + i];
-        buf[pos + i] = buf[pos + digits - 1U - i];
-        buf[pos + digits - 1U - i] = t;
+        char t = buf[pos+i]; buf[pos+i] = buf[pos+digits-1U-i]; buf[pos+digits-1U-i] = t;
     }
     while (digits < width) {
-        for (i = digits; i > 0U; --i) buf[pos + i] = buf[pos + i - 1U];
-        buf[pos] = ' ';
-        ++digits;
+        for (i = digits; i > 0U; --i) buf[pos+i] = buf[pos+i-1U];
+        buf[pos] = ' '; ++digits;
     }
-    buf[pos + digits] = '\0';
+    buf[pos+digits] = '\0';
+    OLED_ShowString(x, y, buf);
+}
+
+void OLED_ShowNum(uint8_t x, uint8_t y, uint32_t num, uint8_t width)
+{
+    char buf[12];
+    uint8_t digits = 0U, i;
+    do { buf[digits] = (char)('0' + num % 10U); num /= 10U; ++digits; }
+    while (num != 0U && digits < 10U);
+    for (i = 0U; i < digits / 2U; ++i) {
+        char t = buf[i]; buf[i] = buf[digits-1U-i]; buf[digits-1U-i] = t;
+    }
+    while (digits < width) {
+        for (i = digits; i > 0U; --i) buf[i] = buf[i-1U];
+        buf[0] = ' '; ++digits;
+    }
+    buf[digits] = '\0';
     OLED_ShowString(x, y, buf);
 }
 
 void OLED_Init(void)
 {
-    OLED_RST_HIGH();
-    oled_delay_ms(10U);
-    OLED_RST_LOW();
-    oled_delay_ms(20U);
-    OLED_RST_HIGH();
-    oled_delay_ms(20U);
+    OLED_RST_HIGH(); oled_delay_ms(10U);
+    OLED_RST_LOW();  oled_delay_ms(20U);
+    OLED_RST_HIGH(); oled_delay_ms(20U);
 
     oled_cmd(0xAEU); oled_cmd(0x20U); oled_cmd(0x10U);
     oled_cmd(0xB0U); oled_cmd(0xC8U); oled_cmd(0x00U); oled_cmd(0x10U);

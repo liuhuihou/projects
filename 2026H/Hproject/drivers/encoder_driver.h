@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-/* Raw quadrature counts are updated by GROUP1_IRQHandler. */
 extern volatile int32_t g_encoder_a_count;
 extern volatile int32_t g_encoder_b_count;
 

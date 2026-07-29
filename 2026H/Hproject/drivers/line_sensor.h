@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-/* Three consistent samples give 30 ms debounce at the 10 ms control period. */
 #define LINE_SENSOR_FILTER_N (3U)
 
 void LineSensor_Init(void);

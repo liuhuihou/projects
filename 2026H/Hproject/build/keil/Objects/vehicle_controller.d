@@ -3,7 +3,8 @@
   E:\MDK_ARM\Keil_v5\ARM\ARMCLANG\include\stdint.h \
   ..\control\control_config.h ..\drivers\encoder_driver.h \
   ..\drivers\line_sensor.h ..\drivers\motor_driver.h \
-  ..\board\board_hardware.h ..\generated\ti_msp_dl_config.h \
+  ..\board\board_hardware.h ..\ti_msp_dl_config.h \
+  ..\generated\ti_msp_dl_config.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\devices\msp\msp.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\devices\DeviceFamily.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\devices\msp\m0p\mspm0g350x.h \

@@ -1,5 +1,4 @@
 #include "motor_driver.h"
-
 #include "board_hardware.h"
 
 static int32_t clamp_duty(int32_t duty)
@@ -50,8 +49,6 @@ void Motor_Stop(void)
 
 void Motor_SetDuty(int32_t left_duty, int32_t right_duty)
 {
-    /* S28A mapping: J1 is the right wheel on motor A; J2 is the left
-     * wheel on motor B. Keep this API ordered logical left, right. */
     left_duty = clamp_duty(left_duty);
     right_duty = clamp_duty(right_duty);
 
