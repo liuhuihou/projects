@@ -89,6 +89,8 @@
 #define HW_IR_PIN(_n)                   HW_IR_PIN_I(_n)
 #define HW_IR_PIN_I(_n)                 IR_SENSORS_IR##_n##_PIN
 #define HW_IR_RAW(_n)                   HW_GPIO_READ(HW_IR_PORT(_n), HW_IR_PIN(_n))
+/* RYZD sensor with internal pull-up: output HIGH = black line detected,
+ * LOW = white surface. Matches the vendor's reference code convention. */
 #define HW_IR_DETECTED(_n)             HW_IR_RAW(_n)
 
 /* ======================== Buttons ======================== */

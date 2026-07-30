@@ -167,13 +167,21 @@ SYSCONFIG_WEAK void SYSCFG_DL_GPIO_init(void)
 
     DL_GPIO_initDigitalOutput(MOTOR_B_DIR_BIN2_IOMUX);
 
-    DL_GPIO_initDigitalInput(ENCODERA_E1A_IOMUX);
+    DL_GPIO_initDigitalInputFeatures(ENCODERA_E1A_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
 
-    DL_GPIO_initDigitalInput(ENCODERA_E1B_IOMUX);
+    DL_GPIO_initDigitalInputFeatures(ENCODERA_E1B_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
 
-    DL_GPIO_initDigitalInput(ENCODERB_E2A_IOMUX);
+    DL_GPIO_initDigitalInputFeatures(ENCODERB_E2A_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
 
-    DL_GPIO_initDigitalInput(ENCODERB_E2B_IOMUX);
+    DL_GPIO_initDigitalInputFeatures(ENCODERB_E2B_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
 
     DL_GPIO_initDigitalOutput(OLED_RST_IOMUX);
 
@@ -213,8 +221,8 @@ SYSCONFIG_WEAK void SYSCFG_DL_GPIO_init(void)
 		MOTOR_B_DIR_BIN2_PIN |
 		OLED_SCL_PIN |
 		OLED_SDA_PIN);
-    DL_GPIO_setUpperPinsPolarity(GPIOA, DL_GPIO_PIN_25_EDGE_RISE_FALL |
-		DL_GPIO_PIN_26_EDGE_RISE_FALL);
+    DL_GPIO_setUpperPinsPolarity(GPIOA, DL_GPIO_PIN_25_EDGE_RISE |
+		DL_GPIO_PIN_26_EDGE_RISE);
     DL_GPIO_clearInterruptStatus(GPIOA, ENCODERA_E1A_PIN |
 		ENCODERA_E1B_PIN);
     DL_GPIO_enableInterrupt(GPIOA, ENCODERA_E1A_PIN |
@@ -231,8 +239,8 @@ SYSCONFIG_WEAK void SYSCFG_DL_GPIO_init(void)
 		STEPPER_STEP_PIN |
 		STEPPER_DIR_PIN |
 		STEPPER_EN_PIN);
-    DL_GPIO_setUpperPinsPolarity(GPIOB, DL_GPIO_PIN_20_EDGE_RISE_FALL |
-		DL_GPIO_PIN_24_EDGE_RISE_FALL);
+    DL_GPIO_setUpperPinsPolarity(GPIOB, DL_GPIO_PIN_20_EDGE_RISE |
+		DL_GPIO_PIN_24_EDGE_RISE);
     DL_GPIO_clearInterruptStatus(GPIOB, ENCODERB_E2A_PIN |
 		ENCODERB_E2B_PIN);
     DL_GPIO_enableInterrupt(GPIOB, ENCODERB_E2A_PIN |
@@ -241,26 +249,45 @@ SYSCONFIG_WEAK void SYSCFG_DL_GPIO_init(void)
 }
 
 
+static const DL_SYSCTL_SYSPLLConfig gSYSPLLConfig = {
+    .inputFreq              = DL_SYSCTL_SYSPLL_INPUT_FREQ_16_32_MHZ,
+	.rDivClk2x              = 1,
+	.rDivClk1               = 0,
+	.rDivClk0               = 0,
+	.enableCLK2x            = DL_SYSCTL_SYSPLL_CLK2X_ENABLE,
+	.enableCLK1             = DL_SYSCTL_SYSPLL_CLK1_DISABLE,
+	.enableCLK0             = DL_SYSCTL_SYSPLL_CLK0_DISABLE,
+	.sysPLLMCLK             = DL_SYSCTL_SYSPLL_MCLK_CLK2X,
+	.sysPLLRef              = DL_SYSCTL_SYSPLL_REF_SYSOSC,
+	.qDiv                   = 4,
+	.pDiv                   = DL_SYSCTL_SYSPLL_PDIV_2
+};
 SYSCONFIG_WEAK void SYSCFG_DL_SYSCTL_init(void)
 {
 
 	//Low Power Mode is configured to be SLEEP0
     DL_SYSCTL_setBORThreshold(DL_SYSCTL_BOR_THRESHOLD_LEVEL_0);
+    DL_SYSCTL_setFlashWaitState(DL_SYSCTL_FLASH_WAIT_STATE_2);
 
-    DL_SYSCTL_setSYSOSCFreq(DL_SYSCTL_SYSOSC_FREQ_BASE);
-    /* Set default configuration */
-    DL_SYSCTL_disableHFXT();
-    DL_SYSCTL_disableSYSPLL();
-    DL_SYSCTL_setULPCLKDivider(DL_SYSCTL_ULPCLK_DIV_1);
-    DL_SYSCTL_setMCLKDivider(DL_SYSCTL_MCLK_DIVIDER_DISABLE);
+    
+	DL_SYSCTL_setSYSOSCFreq(DL_SYSCTL_SYSOSC_FREQ_BASE);
+	/* Set default configuration */
+	DL_SYSCTL_disableHFXT();
+	DL_SYSCTL_disableSYSPLL();
+    DL_SYSCTL_configSYSPLL((DL_SYSCTL_SYSPLLConfig *) &gSYSPLLConfig);
+    DL_SYSCTL_setULPCLKDivider(DL_SYSCTL_ULPCLK_DIV_2);
+    DL_SYSCTL_enableMFCLK();
+    DL_SYSCTL_setMCLKSource(SYSOSC, HSCLK, DL_SYSCTL_HSCLK_SOURCE_SYSPLL);
+    /* INT_GROUP1 Priority */
+    NVIC_SetPriority(GPIOB_INT_IRQn, 0);
 
 }
 
 
 /*
- * Timer clock configuration to be sourced by  / 1 (32000000 Hz)
+ * Timer clock configuration to be sourced by  / 1 (80000000 Hz)
  * timerClkFreq = (timerClkSrc / (timerClkDivRatio * (timerClkPrescale + 1)))
- *   32000000 Hz = 32000000 Hz / (1 * (0 + 1))
+ *   80000000 Hz = 80000000 Hz / (1 * (0 + 1))
  */
 static const DL_TimerA_ClockConfig gPWM_0ClockConfig = {
     .clockSel = DL_TIMER_CLOCK_BUSCLK,
@@ -269,10 +296,10 @@ static const DL_TimerA_ClockConfig gPWM_0ClockConfig = {
 };
 
 static const DL_TimerA_PWMConfig gPWM_0Config = {
-    .pwmMode = DL_TIMER_PWM_MODE_EDGE_ALIGN,
+    .pwmMode = DL_TIMER_PWM_MODE_EDGE_ALIGN_UP,
     .period = 8000,
     .isTimerWithFourCC = false,
-    .startTimer = DL_TIMER_STOP,
+    .startTimer = DL_TIMER_START,
 };
 
 SYSCONFIG_WEAK void SYSCFG_DL_PWM_0_init(void) {
@@ -288,14 +315,14 @@ SYSCONFIG_WEAK void SYSCFG_DL_PWM_0_init(void) {
 		DL_TIMERA_CAPTURE_COMPARE_0_INDEX);
 
     DL_TimerA_setCaptCompUpdateMethod(PWM_0_INST, DL_TIMER_CC_UPDATE_METHOD_IMMEDIATE, DL_TIMERA_CAPTURE_COMPARE_0_INDEX);
-    DL_TimerA_setCaptureCompareValue(PWM_0_INST, 8000, DL_TIMER_CC_0_INDEX);
+    DL_TimerA_setCaptureCompareValue(PWM_0_INST, 0, DL_TIMER_CC_0_INDEX);
 
     DL_TimerA_setCaptureCompareOutCtl(PWM_0_INST, DL_TIMER_CC_OCTL_INIT_VAL_LOW,
 		DL_TIMER_CC_OCTL_INV_OUT_DISABLED, DL_TIMER_CC_OCTL_SRC_FUNCVAL,
 		DL_TIMERA_CAPTURE_COMPARE_1_INDEX);
 
     DL_TimerA_setCaptCompUpdateMethod(PWM_0_INST, DL_TIMER_CC_UPDATE_METHOD_IMMEDIATE, DL_TIMERA_CAPTURE_COMPARE_1_INDEX);
-    DL_TimerA_setCaptureCompareValue(PWM_0_INST, 8000, DL_TIMER_CC_1_INDEX);
+    DL_TimerA_setCaptureCompareValue(PWM_0_INST, 0, DL_TIMER_CC_1_INDEX);
 
     DL_TimerA_enableClock(PWM_0_INST);
 
@@ -309,9 +336,9 @@ SYSCONFIG_WEAK void SYSCFG_DL_PWM_0_init(void) {
 
 
 /*
- * Timer clock configuration to be sourced by BUSCLK /  (32000000 Hz)
+ * Timer clock configuration to be sourced by BUSCLK /  (40000000 Hz)
  * timerClkFreq = (timerClkSrc / (timerClkDivRatio * (timerClkPrescale + 1)))
- *   1000000 Hz = 32000000 Hz / (1 * (31 + 1))
+ *   1250000 Hz = 40000000 Hz / (1 * (31 + 1))
  */
 static const DL_TimerG_ClockConfig gTIMER_0ClockConfig = {
     .clockSel    = DL_TIMER_CLOCK_BUSCLK,
@@ -321,7 +348,7 @@ static const DL_TimerG_ClockConfig gTIMER_0ClockConfig = {
 
 /*
  * Timer load value (where the counter starts from) is calculated as (timerPeriod * timerClockFreq) - 1
- * TIMER_0_INST_LOAD_VALUE = (10 ms * 1000000 Hz) - 1
+ * TIMER_0_INST_LOAD_VALUE = (10 ms * 1250000 Hz) - 1
  */
 static const DL_TimerG_TimerConfig gTIMER_0TimerConfig = {
     .period     = TIMER_0_INST_LOAD_VALUE,
@@ -362,7 +389,7 @@ SYSCONFIG_WEAK void SYSCFG_DL_I2C_MPU_init(void) {
     /* Configure Controller Mode */
     DL_I2C_resetControllerTransfer(I2C_MPU_INST);
     /* Set frequency to 100000 Hz*/
-    DL_I2C_setTimerPeriod(I2C_MPU_INST, 31);
+    DL_I2C_setTimerPeriod(I2C_MPU_INST, 39);
     DL_I2C_setControllerTXFIFOThreshold(I2C_MPU_INST, DL_I2C_TX_FIFO_LEVEL_EMPTY);
     DL_I2C_setControllerRXFIFOThreshold(I2C_MPU_INST, DL_I2C_RX_FIFO_LEVEL_BYTES_1);
     DL_I2C_enableControllerClockStretching(I2C_MPU_INST);
@@ -397,10 +424,10 @@ SYSCONFIG_WEAK void SYSCFG_DL_USB_init(void)
     /*
      * Configure baud rate by setting oversampling and baud rate divisors.
      *  Target baud rate: 115200
-     *  Actual baud rate: 115211.52
+     *  Actual baud rate: 115190.78
      */
     DL_UART_Main_setOversampling(USB_INST, DL_UART_OVERSAMPLING_RATE_16X);
-    DL_UART_Main_setBaudRateDivisor(USB_INST, USB_IBRD_32_MHZ_115200_BAUD, USB_FBRD_32_MHZ_115200_BAUD);
+    DL_UART_Main_setBaudRateDivisor(USB_INST, USB_IBRD_40_MHZ_115200_BAUD, USB_FBRD_40_MHZ_115200_BAUD);
 
 
 
@@ -429,10 +456,10 @@ SYSCONFIG_WEAK void SYSCFG_DL_BLUETOOTH_init(void)
     /*
      * Configure baud rate by setting oversampling and baud rate divisors.
      *  Target baud rate: 9600
-     *  Actual baud rate: 9600.24
+     *  Actual baud rate: 9599.81
      */
     DL_UART_Main_setOversampling(BLUETOOTH_INST, DL_UART_OVERSAMPLING_RATE_16X);
-    DL_UART_Main_setBaudRateDivisor(BLUETOOTH_INST, BLUETOOTH_IBRD_32_MHZ_9600_BAUD, BLUETOOTH_FBRD_32_MHZ_9600_BAUD);
+    DL_UART_Main_setBaudRateDivisor(BLUETOOTH_INST, BLUETOOTH_IBRD_40_MHZ_9600_BAUD, BLUETOOTH_FBRD_40_MHZ_9600_BAUD);
 
 
     /* Configure FIFOs */
@@ -465,10 +492,10 @@ SYSCONFIG_WEAK void SYSCFG_DL_K230_init(void)
     /*
      * Configure baud rate by setting oversampling and baud rate divisors.
      *  Target baud rate: 115200
-     *  Actual baud rate: 115211.52
+     *  Actual baud rate: 115190.78
      */
     DL_UART_Main_setOversampling(K230_INST, DL_UART_OVERSAMPLING_RATE_16X);
-    DL_UART_Main_setBaudRateDivisor(K230_INST, K230_IBRD_32_MHZ_115200_BAUD, K230_FBRD_32_MHZ_115200_BAUD);
+    DL_UART_Main_setBaudRateDivisor(K230_INST, K230_IBRD_40_MHZ_115200_BAUD, K230_FBRD_40_MHZ_115200_BAUD);
 
 
     /* Configure FIFOs */
@@ -483,7 +510,7 @@ SYSCONFIG_WEAK void SYSCFG_DL_K230_init(void)
 static const DL_ADC12_ClockConfig gBATTERY_ADCClockConfig = {
     .clockSel       = DL_ADC12_CLOCK_ULPCLK,
     .divideRatio    = DL_ADC12_CLOCK_DIVIDE_8,
-    .freqRange      = DL_ADC12_CLOCK_FREQ_RANGE_24_TO_32,
+    .freqRange      = DL_ADC12_CLOCK_FREQ_RANGE_32_TO_40,
 };
 SYSCONFIG_WEAK void SYSCFG_DL_BATTERY_ADC_init(void)
 {
@@ -491,7 +518,7 @@ SYSCONFIG_WEAK void SYSCFG_DL_BATTERY_ADC_init(void)
     DL_ADC12_configConversionMem(BATTERY_ADC_INST, BATTERY_ADC_ADCMEM_0,
         DL_ADC12_INPUT_CHAN_0, DL_ADC12_REFERENCE_VOLTAGE_VDDA, DL_ADC12_SAMPLE_TIMER_SOURCE_SCOMP0, DL_ADC12_AVERAGING_MODE_DISABLED,
         DL_ADC12_BURN_OUT_SOURCE_DISABLED, DL_ADC12_TRIGGER_MODE_AUTO_NEXT, DL_ADC12_WINDOWS_COMP_MODE_DISABLED);
-    DL_ADC12_setSampleTime0(BATTERY_ADC_INST,500);
+    DL_ADC12_setSampleTime0(BATTERY_ADC_INST,625);
     DL_ADC12_enableConversions(BATTERY_ADC_INST);
 }
 

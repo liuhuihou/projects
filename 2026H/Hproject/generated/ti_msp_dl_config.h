@@ -72,7 +72,8 @@ extern "C" {
 #define POWER_STARTUP_DELAY                                                (16)
 
 
-#define CPUCLK_FREQ                                                     32000000
+
+#define CPUCLK_FREQ                                                     80000000
 
 
 
@@ -80,7 +81,7 @@ extern "C" {
 #define PWM_0_INST                                                         TIMA1
 #define PWM_0_INST_IRQHandler                                   TIMA1_IRQHandler
 #define PWM_0_INST_INT_IRQN                                     (TIMA1_INT_IRQn)
-#define PWM_0_INST_CLK_FREQ                                             32000000
+#define PWM_0_INST_CLK_FREQ                                             80000000
 /* GPIO defines for channel 0 */
 #define GPIO_PWM_0_C0_PORT                                                 GPIOB
 #define GPIO_PWM_0_C0_PIN                                          DL_GPIO_PIN_2
@@ -100,7 +101,7 @@ extern "C" {
 #define TIMER_0_INST                                                     (TIMG0)
 #define TIMER_0_INST_IRQHandler                                 TIMG0_IRQHandler
 #define TIMER_0_INST_INT_IRQN                                   (TIMG0_INT_IRQn)
-#define TIMER_0_INST_LOAD_VALUE                                          (9999U)
+#define TIMER_0_INST_LOAD_VALUE                                         (12499U)
 
 
 
@@ -133,8 +134,8 @@ extern "C" {
 #define GPIO_USB_IOMUX_RX_FUNC                         IOMUX_PINCM22_PF_UART0_RX
 #define GPIO_USB_IOMUX_TX_FUNC                         IOMUX_PINCM21_PF_UART0_TX
 #define USB_BAUD_RATE                                                   (115200)
-#define USB_IBRD_32_MHZ_115200_BAUD                                         (17)
-#define USB_FBRD_32_MHZ_115200_BAUD                                         (23)
+#define USB_IBRD_40_MHZ_115200_BAUD                                         (21)
+#define USB_FBRD_40_MHZ_115200_BAUD                                         (45)
 /* Defines for BLUETOOTH */
 #define BLUETOOTH_INST                                                     UART1
 #define BLUETOOTH_INST_IRQHandler                               UART1_IRQHandler
@@ -148,8 +149,8 @@ extern "C" {
 #define GPIO_BLUETOOTH_IOMUX_RX_FUNC                   IOMUX_PINCM24_PF_UART1_RX
 #define GPIO_BLUETOOTH_IOMUX_TX_FUNC                   IOMUX_PINCM23_PF_UART1_TX
 #define BLUETOOTH_BAUD_RATE                                               (9600)
-#define BLUETOOTH_IBRD_32_MHZ_9600_BAUD                                    (208)
-#define BLUETOOTH_FBRD_32_MHZ_9600_BAUD                                     (21)
+#define BLUETOOTH_IBRD_40_MHZ_9600_BAUD                                    (260)
+#define BLUETOOTH_FBRD_40_MHZ_9600_BAUD                                     (27)
 /* Defines for K230 */
 #define K230_INST                                                          UART2
 #define K230_INST_IRQHandler                                    UART2_IRQHandler
@@ -163,8 +164,8 @@ extern "C" {
 #define GPIO_K230_IOMUX_RX_FUNC                        IOMUX_PINCM44_PF_UART2_RX
 #define GPIO_K230_IOMUX_TX_FUNC                        IOMUX_PINCM43_PF_UART2_TX
 #define K230_BAUD_RATE                                                  (115200)
-#define K230_IBRD_32_MHZ_115200_BAUD                                        (17)
-#define K230_FBRD_32_MHZ_115200_BAUD                                        (23)
+#define K230_IBRD_40_MHZ_115200_BAUD                                        (21)
+#define K230_FBRD_40_MHZ_115200_BAUD                                        (45)
 
 
 

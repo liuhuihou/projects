@@ -5,13 +5,12 @@
 
 /*
  * Competition mode state machine.
- * Manages sub-question selection and execution.
  *
- * Button mapping (C07A):
- *   BLS:   double-click = switch mode, single-click = start
- *   RESET: double-click = switch mode, single-click = start (redundant)
+ * BLS button:
+ *   single-click = start the selected sub-question (or stop / clear result)
+ *   double-click = switch to the next sub-question (only while idle)
  *
- * Note: RESET按键是用于重置的，在某些场景下也可作为辅助按键使用。
+ * RESET is the hardware reset pin and reboots the MCU.
  */
 
 typedef enum {
@@ -24,10 +23,9 @@ typedef enum {
 } CompetitionQuestion;
 
 typedef enum {
-    STATE_IDLE = 0,   /* Waiting for mode selection */
-    STATE_READY,      /* Mode selected, waiting for start */
+    STATE_IDLE = 0,   /* Idle: single-click starts, double-click switches mode */
     STATE_RUNNING,    /* Task executing */
-    STATE_DONE        /* Task complete, showing result */
+    STATE_DONE        /* Task finished, showing the result */
 } CompetitionState;
 
 void Competition_Init(void);

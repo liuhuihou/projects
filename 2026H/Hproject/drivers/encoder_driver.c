@@ -1,6 +1,8 @@
 #include "encoder_driver.h"
 #include "board_hardware.h"
 
+/* Verified against a stopwatch: the reported speed matches reality, so the
+ * 13-line / 2-counts-per-line / 30:1 scaling is correct. */
 #define ENCODER_LINES_PER_MOTOR_REV (13.0f)
 #define ENCODER_EDGE_FACTOR         (2.0f)
 #define ENCODER_GEAR_RATIO          (30.0f)

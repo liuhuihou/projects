@@ -17,6 +17,8 @@ void Control_SetBaseSpeed(float rpm);
 float Control_GetLeftRpm(void);
 float Control_GetRightRpm(void);
 float Control_GetBaseSpeedRpm(void);
+float Control_GetLeftTargetRpm(void);
+float Control_GetRightTargetRpm(void);
 int32_t Control_GetLeftDuty(void);
 int32_t Control_GetRightDuty(void);
 int Control_GetLineError(void);

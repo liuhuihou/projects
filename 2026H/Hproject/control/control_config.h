@@ -9,8 +9,13 @@
 /* ============ Speed PI Loop ============ */
 #define SPEED_KP                (10.0f)
 #define SPEED_KI                (0.35f)
-#define SPEED_FF_LEFT           (65.0f)
-#define SPEED_FF_RIGHT          (58.0f)
+/* Feed-forward is the dominant term: duty = FF * target_rpm + PI.
+ * The reference project's 65/58 saturated duty at a 101 RPM target, so the
+ * PI loop lost authority and each wheel ran to its own open-loop limit.
+ * Scaled down to leave PI headroom. Both wheels use the same coefficient -
+ * the PI loop absorbs any motor-to-motor difference. */
+#define SPEED_FF_LEFT           (32.0f)
+#define SPEED_FF_RIGHT          (32.0f)
 #define SPEED_INTEGRAL_LIMIT    (1500.0f)
 
 /* ============ Line Following PD ============ */

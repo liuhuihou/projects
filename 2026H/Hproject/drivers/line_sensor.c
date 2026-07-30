@@ -13,15 +13,18 @@ void LineSensor_Init(void)
     s_filtered = 0U;
 }
 
+/* Bit 5 = leftmost physical channel, bit 0 = rightmost.
+ * IR1 (J6 PA22) is the leftmost sensor, IR6 (PB16) the rightmost.
+ * Level convention: 1 = black line detected, 0 = white surface. */
 uint8_t LineSensor_ReadRaw(void)
 {
     uint8_t state = 0U;
-    if (HW_IR_RAW(1)) state |= (uint8_t)(1U << 5);
-    if (HW_IR_RAW(2)) state |= (uint8_t)(1U << 4);
-    if (HW_IR_RAW(3)) state |= (uint8_t)(1U << 3);
-    if (HW_IR_RAW(4)) state |= (uint8_t)(1U << 2);
-    if (HW_IR_RAW(5)) state |= (uint8_t)(1U << 1);
-    if (HW_IR_RAW(6)) state |= (uint8_t)(1U << 0);
+    if (HW_IR_DETECTED(1)) state |= (uint8_t)(1U << 5);
+    if (HW_IR_DETECTED(2)) state |= (uint8_t)(1U << 4);
+    if (HW_IR_DETECTED(3)) state |= (uint8_t)(1U << 3);
+    if (HW_IR_DETECTED(4)) state |= (uint8_t)(1U << 2);
+    if (HW_IR_DETECTED(5)) state |= (uint8_t)(1U << 1);
+    if (HW_IR_DETECTED(6)) state |= (uint8_t)(1U << 0);
     return state;
 }
 

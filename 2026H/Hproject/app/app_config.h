@@ -17,9 +17,8 @@
 #define APP_TRACK_AB_LENGTH_CM     (150.0f)
 
 /* ============ Encoder to Distance ============ */
-/* 13 lines * 2 edges * 30 gear = 780 counts/motor_rev
- * 1 wheel_rev = 20.7345 cm -> 780 counts = 20.7345 cm
- * 1 count = 0.02658 cm */
+/* 13 lines * 2 counts/line * 30 gear = 780 counts per wheel revolution.
+ * Must stay in sync with encoder_driver.c. */
 #define APP_COUNTS_PER_WHEEL_REV   (780.0f)
 #define APP_CM_PER_COUNT           (APP_WHEEL_CIRCUMFERENCE_CM / APP_COUNTS_PER_WHEEL_REV)
 

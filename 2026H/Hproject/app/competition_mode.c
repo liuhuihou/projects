@@ -114,67 +114,38 @@ void Competition_ForceStop(void)
 
 void Competition_Update(uint32_t now_ms)
 {
-    ButtonEvent bls_ev = Button_GetEvent(BTN_BLS);
-
-    /* Only BLS button is available (RESET is hardware reset) */
-    ButtonEvent ev_double = BTN_EVENT_NONE;
-    ButtonEvent ev_single = BTN_EVENT_NONE;
-
-    if (bls_ev == BTN_EVENT_DOUBLE_CLICK)
-        ev_double = BTN_EVENT_DOUBLE_CLICK;
-    if (bls_ev == BTN_EVENT_SINGLE_CLICK)
-        ev_single = BTN_EVENT_SINGLE_CLICK;
+    /* Button_GetEvent reports at most one event per press sequence and
+     * single/double are mutually exclusive, so no input lockout is needed. */
+    const ButtonEvent ev = Button_GetEvent(BTN_BLS);
 
     switch (s_state) {
         case STATE_IDLE:
-            /* Double-click to cycle through modes */
-            if (ev_double == BTN_EVENT_DOUBLE_CLICK) {
-                s_mode = (CompetitionQuestion)((s_mode + 1) % COMP_MODE_COUNT);
-            }
-            /* Single-click to confirm and go to READY */
-            if (ev_single == BTN_EVENT_SINGLE_CLICK) {
-                s_state = STATE_READY;
-            }
-            break;
-
-        case STATE_READY:
-            /* Double-click to go back to IDLE for mode change */
-            if (ev_double == BTN_EVENT_DOUBLE_CLICK) {
-                s_state = STATE_IDLE;
-            }
-            /* Single-click to START */
-            if (ev_single == BTN_EVENT_SINGLE_CLICK) {
+            if (ev == BTN_EVENT_SINGLE_CLICK) {
                 start_task(now_ms);
+            } else if (ev == BTN_EVENT_DOUBLE_CLICK) {
+                s_mode = (CompetitionQuestion)((s_mode + 1) % COMP_MODE_COUNT);
             }
             break;
 
         case STATE_RUNNING:
             s_elapsed_ms = now_ms - s_start_ms;
 
-            /* Update sub-tasks */
             LineFollow_Update(now_ms);
             BalanceTask_Update(now_ms);
 
-            /* Check if line follow task completed */
             if (LineFollow_IsComplete()) {
                 stop_task();
-            }
-
-            /* Check if balance task completed (Q3 only) */
-            if (s_mode == COMP_Q3 && BalanceTask_IsComplete()) {
+            } else if (s_mode == COMP_Q3 && BalanceTask_IsComplete()) {
                 stop_task();
-            }
-
-            /* Single-click during run = emergency stop */
-            if (ev_single == BTN_EVENT_SINGLE_CLICK) {
+            } else if (ev == BTN_EVENT_SINGLE_CLICK) {
+                /* Manual stop */
                 stop_task();
             }
             break;
 
         case STATE_DONE:
-            /* Any click returns to IDLE */
-            if (ev_single == BTN_EVENT_SINGLE_CLICK ||
-                ev_double == BTN_EVENT_DOUBLE_CLICK) {
+            /* Clear the result and return to idle */
+            if (ev == BTN_EVENT_SINGLE_CLICK) {
                 s_state = STATE_IDLE;
             }
             break;

@@ -111,6 +111,8 @@ void Control_SetBaseSpeed(float rpm) { s_base_rpm = (rpm > 0.0f) ? rpm : 0.0f; }
 float Control_GetLeftRpm(void) { return s_left_rpm; }
 float Control_GetRightRpm(void) { return s_right_rpm; }
 float Control_GetBaseSpeedRpm(void) { return s_base_rpm; }
+float Control_GetLeftTargetRpm(void) { return s_left_target_rpm; }
+float Control_GetRightTargetRpm(void) { return s_right_target_rpm; }
 int32_t Control_GetLeftDuty(void) { return s_left_duty; }
 int32_t Control_GetRightDuty(void) { return s_right_duty; }
 int Control_GetLineError(void) { return s_line_error; }
@@ -132,7 +134,10 @@ void Control_Tick(void)
     int32_t left_count, right_count;
     float target_left, target_right;
     float correction, line_error;
-
+    /* Called only from the TIMER_0 ISR. A same-priority interrupt cannot
+     * pre-empt itself on Cortex-M0+, so no re-entry guard is needed - and a
+     * guard that early-returns would stall s_control_ticks, which is the
+     * time base the whole application reads through app_time_ms(). */
     ++s_control_ticks;
 
     LineSensor_Update();
@@ -156,6 +161,16 @@ void Control_Tick(void)
         s_right_speed_counts = 0;
         s_speed_sample_ticks = 0U;
     }
+    /* Keep line error updated even when stopped, so it can be observed
+     * on the display while positioning the car. */
+    if (LineSensor_GetSteeringError(&line_error) != 0U) {
+        s_line_error = (line_error >= 0.0f) ?
+                       (int)(line_error + 0.5f) :
+                       (int)(line_error - 0.5f);
+    } else {
+        s_line_error = 0;
+    }
+
     if (s_mode == CTRL_STOP) {
         s_left_integral = 0.0f;
         s_right_integral = 0.0f;
@@ -177,17 +192,13 @@ void Control_Tick(void)
         s_previous_heading_error = heading_error;
         target_left = s_base_rpm - correction;
         target_right = s_base_rpm + correction;
-    } else { /* CTRL_LINE */
-        if (LineSensor_GetSteeringError(&line_error) == 0U) {
-            s_line_error = 0;
+    } else { /* CTRL_LINE - line_error already computed above */
+        if (s_line_error == 0 && line_error == 0.0f) {
             s_previous_line_error = 0.0f;
             s_last_line_correction = 0.0f;
             target_left = s_base_rpm;
             target_right = s_base_rpm;
         } else {
-            s_line_error = (line_error >= 0.0f) ?
-                           (int)(line_error + 0.5f) :
-                           (int)(line_error - 0.5f);
             correction = LINE_KP * line_error
                        + LINE_KD * (line_error - s_previous_line_error);
             s_previous_line_error = line_error;

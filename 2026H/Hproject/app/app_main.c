@@ -14,7 +14,6 @@
 #include "encoder_driver.h"
 #include "line_sensor.h"
 #include "oled_driver.h"
-#include "debug_uart.h"
 #include "button_input.h"
 #include "stepper_driver.h"
 #include "camera_uart.h"
@@ -35,11 +34,16 @@ static uint32_t app_time_ms(void)
     return Control_GetTickCount() * CONTROL_PERIOD_MS;
 }
 
+static int32_t rpm_to_cm_s_x10(float rpm)
+{
+    float value = rpm * APP_WHEEL_CIRCUMFERENCE_CM * 10.0f / 60.0f;
+    return (int32_t)((value >= 0.0f) ? (value + 0.5f) : (value - 0.5f));
+}
+
 static const char *state_str(CompetitionState st)
 {
     switch (st) {
-        case STATE_IDLE:    return "SELECT";
-        case STATE_READY:   return "READY ";
+        case STATE_IDLE:    return "IDLE  ";
         case STATE_RUNNING: return "RUN   ";
         case STATE_DONE:    return "DONE  ";
         default:            return "???   ";
@@ -51,27 +55,51 @@ static void oled_show_mode_select(void)
     CompetitionState state = Competition_GetState();
     uint32_t elapsed = Competition_GetElapsedMs();
 
-    OLED_ShowString(0, 0, "H: BALANCE CAR");
-    OLED_ShowString(0, 2, "MODE:");
-    /* Show mode name (pad to 11 chars) */
+    OLED_ShowString(0, 0, "H BALANCE CAR");
+    /* Row 2: selected sub-question */
     switch (mode) {
-        case COMP_Q2: OLED_ShowString(5, 2, "Q2:LAP 20S "); break;
-        case COMP_Q3: OLED_ShowString(5, 2, "Q3:BALL+-5 "); break;
-        case COMP_Q4: OLED_ShowString(5, 2, "Q4:AB+BALL "); break;
-        case COMP_Q5: OLED_ShowString(5, 2, "Q5:LAP+BAL "); break;
-        case COMP_Q6: OLED_ShowString(5, 2, "Q6:LAP+POS "); break;
+        case COMP_Q2: OLED_ShowString(0, 2, "Q2:LAP 20S  "); break;
+        case COMP_Q3: OLED_ShowString(0, 2, "Q3:BALL +-5 "); break;
+        case COMP_Q4: OLED_ShowString(0, 2, "Q4:AB+BALL  "); break;
+        case COMP_Q5: OLED_ShowString(0, 2, "Q5:LAP+BALL "); break;
+        case COMP_Q6: OLED_ShowString(0, 2, "Q6:LAP+POS  "); break;
         default: break;
     }
 
-    OLED_ShowString(0, 4, state_str(state));
+    OLED_ShowString(0, 3, state_str(state));
 
-    /* Show elapsed time as seconds.tenths */
+    /* Rows 4/5: measured vs target wheel speed in cm/s.
+     * Format "L:12.3 T:25.0" - actual on the left, target after T. */
+    OLED_ShowString(0, 4, "L:");
+    OLED_ShowTenths(2, 4, rpm_to_cm_s_x10(Control_GetLeftRpm()), 2);
+    OLED_ShowString(8, 4, "T:");
+    OLED_ShowTenths(10, 4, rpm_to_cm_s_x10(Control_GetLeftTargetRpm()), 2);
+
+    OLED_ShowString(0, 5, "R:");
+    OLED_ShowTenths(2, 5, rpm_to_cm_s_x10(Control_GetRightRpm()), 2);
+    OLED_ShowString(8, 5, "T:");
+    OLED_ShowTenths(10, 5, rpm_to_cm_s_x10(Control_GetRightTargetRpm()), 2);
+
+    /* Row 6: elapsed time while running, key hint otherwise */
     if (state == STATE_RUNNING || state == STATE_DONE) {
         OLED_ShowString(0, 6, "T:");
         OLED_ShowTenths(2, 6, (int32_t)(elapsed / 100), 3);
-        OLED_ShowString(8, 6, "S");
+        OLED_ShowString(8, 6, "S      ");
     } else {
-        OLED_ShowString(0, 6, "1CLK:GO 2CLK:SW");
+        OLED_ShowString(0, 6, "1CLK:RUN 2CLK:SW");
+    }
+
+    /* Always show IR sensor state (6 bits) and line error on row 7 */
+    {
+        uint8_t ir = LineSensor_ReadRaw();
+        uint8_t i;
+        OLED_ShowString(0, 7, "IR:");
+        for (i = 0U; i < 6U; ++i) {
+            OLED_ShowChar((uint8_t)(3U + i), 7,
+                          (ir & (uint8_t)(1U << (5U - i))) ? '1' : '0');
+        }
+        OLED_ShowString(10, 7, "E:");
+        OLED_ShowSignedInt(12, 7, Control_GetLineError(), 2);
     }
 }
 
@@ -91,6 +119,7 @@ int main(void)
 {
     uint32_t last_oled_tick;
     uint32_t last_btn_tick;
+    uint32_t last_debug_tick;
 
     SYSCFG_DL_init();
 
@@ -110,8 +139,11 @@ int main(void)
 
     OLED_Init();
     OLED_Clear();
-    OLED_ShowString(0, 0, "H: BALANCE CAR");
-    OLED_ShowString(0, 2, "INIT OK");
+    /* Draw the first frame while interrupts are still masked: the software
+     * SPI bit-bang must not be interrupted mid-byte or the panel latches
+     * garbage and stays blank. */
+    oled_show_mode_select();
+
     /* Enable interrupts */
     NVIC_ClearPendingIRQ(HW_MOTOR_A_ENCODER_IRQN);
     NVIC_EnableIRQ(HW_MOTOR_A_ENCODER_IRQN);
@@ -130,7 +162,9 @@ int main(void)
     while (1) {
         const uint32_t now_ms = app_time_ms();
 
-        /* Button scan every 10ms */
+        /* Scan on a fixed 10 ms cadence, as the original working version did.
+         * Calling it on every loop iteration re-samples the same now_ms value
+         * many times, which made the click windows behave unpredictably. */
         if ((now_ms - last_btn_tick) >= 10U) {
             last_btn_tick = now_ms;
             Button_Update(now_ms);
@@ -139,8 +173,9 @@ int main(void)
         /* Competition state machine update */
         Competition_Update(now_ms);
 
-        /* OLED refresh every 200ms */
-        if ((now_ms - last_oled_tick) >= 200U) {
+
+        /* OLED refresh every 300ms (software SPI is slow, keep it sparse) */
+        if ((now_ms - last_oled_tick) >= 300U) {
             last_oled_tick = now_ms;
             oled_show_mode_select();
         }
