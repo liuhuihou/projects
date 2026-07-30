@@ -3,12 +3,12 @@
 
 /* ============ Timing ============ */
 #define CONTROL_PERIOD_MS       (10U)
-#define SPEED_SAMPLE_TICKS      (5U)
+#define SPEED_SAMPLE_TICKS      (3U)
 #define SPEED_SAMPLE_MS         (CONTROL_PERIOD_MS * SPEED_SAMPLE_TICKS)
 
 /* ============ Speed PI Loop ============ */
-#define SPEED_KP                (10.0f)
-#define SPEED_KI                (0.35f)
+#define SPEED_KP                (15.0f)
+#define SPEED_KI                (0.9f)
 /* Feed-forward is the dominant term: duty = FF * target_rpm + PI.
  * The reference project's 65/58 saturated duty at a 101 RPM target, so the
  * PI loop lost authority and each wheel ran to its own open-loop limit.
@@ -16,13 +16,33 @@
  * the PI loop absorbs any motor-to-motor difference. */
 #define SPEED_FF_LEFT           (32.0f)
 #define SPEED_FF_RIGHT          (32.0f)
-#define SPEED_INTEGRAL_LIMIT    (1500.0f)
+/* Integral windup limit. During a curve the outer wheel under-runs and the
+ * inner wheel over-runs, so their integrators charge to opposite extremes.
+ * With KI=1.0 a limit of 1500 lets each contribute +-1500 duty, which takes
+ * several hundred ms to unwind after the curve - the car keeps cutting inward
+ * on the following straight. Capping it well below the steady-state need
+ * keeps the loop accurate without the long recovery. */
+#define SPEED_INTEGRAL_LIMIT    (400.0f)
+/* Integration is suspended while |steering correction| exceeds this, i.e.
+ * during curves, where the speed error is geometric rather than a
+ * steady-state offset. Below it the car is running near-straight and the
+ * integrator does its normal job of trimming out residual error. */
+#define SPEED_INTEGRATE_STEER_MAX (8.0f)
+/* Per-cycle decay applied to both integrators while steering hard, so the
+ * curve leaves no accumulated charge to unwind on the following straight. */
+#define SPEED_INTEGRAL_BLEED      (0.90f)
 
 /* ============ Line Following PD ============ */
-#define LINE_KP                 (3.00f)
-#define LINE_KD                 (1.50f)
-#define LINE_CORRECTION_LIMIT   (10.0f)
-#define LINE_CORRECTION_STEP    (3.0f)
+#define LINE_KP                 (12.00f)
+#define LINE_KD                 (8.00f)
+#define LINE_CORRECTION_LIMIT   (25.0f)
+#define LINE_CORRECTION_STEP    (25.0f)
+/* Line-lost behaviour. The last steering correction is held for this many
+ * 10 ms cycles so a brief dropout mid-curve does not straighten the car,
+ * then decayed each cycle so a sustained dropout on a curve exit does not
+ * keep the car turning at full scale until it leaves the track. */
+#define LINE_LOST_HOLD_TICKS    (5U)
+#define LINE_LOST_DECAY         (0.85f)
 
 /* ============ Straight Heading Correction ============ */
 #define STRAIGHT_KP             (0.20f)

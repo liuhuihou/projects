@@ -59,7 +59,13 @@ uint8_t LineSensor_GetSteeringError(float *error)
     if (error == 0) return 0U;
     *error = 0.0f;
 
-    if (state == 0U || state == 0x3FU) return 0U;
+    /* No channel sees black: the line is lost. The caller must decide what
+     * to do (hold the previous steering correction rather than go straight). */
+    if (state == 0U) return 0U;
+
+    /* Every channel black: a perpendicular bar such as the start/stop line.
+     * Report a valid zero error so the car drives straight across it. */
+    if (state == 0x3FU) return 1U;
 
     for (i = 0U; i < RYZD_SENSOR_COUNT; ++i) {
         const uint8_t mask = (uint8_t)(1U << (5U - i));

@@ -21,6 +21,8 @@ static volatile float s_right_target_rpm;
 static volatile int32_t s_left_duty;
 static volatile int32_t s_right_duty;
 static volatile int s_line_error;
+static volatile uint8_t s_line_valid;
+static volatile uint16_t s_line_lost_ticks;
 static volatile float s_previous_line_error;
 static volatile int s_previous_heading_error;
 static volatile float s_last_line_correction;
@@ -163,11 +165,13 @@ void Control_Tick(void)
     }
     /* Keep line error updated even when stopped, so it can be observed
      * on the display while positioning the car. */
-    if (LineSensor_GetSteeringError(&line_error) != 0U) {
+    s_line_valid = LineSensor_GetSteeringError(&line_error);
+    if (s_line_valid != 0U) {
         s_line_error = (line_error >= 0.0f) ?
                        (int)(line_error + 0.5f) :
                        (int)(line_error - 0.5f);
     } else {
+        line_error = 0.0f;
         s_line_error = 0;
     }
 
@@ -193,12 +197,7 @@ void Control_Tick(void)
         target_left = s_base_rpm - correction;
         target_right = s_base_rpm + correction;
     } else { /* CTRL_LINE - line_error already computed above */
-        if (s_line_error == 0 && line_error == 0.0f) {
-            s_previous_line_error = 0.0f;
-            s_last_line_correction = 0.0f;
-            target_left = s_base_rpm;
-            target_right = s_base_rpm;
-        } else {
+        if (s_line_valid != 0U) {
             correction = LINE_KP * line_error
                        + LINE_KD * (line_error - s_previous_line_error);
             s_previous_line_error = line_error;
@@ -208,9 +207,24 @@ void Control_Tick(void)
             correction = slew_float(s_last_line_correction, correction,
                                     LINE_CORRECTION_STEP);
             s_last_line_correction = correction;
-            target_left = s_base_rpm + correction;
-            target_right = s_base_rpm - correction;
+            s_line_lost_ticks = 0U;
+        } else {
+            /* Line lost. Keep steering the way we were so the line can be
+             * re-acquired, but decay the correction: holding a full-scale
+             * turn indefinitely drives the car off the track when the line
+             * is lost on a curve exit rather than mid-curve. */
+            if (s_line_lost_ticks < 0xFFFFU) {
+                ++s_line_lost_ticks;
+            }
+            if (s_line_lost_ticks <= LINE_LOST_HOLD_TICKS) {
+                correction = s_last_line_correction;
+            } else {
+                s_last_line_correction *= LINE_LOST_DECAY;
+                correction = s_last_line_correction;
+            }
         }
+        target_left = s_base_rpm + correction;
+        target_right = s_base_rpm - correction;
     }
 
     target_left = (target_left > 0.0f) ? target_left : 0.0f;
@@ -218,12 +232,31 @@ void Control_Tick(void)
     s_left_target_rpm = target_left;
     s_right_target_rpm = target_right;
 
-    s_left_duty = speed_pi(target_left, s_left_rpm, SPEED_FF_LEFT,
-                           &s_left_integral,
-                           (s_speed_sample_ticks == 0U) ? 1U : 0U);
-    s_right_duty = speed_pi(target_right, s_right_rpm, SPEED_FF_RIGHT,
-                            &s_right_integral,
-                            (s_speed_sample_ticks == 0U) ? 1U : 0U);
+    /* Suspend integration while steering hard. In a curve the wheels are
+     * commanded to different speeds for geometric reasons and the outer wheel
+     * simply cannot keep up, so the error is not a steady-state offset for the
+     * integrator to correct - integrating it just winds both integrators to
+     * opposite extremes, and the car keeps cutting inward after the curve
+     * until they unwind. Only integrate when running near-straight. */
+    {
+        const float steer = (s_last_line_correction >= 0.0f) ?
+                            s_last_line_correction : -s_last_line_correction;
+        const uint8_t straight = (steer < SPEED_INTEGRATE_STEER_MAX) ? 1U : 0U;
+        const uint8_t integrate = ((s_speed_sample_ticks == 0U) && straight) ?
+                                  1U : 0U;
+
+        /* While steering hard, actively bleed the integrators toward zero so
+         * no charge is left to fight the straight that follows the curve. */
+        if (straight == 0U) {
+            s_left_integral *= SPEED_INTEGRAL_BLEED;
+            s_right_integral *= SPEED_INTEGRAL_BLEED;
+        }
+
+        s_left_duty = speed_pi(target_left, s_left_rpm, SPEED_FF_LEFT,
+                               &s_left_integral, integrate);
+        s_right_duty = speed_pi(target_right, s_right_rpm, SPEED_FF_RIGHT,
+                                &s_right_integral, integrate);
+    }
     Motor_SetDuty(s_left_duty, s_right_duty);
 }
 

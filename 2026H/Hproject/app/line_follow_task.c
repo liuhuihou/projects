@@ -74,13 +74,12 @@ void LineFollow_Update(uint32_t now_ms)
 
         case LF_CRUISING:
             if (s_mode == LFMODE_FULL_LAP) {
-                /* Detect stop line (all sensors black) near expected distance */
+                /* The 5 cm stop bar at A only covers the middle four
+                 * channels. Stop as soon as all four read black - waiting
+                 * for the car to leave the bar would overshoot. */
                 if (distance_cm > (s_target_distance_cm * 0.8f)) {
-                    if (line_state == APP_STOP_LINE_PATTERN) {
+                    if ((line_state & APP_STOP_LINE_MASK) == APP_STOP_LINE_PATTERN) {
                         s_stop_line_seen = 1;
-                    }
-                    /* Once we've seen stop line and passed it, stop */
-                    if (s_stop_line_seen && line_state != APP_STOP_LINE_PATTERN) {
                         s_lf_state = LF_STOPPING;
                     }
                 }

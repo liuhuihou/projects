@@ -23,9 +23,15 @@
 #define APP_CM_PER_COUNT           (APP_WHEEL_CIRCUMFERENCE_CM / APP_COUNTS_PER_WHEEL_REV)
 
 /* ============ Stop Line Detection ============ */
-/* The stop line at A is a 5cm perpendicular bar.
- * When all 6 sensors detect black simultaneously -> stop line. */
-#define APP_STOP_LINE_PATTERN      (0x3FU)
+/* The stop line at A is a 5 cm bar centred on the track, perpendicular to it.
+ * It is too short to reach the outer sensors, so only the middle four
+ * channels (bits 4..1) go black when crossing it. Bits 5 and 0 are ignored.
+ *
+ * Sensor bit layout: bit5 = leftmost ... bit0 = rightmost.
+ * Mask 0x1E selects the middle four; the line is detected when all four
+ * read black at once - something the 1.8 cm track line alone cannot do. */
+#define APP_STOP_LINE_MASK         (0x1EU)
+#define APP_STOP_LINE_PATTERN      (0x1EU)
 #define APP_STOP_IGNORE_DISTANCE   (30.0f)  /* Ignore stop line for first 30cm */
 
 #endif
