@@ -50,6 +50,14 @@
     HW_GPIO_LOW(HW_MOTOR_B_DIR_PORT, HW_MOTOR_B_IN1_PIN); \
     HW_GPIO_LOW(HW_MOTOR_B_DIR_PORT, HW_MOTOR_B_IN2_PIN); \
 } while (0)
+#define HW_MOTOR_A_BRAKE() do {          \
+    HW_GPIO_HIGH(HW_MOTOR_A_DIR_PORT, HW_MOTOR_A_IN1_PIN); \
+    HW_GPIO_HIGH(HW_MOTOR_A_DIR_PORT, HW_MOTOR_A_IN2_PIN); \
+} while (0)
+#define HW_MOTOR_B_BRAKE() do {          \
+    HW_GPIO_HIGH(HW_MOTOR_B_DIR_PORT, HW_MOTOR_B_IN1_PIN); \
+    HW_GPIO_HIGH(HW_MOTOR_B_DIR_PORT, HW_MOTOR_B_IN2_PIN); \
+} while (0)
 /* ======================== Encoders ======================== */
 #define HW_MOTOR_A_ENCODER_PORT         ENCODERA_PORT
 #define HW_MOTOR_A_ENCODER_A_PIN        ENCODERA_E1A_PIN

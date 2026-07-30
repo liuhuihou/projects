@@ -7,6 +7,7 @@
 
 void Motor_Init(void);
 void Motor_Stop(void);
+void Motor_Brake(void);
 void Motor_SetDuty(int32_t left_duty, int32_t right_duty);
 
 #endif

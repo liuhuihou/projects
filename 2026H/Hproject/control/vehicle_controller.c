@@ -110,7 +110,7 @@ void Control_SetMode(ControlMode mode)
         s_last_line_correction = 0.0f;
     }
     s_mode = mode;
-    if (mode == CTRL_STOP) Motor_Stop();
+    if (mode == CTRL_STOP) Motor_Brake();
 }
 ControlMode Control_GetMode(void) { return s_mode; }
 void Control_SetBaseSpeed(float rpm) { s_base_rpm = (rpm > 0.0f) ? rpm : 0.0f; }
@@ -189,7 +189,7 @@ void Control_Tick(void)
         s_left_speed_counts = 0;
         s_right_speed_counts = 0;
         s_speed_sample_ticks = 0U;
-        Motor_Stop();
+        Motor_Brake();
         return;
     }
 

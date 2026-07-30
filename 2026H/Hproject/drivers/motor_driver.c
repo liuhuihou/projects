@@ -47,6 +47,16 @@ void Motor_Stop(void)
     HW_MOTOR_B_COAST();
 }
 
+void Motor_Brake(void)
+{
+    /* Explicit TB6612 short brake. IN1=IN2=HIGH selects short-brake
+     * independently of the PWM input level. */
+    HW_MOTOR_A_SET_DUTY(0U);
+    HW_MOTOR_B_SET_DUTY(0U);
+    HW_MOTOR_A_BRAKE();
+    HW_MOTOR_B_BRAKE();
+}
+
 void Motor_SetDuty(int32_t left_duty, int32_t right_duty)
 {
     left_duty = clamp_duty(left_duty);

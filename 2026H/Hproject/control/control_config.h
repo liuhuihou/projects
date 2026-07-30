@@ -3,11 +3,11 @@
 
 /* ============ Timing ============ */
 #define CONTROL_PERIOD_MS       (10U)
-#define SPEED_SAMPLE_TICKS      (3U)
+#define SPEED_SAMPLE_TICKS      (2U)
 #define SPEED_SAMPLE_MS         (CONTROL_PERIOD_MS * SPEED_SAMPLE_TICKS)
 
 /* ============ Speed PI Loop ============ */
-#define SPEED_KP                (15.0f)
+#define SPEED_KP                (10.0f)
 #define SPEED_KI                (0.9f)
 /* Feed-forward is the dominant term: duty = FF * target_rpm + PI.
  * The reference project's 65/58 saturated duty at a 101 RPM target, so the
@@ -34,9 +34,9 @@
 
 /* ============ Line Following PD ============ */
 #define LINE_KP                 (12.00f)
-#define LINE_KD                 (8.00f)
+#define LINE_KD                 (6.00f)
 #define LINE_CORRECTION_LIMIT   (25.0f)
-#define LINE_CORRECTION_STEP    (25.0f)
+#define LINE_CORRECTION_STEP    (20.0f)
 /* Line-lost behaviour. The last steering correction is held for this many
  * 10 ms cycles so a brief dropout mid-curve does not straighten the car,
  * then decayed each cycle so a sustained dropout on a curve exit does not
@@ -52,8 +52,8 @@
  * curve (entered slowly after the start) is made and the second (entered at
  * full speed off a 1.5 m straight) is not, because turn radius for a given
  * wheel-speed differential grows with forward speed. */
-#define CURVE_SLOWDOWN_GAIN     (0.45f)
-#define CURVE_SPEED_MIN_SCALE   (0.55f)
+#define CURVE_SLOWDOWN_GAIN     (0.30f)
+#define CURVE_SPEED_MIN_SCALE   (0.70f)
 
 /* ============ Straight Heading Correction ============ */
 #define STRAIGHT_KP             (0.20f)

@@ -23,15 +23,17 @@
 #define APP_CM_PER_COUNT           (APP_WHEEL_CIRCUMFERENCE_CM / APP_COUNTS_PER_WHEEL_REV)
 
 /* ============ Stop Line Detection ============ */
-/* The stop line at A is a 5 cm bar centred on the track, perpendicular to it.
- * It is too short to reach the outer sensors, so only the middle four
- * channels (bits 4..1) go black when crossing it. Bits 5 and 0 are ignored.
- *
- * Sensor bit layout: bit5 = leftmost ... bit0 = rightmost.
- * Mask 0x1E selects the middle four; the line is detected when all four
- * read black at once - something the 1.8 cm track line alone cannot do. */
-#define APP_STOP_LINE_MASK         (0x1EU)
-#define APP_STOP_LINE_PATTERN      (0x1EU)
+/* The car can cross the 5 cm stop bar with lateral offset or yaw, so detection
+ * must not depend on a fixed set of channels. A normal 1.8 cm guide line
+ * usually covers one or two channels; the stop bar either covers at least
+ * three channels at once, or sweeps across at least four channels in a short
+ * time window. */
+#define APP_STOP_LINE_MIN_INSTANT_CHANNELS (3U)
 #define APP_STOP_IGNORE_DISTANCE   (30.0f)  /* Ignore stop line for first 30cm */
+#define APP_STOP_IGNORE_TICKS      (100U)   /* Full lap: ignore first 1 second */
+#define APP_STOP_LINE_CONFIRM_TICKS (2U)    /* Two consecutive 10ms samples */
+#define APP_STOP_LINE_WINDOW_TICKS  (6U)    /* 60ms temporal coverage window */
+#define APP_STOP_LINE_WINDOW_CHANNELS (4U)
+#define APP_STOP_BRAKE_HOLD_MS       (150U)
 
 #endif

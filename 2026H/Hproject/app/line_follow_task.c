@@ -15,6 +15,42 @@ static LineFollowMode s_mode;
 static LfState s_lf_state;
 static float s_target_distance_cm;
 static uint8_t s_stop_line_seen;
+static uint8_t s_stop_line_ticks;
+static uint8_t s_stop_window_mask;
+static uint8_t s_stop_window_ticks;
+static uint8_t s_stop_window_has_wide_sample;
+static uint16_t s_start_ignore_ticks;
+static uint32_t s_last_update_ms;
+static uint32_t s_brake_start_ms;
+
+static uint8_t count_active_sensors(uint8_t state)
+{
+    uint8_t count = 0U;
+    uint8_t bits = (uint8_t)(state & 0x3FU);
+
+    while (bits != 0U) {
+        count = (uint8_t)(count + (bits & 1U));
+        bits >>= 1U;
+    }
+    return count;
+}
+
+static void reset_stop_line_detector(void)
+{
+    s_stop_line_ticks = 0U;
+    s_stop_window_mask = 0U;
+    s_stop_window_ticks = 0U;
+    s_stop_window_has_wide_sample = 0U;
+}
+
+static void start_braking(uint32_t now_ms)
+{
+    /* Control_SetMode applies the explicit short brake immediately, in the
+     * same update that recognizes the stop line. */
+    Control_SetMode(CTRL_STOP);
+    s_brake_start_ms = now_ms;
+    s_lf_state = LF_STOPPING;
+}
 
 void LineFollow_Init(void)
 {
@@ -22,6 +58,10 @@ void LineFollow_Init(void)
     s_lf_state = LF_IDLE;
     s_target_distance_cm = 0.0f;
     s_stop_line_seen = 0;
+    reset_stop_line_detector();
+    s_start_ignore_ticks = 0U;
+    s_last_update_ms = 0U;
+    s_brake_start_ms = 0U;
 }
 
 void LineFollow_Start(LineFollowMode mode)
@@ -29,6 +69,10 @@ void LineFollow_Start(LineFollowMode mode)
     s_mode = mode;
     s_lf_state = LF_STARTING;
     s_stop_line_seen = 0;
+    reset_stop_line_detector();
+    s_start_ignore_ticks = 0U;
+    s_last_update_ms = 0U;
+    s_brake_start_ms = 0U;
     Control_ResetDistance();
 
     if (mode == LFMODE_FULL_LAP) {
@@ -54,51 +98,105 @@ uint8_t LineFollow_IsComplete(void)
 }
 void LineFollow_Update(uint32_t now_ms)
 {
-    float distance_cm;
     uint8_t line_state;
-
-    (void)now_ms;
 
     if (s_lf_state == LF_IDLE || s_lf_state == LF_COMPLETE) return;
 
-    distance_cm = LineFollow_GetDistanceCm();
-    line_state = LineSensor_Read();
+    /* app_main may wake on encoder and UART interrupts many times during the
+     * same 10 ms control tick. Process the task only once per time-base tick
+     * so confirmation counters represent real, independent sensor samples. */
+    if (now_ms == s_last_update_ms) return;
+    s_last_update_ms = now_ms;
+
+    /* Stop-bar timing is determined by its 1.8 +/- 0.2 cm line width:
+     * only about 46..57 ms at the Q2 speed. Use raw inputs here so the
+     * three-tick steering filter does not consume most of that interval.
+     * Vehicle steering still uses the filtered LineSensor_Read() value. */
+    line_state = LineSensor_ReadRaw();
 
     switch (s_lf_state) {
         case LF_STARTING:
-            /* Ignore stop line detection until we've traveled enough */
-            if (distance_cm > APP_STOP_IGNORE_DISTANCE) {
+            if (s_mode == LFMODE_FULL_LAP) {
+                /* Q2/Q5/Q6 do not depend on wheel odometry for parking.
+                 * Ignore the starting bar for one second, then arm the
+                 * position-independent stop-line detector. */
+                if (s_start_ignore_ticks < APP_STOP_IGNORE_TICKS) {
+                    ++s_start_ignore_ticks;
+                }
+                if (s_start_ignore_ticks >= APP_STOP_IGNORE_TICKS) {
+                    s_lf_state = LF_CRUISING;
+                }
+            } else if (LineFollow_GetDistanceCm() >
+                       APP_STOP_IGNORE_DISTANCE) {
+                /* A-to-B mode still uses distance measurement. */
                 s_lf_state = LF_CRUISING;
             }
             break;
 
         case LF_CRUISING:
             if (s_mode == LFMODE_FULL_LAP) {
-                /* The 5 cm stop bar at A only covers the middle four
-                 * channels. Stop as soon as all four read black - waiting
-                 * for the car to leave the bar would overshoot. */
-                if (distance_cm > (s_target_distance_cm * 0.8f)) {
-                    if ((line_state & APP_STOP_LINE_MASK) == APP_STOP_LINE_PATTERN) {
-                        s_stop_line_seen = 1;
-                        s_lf_state = LF_STOPPING;
+                /* Detect a wide stop bar independently of lateral position.
+                 * A direct hit keeps any three channels active for two
+                 * samples. A skewed hit may move across the array, so also
+                 * accumulate channel coverage over a 60 ms window. */
+                const uint8_t active = count_active_sensors(line_state);
+                uint8_t stop_line_detected = 0U;
+
+                if (active >= APP_STOP_LINE_MIN_INSTANT_CHANNELS) {
+                    if (s_stop_line_ticks < APP_STOP_LINE_CONFIRM_TICKS) {
+                        ++s_stop_line_ticks;
                     }
+                    s_stop_window_has_wide_sample = 1U;
+                } else {
+                    s_stop_line_ticks = 0U;
                 }
-                /* Also stop if distance exceeded (safety) */
-                if (distance_cm > s_target_distance_cm * 1.1f) {
-                    s_lf_state = LF_STOPPING;
+
+                if (s_stop_window_ticks == 0U) {
+                    if (active >= 2U) {
+                        s_stop_window_mask = line_state;
+                        s_stop_window_ticks = 1U;
+                        s_stop_window_has_wide_sample =
+                            (active >= APP_STOP_LINE_MIN_INSTANT_CHANNELS) ?
+                            1U : 0U;
+                    }
+                } else if (active == 0U) {
+                    reset_stop_line_detector();
+                } else {
+                    s_stop_window_mask |= line_state;
+                    ++s_stop_window_ticks;
+                }
+
+                if (s_stop_line_ticks >= APP_STOP_LINE_CONFIRM_TICKS) {
+                    stop_line_detected = 1U;
+                } else if (s_stop_window_has_wide_sample != 0U &&
+                           count_active_sensors(s_stop_window_mask) >=
+                               APP_STOP_LINE_WINDOW_CHANNELS) {
+                    stop_line_detected = 1U;
+                }
+
+                if (stop_line_detected != 0U) {
+                    s_stop_line_seen = 1U;
+                    start_braking(now_ms);
+                } else if (s_stop_window_ticks >=
+                           APP_STOP_LINE_WINDOW_TICKS) {
+                    reset_stop_line_detector();
                 }
             } else if (s_mode == LFMODE_A_TO_B) {
                 /* For A->B, stop based on distance */
-                if (distance_cm >= s_target_distance_cm * 0.95f) {
-                    s_lf_state = LF_STOPPING;
+                if (LineFollow_GetDistanceCm() >=
+                    s_target_distance_cm * 0.95f) {
+                    start_braking(now_ms);
                 }
             }
             break;
 
         case LF_STOPPING:
-            /* Immediate stop - let the competition_mode handle deceleration later */
-            Control_SetMode(CTRL_STOP);
-            s_lf_state = LF_COMPLETE;
+            /* Keep both bridges in short-brake long enough for wheel motion
+             * and chassis rebound to settle before reporting completion. */
+            if ((uint32_t)(now_ms - s_brake_start_ms) >=
+                APP_STOP_BRAKE_HOLD_MS) {
+                s_lf_state = LF_COMPLETE;
+            }
             break;
 
         default:
