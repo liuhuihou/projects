@@ -23,6 +23,8 @@ static volatile int32_t s_right_duty;
 static volatile int s_line_error;
 static volatile uint8_t s_line_valid;
 static volatile uint16_t s_line_lost_ticks;
+/* Base speed after curve scaling; s_base_rpm stays the commanded value. */
+static volatile float s_curve_base_rpm;
 static volatile float s_previous_line_error;
 static volatile int s_previous_heading_error;
 static volatile float s_last_line_correction;
@@ -93,6 +95,8 @@ void Control_Init(void)
     s_previous_heading_error = 0;
     s_last_line_correction = 0.0f;
     s_control_ticks = 0U;
+    s_line_lost_ticks = 0U;
+    s_curve_base_rpm = 0.0f;
     Motor_Stop();
 }
 
@@ -223,8 +227,24 @@ void Control_Tick(void)
                 correction = s_last_line_correction;
             }
         }
-        target_left = s_base_rpm + correction;
-        target_right = s_base_rpm - correction;
+        /* Curve speed scaling. Turn radius for a given wheel-speed
+         * differential grows with forward speed, so a correction that holds
+         * the R=0.5 m arc from a slow entry is not enough after a full
+         * straight of acceleration. Scale the base speed down in proportion
+         * to how hard we are steering, so entry speed no longer decides
+         * whether the car makes the corner. */
+        {
+            const float steer_mag = (correction >= 0.0f) ? correction : -correction;
+            float scale = 1.0f - CURVE_SLOWDOWN_GAIN
+                                 * (steer_mag / LINE_CORRECTION_LIMIT);
+
+            if (scale < CURVE_SPEED_MIN_SCALE) {
+                scale = CURVE_SPEED_MIN_SCALE;
+            }
+            s_curve_base_rpm = s_base_rpm * scale;
+        }
+        target_left = s_curve_base_rpm + correction;
+        target_right = s_curve_base_rpm - correction;
     }
 
     target_left = (target_left > 0.0f) ? target_left : 0.0f;

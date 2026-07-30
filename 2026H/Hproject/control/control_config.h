@@ -44,6 +44,17 @@
 #define LINE_LOST_HOLD_TICKS    (5U)
 #define LINE_LOST_DECAY         (0.85f)
 
+/* ============ Curve Slowdown ============ */
+/* Base speed is scaled down in proportion to steering effort:
+ *   scale = 1 - GAIN * (|correction| / LINE_CORRECTION_LIMIT)
+ * At full deflection with GAIN=0.45 the car runs at 55% of the straight-line
+ * speed. This decouples cornering from entry speed: without it the first
+ * curve (entered slowly after the start) is made and the second (entered at
+ * full speed off a 1.5 m straight) is not, because turn radius for a given
+ * wheel-speed differential grows with forward speed. */
+#define CURVE_SLOWDOWN_GAIN     (0.45f)
+#define CURVE_SPEED_MIN_SCALE   (0.55f)
+
 /* ============ Straight Heading Correction ============ */
 #define STRAIGHT_KP             (0.20f)
 #define STRAIGHT_KD             (0.70f)

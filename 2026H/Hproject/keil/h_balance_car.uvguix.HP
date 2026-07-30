@@ -1874,9 +1874,9 @@
       </Doc>
       <Doc>
         <Name>..\control\control_config.h</Name>
-        <ColumnNumber>34</ColumnNumber>
+        <ColumnNumber>36</ColumnNumber>
         <TopLine>1</TopLine>
-        <CurrentLine>11</CurrentLine>
+        <CurrentLine>6</CurrentLine>
         <Folding>1</Folding>
         <ContractedFolders></ContractedFolders>
         <PaneID>0</PaneID>
