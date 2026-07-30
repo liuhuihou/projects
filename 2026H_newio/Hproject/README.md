@@ -1,0 +1,150 @@
+# H题 - 车载平衡滚球运动控制系统
+
+## 项目结构
+
+```
+Hproject/
+├── board/
+│   └── board_hardware.h           # 硬件引脚宏定义
+├── drivers/
+│   ├── motor_driver.c/h           # TB6612 电机驱动
+│   ├── encoder_driver.c/h         # 正交编码器
+│   ├── line_sensor.c/h            # 幻尔I2C巡线传感器（6/8路可配）
+│   ├── oled_driver.c/h            # OLED显示
+│   ├── stepper_driver.c/h         # 步进电机驱动（摆杆控制）
+│   ├── camera_uart.c/h            # K230D摄像头通信
+│   ├── button_input.c/h           # 按键输入（单击/双击）
+│   └── debug_uart.c/h             # 调试串口
+├── control/
+│   ├── control_config.h           # PID参数集中配置
+│   ├── vehicle_controller.c/h     # 速度PI + 巡线PD
+│   └── balance_controller.c/h     # 钢球位置PID → 步进电机
+├── app/
+│   ├── app_config.h               # 应用参数（速度/赛道/停车）
+│   ├── app_main.c                 # 主入口
+│   ├── competition_mode.c/h       # 比赛模式状态机
+│   ├── line_follow_task.c/h       # 巡线任务
+│   └── balance_task.c/h           # 平衡任务
+├── config/
+│   └── board.syscfg               # 引脚定义唯一来源（.bak 为改造前备份）
+├── generated/
+│   └── ti_msp_dl_config.c/h       # SysConfig 生成，不要手改
+├── tools/
+│   └── generate_syscfg.bat        # 重新生成上面两个文件
+├── docs/
+│   ├── 硬件说明.md                # 硬件全貌、外设资源、时钟与中断
+│   └── 接线指导.md                # 接线步骤、拨码表、上电调试顺序
+├── keil/                          # Keil 工程
+└── ti_msp_dl_config.h             # 两行重定向到 generated/
+```
+
+## 文档
+
+- [docs/硬件说明.md](docs/硬件说明.md) —— 芯片参数、时钟域、外设占用、中断优先级、
+  各模块工作原理与设计取舍
+- [docs/接线指导.md](docs/接线指导.md) —— 供电架构、逐脚接线表、D36A 拨码对照、
+  上电调试顺序
+
+## 操作说明
+
+- **双击** BLS/RESET 按键：切换比赛模式 (Q2→Q3→Q4→Q5→Q6)
+- **单击** BLS/RESET 按键：确认/启动
+- 运行中单击：紧急停车
+
+## 比赛模式
+
+| 模式 | 描述 | 时间要求 |
+|------|------|---------|
+| Q2 | 纯巡线一圈 | ≤20s |
+| Q3 | 静止控球 O→+5→-5 | ≤5s |
+| Q4 | 巡线A→B + 球稳中心 | ≤8s |
+| Q5 | 巡线一圈 + 球稳中心 | ≤30s |
+| Q6 | 巡线一圈 + 球稳指定位置 | ≤30s |
+
+## 硬件平台
+
+- MCU: TI MSPM0G3507**SPTR**（80MHz Cortex-M0+，**LQFP-48(PT)** 封装）
+- 核心板: C07A V1.1
+- 底板: S28A
+- 电机驱动: TB6612FNG (D103A模块)
+- 摄像头: K230D Box (正点原子, UART)
+- 巡线: 幻尔 I2C 巡线传感器（当前6路，可换8路）
+- 显示: 0.96" OLED (SSD1306)
+- 平衡: 步进电机 + D36A 驱动板 (ATD5984)
+- 未使用: MPU6050、蓝牙模块 —— 两个插座已改作巡线 I2C 与 K230D 串口
+
+## 引脚分配
+
+引脚定义的唯一来源是 `config/board.syscfg`，改完后跑 `tools/generate_syscfg.bat`
+重新生成 `generated/ti_msp_dl_config.c/h`，不要手改生成的文件。
+
+| 功能 | 引脚 | 外设 | 接线位置 |
+|------|------|------|---------|
+| 巡线 SDA | PA0 | I2C0_SDA, 400kHz | H5（原 MPU6050 插座） |
+| 巡线 SCL | PA1 | I2C0_SCL | 同上 |
+| 步进 ST1（脉冲） | PB16 | TIMG7_CCP1 硬件PWM | J10 → D36A ST1 |
+| 步进 DIR1 | PB17 | GPIO | J10 → D36A DIR1 |
+| 步进 EN1 | PA12 | GPIO，**高电平使能** | J10 → D36A EN1 |
+| K230D TX | PB6 | UART1_TX | 蓝牙插座 H8 → K230D RX |
+| K230D RX | PB7 | UART1_RX | 蓝牙插座 H8 ← K230D TX |
+| 电机 PWM A/B | PB2/PB3 | TIMA1 CCP0/CCP1, 10kHz | J1/J2 |
+| 电机方向 A | PA14/PA13 | GPIO | TB6612 AIN1/AIN2 |
+| 电机方向 B | PA16/PA17 | GPIO | TB6612 BIN1/BIN2 |
+| 编码器 A | PA25/PA26 | GPIO 上升沿中断 | J1 |
+| 编码器 B | PB20/PB24 | GPIO 上升沿中断 | J2 |
+| OLED | PB14/PB15/PA28/PA31 | 软件SPI RST/DC/SCL/SDA | — |
+| 按键 | PA18 (BLS) / PB8 (板载) | GPIO | — |
+| 电池检测 | PA15 | ADC1 CH0 | — |
+| 调试串口 | PA10/PA11 | UART0, 115200 | USB |
+
+改口后空出的引脚：PA7、PA9、PA22、PA24、PA27。
+
+几点接线注意：
+
+- **PA0/PA1 是本芯片唯一两个 5V 耐压引脚**（绝对最大 5.5V，其余引脚只有
+  VDD+0.3V）。幻尔传感器是 5V 供电、5V 电平，所以只能接这一对，换别的口会
+  超出 IO 绝对最大额定值。
+- **D36A 的 EN 是高电平使能**（接 ATD5984 的 SLEEP 脚）：高 = 上电锁力，
+  低 = 松开。和 A4988/DRV8825 相反，旧代码按低有效写的，方向是错的。
+- D36A 控制口是单端信号（`ST1/DIR1/EN1` + `GND`），不是 PUL±/DIR± 差分对，
+  接线时必须把 D36A 的 `GND` 与底板共地。丝印在 D36A 板子背面。
+- D36A 的 `5V` 脚不要接底板 5V：底板自带 12V→5V 模块，两个源并联会互灌。
+- 微步由 D36A 上的 MS1~MS3 拨码决定，代码里 `STEPPER_MICROSTEPS` 默认 16
+  （1.8° 电机 → 3200 脉冲/圈），拨码改了要同步改这个宏。
+  16 细分对应**拨码 1/2/3 全部拨到 OFF**（手册真值表里 ON=1、OFF=0，16 细分是 000）。
+- 拨码 4/5/6 设电流，全 ON = 0.55 A（最小档），建议从这一档起步。
+
+完整接线步骤、拨码对照表、上电调试顺序见 [docs/接线指导.md](docs/接线指导.md)。
+
+## 关键实现说明
+
+**巡线传感器（I2C）**：I2C 读是阻塞的，不能放在 100Hz 控制中断里 —— 传感器
+拉长时钟或掉线会把整个控制环卡住、电机停在上一次的占空比。所以拆成两半：
+主循环里 `LineSensor_Poll()` 每 5ms 读一次存进缓存，控制中断里
+`LineSensor_Update()` 只对缓存做滤波。连续 5 次读失败按丢线处理，交给巡线
+任务原有的"保持再衰减"逻辑。
+
+**通道数**：只改 `board_hardware.h` 里的 `HW_LINE_SENSOR_COUNT` 即可 6↔8 路
+切换，滤波状态、权重表、全黑掩码、OLED 显示都是从它推出来的。传感器自身的
+位序如果和"最高位=最左"相反，改 `HW_LINE_SENSOR_BIT0_IS_LEFT` 就行。
+
+**步进脉冲（硬件PWM）**：脉冲由 TIMG7 硬件产生，改周期即改速度，CPU 不参与，
+脉冲间隔不受中断负载影响。选 TIMG7 而不是 TIMG8（PB16 两个都能接）是因为只有
+TIMG7 有影子寄存器：没有它，写 LOAD 立即生效，若计数器已经越过新值就会一路
+跑到 0xFFFF 才回绕，每次变速都可能多出一个最长 65ms 的畸形脉冲。
+
+## TODO
+
+- [ ] **核对幻尔传感器实际 I2C 地址与寄存器号**（现用 0x5D / 状态寄存器 5，
+      手头资料是8路版本的，6路版本需实测确认）
+- [ ] **核对传感器位序**：最左通道对应 bit0 还是最高位，装反了改
+      `HW_LINE_SENSOR_BIT0_IS_LEFT`
+- [ ] **核对 K230D 排针丝印**：确认哪两个脚是 UART TX/RX
+- [ ] 确认 D36A 拨码微步设置与 `STEPPER_MICROSTEPS` 一致（16 细分 = 拨码 1/2/3 全 OFF）
+- [ ] **万用表量 H5 插座的电源脚到底是 3V3 还是 5V**：底板原理图两处标注不一致，
+      传感器必须 5V 供电，稳妥做法是电源从 J4 取、H5 只借 SDA/SCL/GND
+- [ ] 核对 D36A 手册 3.2 节给出的 STEP 频率范围与 `STEPPER_MAX_FREQ_HZ`（现为 5kHz）
+- [ ] 实测确认步进正转方向与摆杆倾斜方向的对应关系
+- [ ] 对接 K230D 实际通信协议
+- [ ] 调试巡线PID参数
+- [ ] 调试平衡PID参数

@@ -1,0 +1,285 @@
+/**
+ * H题 - 车载平衡滚球运动控制系统
+ * S28A + C07A hardware configuration.
+ *
+ * Generated for MSPM0G350X, LQFP-48(PT), MSPM0 SDK 2.01.00.03.
+ * The C07A core board carries MSPM0G3507SPTR = LQFP-48(PT); the earlier
+ * LQFP-64(PM) declaration let SysConfig accept pins that do not exist on
+ * this package (PB4/PB12/PB13 were assigned to the stepper).
+ *
+ * Reworked interfaces:
+ *   - Line sensor: Hiwonder I2C (SCL/SDA) on I2C0 PA1/PA0, replacing the
+ *     6 parallel GPIO inputs. PA0/PA1 are the only 5 V tolerant pins, which
+ *     the 5 V sensor board needs. Wired through the unused MPU6050 socket.
+ *   - Stepper (D36A): ST1 = PB16 hardware PWM (TIMG8_CCP1), DIR1 = PB17,
+ *     EN1 = PA12, all on J10.
+ *   - K230D: UART1 on PB6/PB7 (unused Bluetooth socket H8), so TX/RX sit
+ *     on one adjacent pin pair instead of PB17/PB18.
+ * Freed by this rework: PA7, PA9, PA22, PA24, PA27.
+ */
+// @cliArgs --device "MSPM0G350X" --package "LQFP-48(PT)" --part "Default"
+// @cliArgs --board /ti/boards/LP_MSPM0G3507 --rtos nortos
+
+const GPIO = scripting.addModule("/ti/driverlib/GPIO", {}, false);
+const GPIO1 = GPIO.addInstance();
+const GPIO2 = GPIO.addInstance();
+const GPIO3 = GPIO.addInstance();
+const GPIO4 = GPIO.addInstance();
+const GPIO5 = GPIO.addInstance();
+const GPIO6 = GPIO.addInstance();
+const GPIO7 = GPIO.addInstance();
+const GPIO8 = GPIO.addInstance();
+const GPIO9 = GPIO.addInstance();
+
+const PWM = scripting.addModule("/ti/driverlib/PWM", {}, false);
+const PWM1 = PWM.addInstance();
+const PWM2 = PWM.addInstance();
+
+const SYSCTL = scripting.addModule("/ti/driverlib/SYSCTL");
+const SYSTICK = scripting.addModule("/ti/driverlib/SYSTICK");
+
+const TIMER = scripting.addModule("/ti/driverlib/TIMER", {}, false);
+const TIMER1 = TIMER.addInstance();
+
+const UART = scripting.addModule("/ti/driverlib/UART", {}, false);
+const UART1 = UART.addInstance();
+const UART2 = UART.addInstance();
+
+const I2C = scripting.addModule("/ti/driverlib/I2C", {}, false);
+const I2C1 = I2C.addInstance();
+
+const ADC12 = scripting.addModule("/ti/driverlib/ADC12", {}, false);
+const ADC121 = ADC12.addInstance();
+
+const Board = scripting.addModule("/ti/driverlib/Board", {}, false);
+
+/* ====================== GPIO Config ====================== */
+
+/* BLS key on C07A: active HIGH when pressed */
+GPIO1.$name = "KEY";
+GPIO1.associatedPins[0].$name = "BLS";
+GPIO1.associatedPins[0].direction = "INPUT";
+GPIO1.associatedPins[0].internalResistor = "PULL_DOWN";
+GPIO1.associatedPins[0].pin.$assign = "PA18";
+
+/* S28A board button (active LOW) */
+GPIO2.$name = "S28A_BUTTON";
+GPIO2.associatedPins[0].$name = "S28A_KEY";
+GPIO2.associatedPins[0].direction = "INPUT";
+GPIO2.associatedPins[0].internalResistor = "PULL_UP";
+GPIO2.associatedPins[0].pin.$assign = "PB8";
+
+/* Status LED */
+GPIO3.$name = "LED";
+GPIO3.associatedPins[0].$name = "led";
+GPIO3.associatedPins[0].pin.$assign = "PB9";
+
+/* TB6612 Motor A direction: AIN1=PA14, AIN2=PA13 */
+GPIO4.$name = "MOTOR_A_DIR";
+GPIO4.port = "PORTA";
+GPIO4.associatedPins.create(2);
+GPIO4.associatedPins[0].$name = "AIN1";
+GPIO4.associatedPins[0].pin.$assign = "PA14";
+GPIO4.associatedPins[1].$name = "AIN2";
+GPIO4.associatedPins[1].pin.$assign = "PA13";
+
+/* TB6612 Motor B direction: BIN1=PA16, BIN2=PA17 */
+GPIO5.$name = "MOTOR_B_DIR";
+GPIO5.port = "PORTA";
+GPIO5.associatedPins.create(2);
+GPIO5.associatedPins[0].$name = "BIN1";
+GPIO5.associatedPins[0].pin.$assign = "PA16";
+GPIO5.associatedPins[1].$name = "BIN2";
+GPIO5.associatedPins[1].pin.$assign = "PA17";
+
+/* Encoder A: E1A=PA25, E1B=PA26 (rising-edge GPIO interrupt, pull-up) */
+GPIO6.$name = "ENCODERA";
+GPIO6.associatedPins.create(2);
+GPIO6.associatedPins[0].$name = "E1A";
+GPIO6.associatedPins[0].direction = "INPUT";
+GPIO6.associatedPins[0].internalResistor = "PULL_UP";
+GPIO6.associatedPins[0].polarity = "RISE";
+GPIO6.associatedPins[0].interruptPriority = "0";
+GPIO6.associatedPins[0].interruptEn = true;
+GPIO6.associatedPins[0].pin.$assign = "PA25";
+GPIO6.associatedPins[1].$name = "E1B";
+GPIO6.associatedPins[1].direction = "INPUT";
+GPIO6.associatedPins[1].internalResistor = "PULL_UP";
+GPIO6.associatedPins[1].polarity = "RISE";
+GPIO6.associatedPins[1].interruptPriority = "0";
+GPIO6.associatedPins[1].interruptEn = true;
+GPIO6.associatedPins[1].pin.$assign = "PA26";
+
+/* Encoder B: E2A=PB20, E2B=PB24 (rising-edge GPIO interrupt, pull-up) */
+GPIO7.$name = "ENCODERB";
+GPIO7.associatedPins.create(2);
+GPIO7.associatedPins[0].$name = "E2A";
+GPIO7.associatedPins[0].direction = "INPUT";
+GPIO7.associatedPins[0].internalResistor = "PULL_UP";
+GPIO7.associatedPins[0].polarity = "RISE";
+GPIO7.associatedPins[0].interruptPriority = "0";
+GPIO7.associatedPins[0].interruptEn = true;
+GPIO7.associatedPins[0].pin.$assign = "PB20";
+GPIO7.associatedPins[1].$name = "E2B";
+GPIO7.associatedPins[1].direction = "INPUT";
+GPIO7.associatedPins[1].internalResistor = "PULL_UP";
+GPIO7.associatedPins[1].polarity = "RISE";
+GPIO7.associatedPins[1].interruptPriority = "0";
+GPIO7.associatedPins[1].interruptEn = true;
+GPIO7.associatedPins[1].pin.$assign = "PB24";
+/* OLED: RST=PB14, DC=PB15, SCL=PA28, SDA=PA31 (software SPI) */
+GPIO8.$name = "OLED";
+GPIO8.associatedPins.create(4);
+GPIO8.associatedPins[0].$name = "RST";
+GPIO8.associatedPins[0].pin.$assign = "PB14";
+GPIO8.associatedPins[1].$name = "DC";
+GPIO8.associatedPins[1].pin.$assign = "PB15";
+GPIO8.associatedPins[2].$name = "SCL";
+GPIO8.associatedPins[2].pin.$assign = "PA28";
+GPIO8.associatedPins[3].$name = "SDA";
+GPIO8.associatedPins[3].pin.$assign = "PA31";
+
+/* Stepper (D36A / ATD5984) static control lines on J10.
+ * ST1 (pulse) is not here - it is PWM_STEPPER below on PB16.
+ * EN1 is active HIGH: it drives the ATD5984 SLEEP input, so HIGH = driver
+ * awake and coils energised, LOW = coils released. Both start LOW so the
+ * motor is free until Stepper_Enable() is called.
+ * The "-" side of PUL/DIR/ENA on the D36A ties to board GND. */
+GPIO9.$name = "STEPPER";
+GPIO9.associatedPins.create(2);
+GPIO9.associatedPins[0].$name = "DIR1";
+GPIO9.associatedPins[0].initialValue = "CLEARED";
+GPIO9.associatedPins[0].pin.$assign = "PB17";
+GPIO9.associatedPins[1].$name = "EN1";
+GPIO9.associatedPins[1].initialValue = "CLEARED";
+GPIO9.associatedPins[1].pin.$assign = "PA12";
+
+/* ====================== PWM Config ====================== */
+
+/* Motor PWM: TIMA1, 10kHz, 2 channels */
+PWM1.$name = "PWM_0";
+PWM1.timerStartTimer = true;
+PWM1.pwmMode = "EDGE_ALIGN_UP";
+PWM1.timerCount = 8000;
+PWM1.peripheral.$assign = "TIMA1";
+PWM1.peripheral.ccp0Pin.$assign = "PB2";
+PWM1.peripheral.ccp1Pin.$assign = "PB3";
+PWM1.PWM_CHANNEL_0.$name = "ti_driverlib_pwm_PWMTimerCC0";
+PWM1.PWM_CHANNEL_1.$name = "ti_driverlib_pwm_PWMTimerCC1";
+
+/* Stepper pulse ST1: TIMG7 CCP1 on PB16, hardware PWM.
+ * Speed is set by rewriting LOAD at runtime; output frequency is
+ * 1 MHz/(load+1), so load 199 -> 5000 Hz (the D36A maximum) and load 65535
+ * -> 15.3 Hz (slowest; anything slower is treated as stopped). Duty stays
+ * at 50%, which even at 5 kHz is a 100 us pulse, far above the ATD5984's
+ * minimum pulse width.
+ *
+ * TIMG7 rather than TIMG8, though PB16 muxes to either: TIMG7 is the only
+ * one of the two with shadow LOAD and shadow CC. Without them, a LOAD write
+ * lands immediately, and if the counter has already passed the new value it
+ * runs on to 0xFFFF before wrapping - one stray pulse up to 65 ms long on
+ * every speed change. With shadow enabled plus ZERO_EVT channel updates,
+ * LOAD and CC both take effect at the next zero crossing, so the pulse
+ * train stays clean while the balance loop retunes speed at 50 Hz.
+ * TIMG7 is in PD1 (80 MHz), hence prescale 80 for the same 1 MHz tick.
+ *
+ * Only CC1 is enabled (ccIndex = [1]) because PB16 is channel 1, not 0.
+ * timerStartTimer is false: no pulses until Stepper_SetSpeed() asks for
+ * them, otherwise the beam would creep away from level at reset. */
+PWM2.$name = "PWM_STEPPER";
+PWM2.timerStartTimer = false;
+PWM2.pwmMode = "EDGE_ALIGN_UP";
+PWM2.clockPrescale = 80;
+PWM2.timerCount = 1000;
+PWM2.ccIndex = [1];
+PWM2.enableShadowLoad = true;
+PWM2.peripheral.$assign = "TIMG7";
+PWM2.peripheral.ccp1Pin.$assign = "PB16";
+PWM2.PWM_CHANNEL_1.$name = "ti_driverlib_pwm_PWMTimerCC1_STEP";
+PWM2.PWM_CHANNEL_1.dutyCycle = 50;
+PWM2.PWM_CHANNEL_1.shadowUpdateMode = "ZERO_EVT";
+
+/* ====================== Timer Config ====================== */
+
+/* Control loop timer: TIMG0, 10ms periodic, auto-start */
+TIMER1.$name = "TIMER_0";
+TIMER1.timerClkPrescale = 32;
+TIMER1.timerMode = "PERIODIC";
+TIMER1.timerStartTimer = true;
+TIMER1.interrupts = ["ZERO"];
+TIMER1.timerPeriod = "10 ms";
+TIMER1.peripheral.$assign = "TIMG0";
+
+/* ====================== SYSCTL Config ====================== */
+SYSCTL.forceDefaultClkConfig = true;
+SYSCTL.clockTreeEn = true;
+
+/* PLL configuration: 80 MHz CPU clock */
+const divider7 = system.clockTree["PLL_PDIV"];
+divider7.divideValue = 2;
+
+const divider9 = system.clockTree["UDIV"];
+divider9.divideValue = 2;
+
+const gate7 = system.clockTree["MFCLKGATE"];
+gate7.enable = true;
+
+const multiplier2 = system.clockTree["PLL_QDIV"];
+multiplier2.multiplyValue = 5;
+
+const mux8 = system.clockTree["HSCLKMUX"];
+mux8.inputSelect = "HSCLKMUX_SYSPLL2X";
+
+/* ====================== UART Config ====================== */
+
+/* USB Debug: UART0, 115200 */
+UART1.$name = "USB";
+UART1.targetBaudRate = 115200;
+UART1.peripheral.$assign = "UART0";
+UART1.peripheral.rxPin.$assign = "PA11";
+UART1.peripheral.txPin.$assign = "PA10";
+
+/* K230D Camera: UART1 on PB6/PB7, 115200.
+ * Moved off UART2/PB17+PB18: PB18 is not brought out to the S28A headers at
+ * all, so the old RX line was unreachable. PB6/PB7 are the adjacent pair on
+ * the unused Bluetooth socket (H8), which also supplies 3V3 and GND there -
+ * K230D logic is 3.3 V (RT9013-33GB on board), so no level shifting.
+ * Cross the data lines: MCU TX (PB6) -> K230D RX, MCU RX (PB7) <- K230D TX. */
+UART2.$name = "K230";
+UART2.targetBaudRate = 115200;
+UART2.enableFIFO = true;
+UART2.peripheral.$assign = "UART1";
+UART2.peripheral.rxPin.$assign = "PB7";
+UART2.peripheral.txPin.$assign = "PB6";
+
+/* ====================== I2C Config ====================== */
+
+/* Hiwonder line sensor: I2C0, SDA=PA0, SCL=PA1, 400 kHz.
+ * PA0/PA1 are the only 5 V tolerant pins on this device (abs max 5.5 V vs
+ * VDD+0.3 V elsewhere), and the Hiwonder board runs off 5 V with 5 V logic,
+ * so this pair is the only safe place for it. Wired through the unused
+ * MPU6050 socket, which already provides 5 V and GND on the same connector.
+ * Fast mode keeps a full 6- or 8-channel read well inside one 10 ms control
+ * period. External pull-ups are on the sensor board. */
+I2C1.$name = "LINE_I2C";
+I2C1.basicEnableController = true;
+I2C1.basicControllerStandardBusSpeed = "Fast";
+I2C1.peripheral.$assign = "I2C0";
+I2C1.peripheral.sdaPin.$assign = "PA0";
+I2C1.peripheral.sclPin.$assign = "PA1";
+
+/* ====================== ADC Config ====================== */
+
+/* Battery voltage: ADC1 CH0, PA15 */
+ADC121.$name = "BATTERY_ADC";
+ADC121.sampClkSrc = "DL_ADC12_CLOCK_ULPCLK";
+ADC121.sampClkDiv = "DL_ADC12_CLOCK_DIVIDE_8";
+ADC121.adcMem0chansel = "DL_ADC12_INPUT_CHAN_0";
+ADC121.sampleTime0 = "125 us";
+ADC121.peripheral.$assign = "ADC1";
+ADC121.peripheral.adcPin0.$assign = "PA15";
+
+/* ====================== Debug Config ====================== */
+Board.peripheral.$assign = "DEBUGSS";
+Board.peripheral.swclkPin.$assign = "PA20";
+Board.peripheral.swdioPin.$assign = "PA19";
