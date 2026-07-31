@@ -139,7 +139,7 @@ void LineFollow_Update(uint32_t now_ms)
         case LF_CRUISING:
             if (s_mode == LFMODE_FULL_LAP) {
                 /* Detect a wide stop bar independently of lateral position.
-                 * A direct hit keeps any three channels active for two
+                 * A direct hit keeps any four channels active for two
                  * samples. A skewed hit may move across the array, so also
                  * accumulate channel coverage over a 60 ms window. */
                 const uint8_t active = count_active_sensors(line_state);

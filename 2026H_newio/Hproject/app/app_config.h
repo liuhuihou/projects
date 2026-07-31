@@ -25,15 +25,23 @@
 /* ============ Stop Line Detection ============ */
 /* The car can cross the 5 cm stop bar with lateral offset or yaw, so detection
  * must not depend on a fixed set of channels. A normal 1.8 cm guide line
- * usually covers one or two channels; the stop bar either covers at least
- * three channels at once, or sweeps across at least four channels in a short
- * time window. */
-#define APP_STOP_LINE_MIN_INSTANT_CHANNELS (3U)
+ * covers one or two of the eight channels, but on a diagonal or at a sharp
+ * corner it reaches three - which is why three used to false-trigger. The
+ * stop bar must now light four channels at once (a direct hit on the ~12 mm
+ * probe pitch), or sweep across six within a short window (a skewed hit).
+ *
+ * Both counts are absolute channel counts, not fractions, so they had to be
+ * re-tuned when the array went from six to eight probes. */
+#define APP_STOP_LINE_MIN_INSTANT_CHANNELS (4U)
 #define APP_STOP_IGNORE_DISTANCE   (30.0f)  /* Ignore stop line for first 30cm */
 #define APP_STOP_IGNORE_TICKS      (100U)   /* Full lap: ignore first 1 second */
 #define APP_STOP_LINE_CONFIRM_TICKS (2U)    /* Two consecutive 10ms samples */
 #define APP_STOP_LINE_WINDOW_TICKS  (6U)    /* 60ms temporal coverage window */
-#define APP_STOP_LINE_WINDOW_CHANNELS (4U)
+/* Must stay strictly above APP_STOP_LINE_MIN_INSTANT_CHANNELS. If the two are
+ * equal, one single wide sample both arms the window and fills the mask, so
+ * this path fires on that frame alone and short-circuits the two-sample
+ * confirmation above - the looser of the two branches wins. */
+#define APP_STOP_LINE_WINDOW_CHANNELS (6U)
 #define APP_STOP_BRAKE_HOLD_MS       (150U)
 
 #endif

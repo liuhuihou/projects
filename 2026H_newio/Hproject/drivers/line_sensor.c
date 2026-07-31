@@ -177,12 +177,17 @@ uint8_t LineSensor_GetSteeringError(float *error)
         if (black != 0U) {
             if (ended != 0U) return 0U;
             started = 1U;
-            /* Half-channel units, symmetric about centre and odd-valued so
-             * no channel sits exactly at zero: 6 channels give
-             * -5,-3,-1,1,3,5 (unchanged from the GPIO version) and 8 give
-             * -7..7. Wider boards therefore report proportionally larger
-             * errors, so LINE_KP scales with the physical array width rather
-             * than needing a new gain per channel count. */
+            /* Half-channel units, symmetric about centre and odd-valued so no
+             * channel sits exactly at zero. 8 channels give -7,-5,-3,-1,1,3,
+             * 5,7; the 6-channel board gave -5..5.
+             * The unit is half a probe pitch, so for the same physical offset
+             * from the line the number is unchanged by the channel count -
+             * LINE_KP does not scale with it. What changes is the saturation
+             * limit, +/-7 instead of +/-5, so a line pinned at the outermost
+             * channel now asks for about 1.4x the correction it used to.
+             * Probe pitch is what LINE_KP really tracks: a tighter pitch means
+             * a larger number for the same offset, so the gain has to come
+             * down in proportion. */
             sum += (int)(2U * i) - (int)(LINE_SENSOR_COUNT - 1U);
             ++active_count;
         } else if (started != 0U) {

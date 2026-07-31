@@ -90,10 +90,15 @@ static void oled_show_mode_select(void)
     }
 
     /* Always show line sensor channels and line error on row 7.
-     * Channel count comes from LINE_SENSOR_COUNT so an 8-channel board fills
-     * two more columns without an edit here. "--" instead of the bit pattern
-     * means the I2C sensor is not answering. */
+     * Leftmost digit is the leftmost channel, matching the driver's bit
+     * convention. "--" instead of the bit pattern means the I2C sensor is not
+     * answering.
+     * The error column is derived from LINE_SENSOR_COUNT rather than written
+     * out: at 8 channels the digits reach column 10, which is where "E:" used
+     * to start, so a fixed 10 would have overwritten the last channel. A row
+     * holds 21 characters (128 px / 6), so there is room to spare. */
     {
+        const uint8_t err_col = (uint8_t)(3U + LINE_SENSOR_COUNT + 1U);
         uint8_t ir = LineSensor_ReadRaw();
         uint8_t i;
         OLED_ShowString(0, 7, "IR:");
@@ -108,8 +113,12 @@ static void oled_show_mode_select(void)
                 OLED_ShowChar((uint8_t)(3U + i), 7, '-');
             }
         }
-        OLED_ShowString(10, 7, "E:");
-        OLED_ShowSignedInt(12, 7, Control_GetLineError(), 2);
+        /* Blank the gap so a shorter channel count cannot leave a stale digit
+         * between the bit pattern and the error. */
+        OLED_ShowChar((uint8_t)(3U + LINE_SENSOR_COUNT), 7, ' ');
+        OLED_ShowString(err_col, 7, "E:");
+        OLED_ShowSignedInt((uint8_t)(err_col + 2U), 7,
+                           Control_GetLineError(), 2);
     }
 }
 

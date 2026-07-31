@@ -20,7 +20,7 @@
  * own bit order to this (see HW_LINE_SENSOR_BIT0_IS_LEFT).
  */
 
-/* Channel count, 6 today and 8 after a board swap. Everything derived. */
+/* Channel count, 8 on the current board. Everything derived. */
 #define LINE_SENSOR_COUNT       HW_LINE_SENSOR_COUNT
 
 /* Mask with every channel black - a perpendicular bar such as the start line. */

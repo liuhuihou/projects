@@ -79,10 +79,14 @@
 /* =================== Line Sensor Bus (Hiwonder I2C) =================== */
 /* Wired through the unused MPU6050 socket (H5). PA0/PA1 are the only 5 V
  * tolerant pins on this device, so this is the one safe place for the
- * sensor's 5 V logic. Pull-ups are on the sensor board.
- * H5's supply pin is ambiguous in the baseboard schematic (netlist text says
- * 3V3, the drawing shows 5 V), and the sensor needs 5 V - take power from J4
- * and borrow only SDA/SCL/GND from H5 until measured. */
+ * sensor's 5 V logic.
+ * Pull-ups come from two places on a C07A V1.1 core board: R11/R12 (10k to
+ * 5 V, on PA0A/PA1A) plus whatever the sensor board carries. Do not add more,
+ * and never pull up to 3V3 - it would fight the on-board 5 V pull-ups. A V1.0
+ * core board has no R11/R12, so there the sensor board is the only source.
+ * H5 supplies 5 V (baseboard schematic REV 15.0, with a 0.1 uF decoupling
+ * cap), which is what the sensor needs - all four wires go to H5, no separate
+ * power feed required. H5 pin 7 is PA7 (the old MPU6050 INT), left unused. */
 #define HW_LINE_I2C                     LINE_I2C_INST
 #define HW_LINE_I2C_SPEED_HZ            LINE_I2C_BUS_SPEED_HZ
 
@@ -102,20 +106,24 @@
 #define HW_K230_BAUD                    K230_BAUD_RATE
 
 /* ================== Line Sensor (Hiwonder, I2C) ================== */
-/* Channel count is the one number to change when swapping the 6-channel
- * board for the 8-channel one. Everything downstream - filter state, the
- * weight table, the all-black mask, the OLED readout - derives from it.
- * The API returns the channel bitmask in a uint8_t, so 8 is the ceiling. */
-#define HW_LINE_SENSOR_COUNT            (6U)
+/* Channel count. Everything downstream - filter state, the weight table, the
+ * all-black mask, the OLED readout - derives from it. The API returns the
+ * channel bitmask in a uint8_t, so 8 is the ceiling.
+ * Now a LineFollower_8CH v1.0 board (107 x 31.2 mm, 85 mA at 5 V). Its
+ * protocol is identical to the 6-channel board's: same address, same three
+ * register bases, same "write reg + STOP, then read" access. */
+#define HW_LINE_SENSOR_COUNT            (8U)
 
-/* 7-bit device address. The 6- and 8-channel boards ship with the same
- * default; verify against the sticker if the board has been re-addressed. */
+/* 7-bit device address, fixed - the 8-channel manual lists 0x5D with no
+ * strapping option. */
 #define HW_LINE_SENSOR_I2C_ADDR         (0x5DU)
 
-/* Register map. STATE returns one byte, one bit per channel, 1 = black line.
- * ANALOG returns COUNT 16-bit little-endian values, THRESHOLD is writable
- * with the same layout. Only STATE is used in the control path; the other
- * two are here for calibration work. */
+/* Register map, confirmed against the 8-channel protocol tables.
+ * STATE returns one byte, one bit per channel, 1 = black line.
+ * ANALOG returns COUNT 16-bit little-endian values (channels 1..8 at 6, 8,
+ * 10 ... 20), THRESHOLD is writable with the same layout (22, 24 ... 36).
+ * Only STATE is used in the control path; the other two are here for
+ * calibration work. */
 #define HW_LINE_SENSOR_REG_STATE        (5U)
 #define HW_LINE_SENSOR_REG_ANALOG       (6U)
 #define HW_LINE_SENSOR_REG_THRESHOLD    (22U)
@@ -123,8 +131,18 @@
 /* Set to 1 if the sensor reports bit 0 as the leftmost channel. The driver
  * normalises to this project's convention (highest bit = leftmost), so
  * flipping this is all that is needed if the board is mounted reversed or
- * the register order turns out to be the other way round. */
-#define HW_LINE_SENSOR_BIT0_IS_LEFT     (0U)
+ * the register order turns out to be the other way round.
+ *
+ * 1 for this board: the vendor's own example extracts channel n as
+ * (state >> n) & 1 and prints it as "State(n+1)", so bit 0 is S1, and the
+ * silkscreen runs S1..S8 left to right (the Hiwonder logo and the KEY button
+ * are at the S8 end). With the board mounted connector-edge-to-the-rear, S1
+ * is on the car's left, so bit 0 is the leftmost channel and the driver has
+ * to reverse it.
+ * This also fixes the steering sign, not just the display: the raw and the
+ * normalised mask are the same byte, so while this read 0 the weighted error
+ * came out mirrored and the car corrected the wrong way. */
+#define HW_LINE_SENSOR_BIT0_IS_LEFT     (1U)
 
 /* ======================== Buttons ======================== */
 /* BLS: active HIGH when pressed (C07A V1.1) */
@@ -149,7 +167,11 @@
  * differential PUL+/PUL- pair: tie D36A GND to board GND. Leave the D36A 5 V
  * pin unconnected - the S28A has its own 12 V->5 V module and paralleling
  * two supplies makes them fight. ST1 is rising-edge triggered, which is why
- * it needs a real pulse train rather than a level. */
+ * it needs a real pulse train rather than a level.
+ * CONFLICT: J10 is wired in parallel with the gamepad socket U3 (GND / 3V3 /
+ * PB17 / PB16 / PA12 / PA27) - these three signals are shared. Never plug a
+ * gamepad in while the stepper is on J10; both ends would drive the same
+ * nets. The two sockets are mutually exclusive. */
 #define HW_STEPPER_PWM_TIMER            PWM_STEPPER_INST
 #define HW_STEPPER_PWM_CHANNEL          GPIO_PWM_STEPPER_C1_IDX
 #define HW_STEPPER_PWM_CLK_HZ           PWM_STEPPER_INST_CLK_FREQ
