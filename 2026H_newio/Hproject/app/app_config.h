@@ -12,14 +12,12 @@
 
 /* ============ Stop Line Detection ============ */
 /* Eight probes are numbered 1..8 from left to right after the driver
- * normalises the sensor byte. Accept the normal 3456 pattern, or tolerate
- * one edge-channel dropout only when the adjacent outer channel replaces it:
- * 2456 replaces channel 3 with 2; 3457 replaces channel 6 with 7.
- * Other channels are optional. In particular, 2457 is rejected because both
- * edge channels are missing, as are the one-sided curve patterns 2345/4567. */
+ * normalises the sensor byte. Accept the centred 3456 pattern or either
+ * four-adjacent-channel offset pattern 2345/4567. Other channels are allowed,
+ * but one of these three four-channel groups must be present in full. */
 #define APP_STOP_PATTERN_3456_MASK      (0x3CU)
-#define APP_STOP_PATTERN_2456_MASK      (0x5CU)
-#define APP_STOP_PATTERN_3457_MASK      (0x3AU)
+#define APP_STOP_PATTERN_2345_MASK      (0x78U)
+#define APP_STOP_PATTERN_4567_MASK      (0x1EU)
 
 /* Odometry is an arming gate, not a forced stop. The full-lap modes may
  * recognise the A stop bar only after the average wheel travel exceeds 80%
@@ -30,6 +28,14 @@
 #define APP_STOP_ODOMETRY_ARM_RATIO      (0.80f)
 #define APP_STOP_ODOMETRY_ARM_CM         \
     (APP_TRACK_LAP_LENGTH_CM * APP_STOP_ODOMETRY_ARM_RATIO)
+
+/* Q4/Q5/Q6 use odometry as the actual stop trigger. Q4 stops after the
+ * requested 1.6 m. Q5/Q6 deliberately run 110% of the nominal lap so the
+ * vehicle has passed A before braking even with moderate under-counting. */
+#define APP_STOP_Q4_DISTANCE_CM           (180.0f)
+#define APP_STOP_Q5_Q6_DISTANCE_RATIO     (1.10f)
+#define APP_STOP_Q5_Q6_DISTANCE_CM        \
+    (APP_TRACK_LAP_LENGTH_CM * APP_STOP_Q5_Q6_DISTANCE_RATIO)
 
 /* At 35 cm/s the 1.6..2.0 cm bar is present for about 46..57 ms. Vote over
  * five successful I2C samples and accept two hits. The odometry gate and

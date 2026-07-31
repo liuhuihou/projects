@@ -23,39 +23,45 @@
  * on the following straight. Capping it well below the steady-state need
  * keeps the loop accurate without the long recovery. */
 #define SPEED_INTEGRAL_LIMIT    (400.0f)
-/* Integration is suspended while |steering correction| exceeds this, i.e.
- * during curves, where the speed error is geometric rather than a
- * steady-state offset. Below it the car is running near-straight and the
- * integrator does its normal job of trimming out residual error. */
-#define SPEED_INTEGRATE_STEER_MAX (8.0f)
 /* Per-cycle decay applied to both integrators while steering hard, so the
  * curve leaves no accumulated charge to unwind on the following straight. */
 #define SPEED_INTEGRAL_BLEED      (0.90f)
 
-/* ============ Line Following PD ============ */
-#define LINE_KP                 (10.00f)
-#define LINE_KD                 (6.00f)
-#define LINE_CORRECTION_LIMIT   (25.0f)
-#define LINE_CORRECTION_STEP    (20.0f)
-/* Line-lost behaviour. The last steering correction is held for this many
- * 10 ms cycles so a brief dropout mid-curve does not straighten the car,
- * then decayed each cycle so a sustained dropout on a curve exit does not
- * keep the car turning at full scale until it leaves the track. */
-#define LINE_LOST_HOLD_TICKS    (2U)
-#define LINE_LOST_DECAY         (0.70f)
+/* ============ Line Following Profiles ============ */
+/* Q2/Q4 keep the currently proven line-following response. Values that
+ * produce a wheel-speed difference are expressed in RPM, so applying them
+ * unchanged at Q5/Q6's lower speed makes the relative steering much stronger
+ * and can drive the inside wheel close to stall. The Q5/Q6 values are scaled
+ * to about 22/35 of the Q2 values, preserving approximately the same wheel
+ * speed ratio at a given sensor error.
+ *
+ * Curve slowdown gain/minimum scale and line-lost behaviour are also separate
+ * even though their initial values match, so later tuning one question group
+ * cannot change the other group. */
 
-/* ============ Curve Slowdown ============ */
-/* Base speed is scaled down in proportion to steering effort:
- *   scale = 1 - GAIN * (|correction| / LINE_CORRECTION_LIMIT)
- * At full deflection with GAIN=0.25 the car runs at 75% of the straight-line
- * speed. This decouples cornering from entry speed: without it the first
- * curve (entered slowly after the start) is made and the second (entered at
- * full speed off a 1.5 m straight) is not, because turn radius for a given
- * wheel-speed differential grows with forward speed. */
-#define CURVE_SLOWDOWN_GAIN     (0.30f)
-#define CURVE_SPEED_MIN_SCALE   (0.70f)
-/* Maximum right-wheel target RPM decrease per 10 ms control period. */
-#define RIGHT_TARGET_DECEL_STEP_RPM (15.0f)
+/* Q2 + Q4 profile */
+#define LINE_Q2_Q4_KP                       (10.00f)
+#define LINE_Q2_Q4_KD                       (6.00f)
+#define LINE_Q2_Q4_CORRECTION_LIMIT         (25.0f)
+#define LINE_Q2_Q4_CORRECTION_STEP          (20.0f)
+#define LINE_Q2_Q4_LOST_HOLD_TICKS          (2U)
+#define LINE_Q2_Q4_LOST_DECAY               (0.70f)
+#define LINE_Q2_Q4_CURVE_SLOWDOWN_GAIN      (0.30f)
+#define LINE_Q2_Q4_CURVE_SPEED_MIN_SCALE    (0.70f)
+#define LINE_Q2_Q4_RIGHT_DECEL_STEP_RPM     (15.0f)
+#define LINE_Q2_Q4_INTEGRATE_STEER_MAX      (8.0f)
+
+/* Q5 + Q6 low-speed, ball-control profile */
+#define LINE_Q5_Q6_KP                       (6.30f)
+#define LINE_Q5_Q6_KD                       (3.80f)
+#define LINE_Q5_Q6_CORRECTION_LIMIT         (16.0f)
+#define LINE_Q5_Q6_CORRECTION_STEP          (12.0f)
+#define LINE_Q5_Q6_LOST_HOLD_TICKS          (2U)
+#define LINE_Q5_Q6_LOST_DECAY               (0.70f)
+#define LINE_Q5_Q6_CURVE_SLOWDOWN_GAIN      (0.30f)
+#define LINE_Q5_Q6_CURVE_SPEED_MIN_SCALE    (0.70f)
+#define LINE_Q5_Q6_RIGHT_DECEL_STEP_RPM     (10.0f)
+#define LINE_Q5_Q6_INTEGRATE_STEER_MAX      (5.0f)
 
 /* ============ Straight Heading Correction ============ */
 #define STRAIGHT_KP             (0.20f)

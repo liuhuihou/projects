@@ -9,10 +9,17 @@ typedef enum {
     CTRL_LINE
 } ControlMode;
 
+typedef enum {
+    CTRL_LINE_PROFILE_Q2_Q4 = 0,
+    CTRL_LINE_PROFILE_Q5_Q6
+} ControlLineProfile;
+
 void Control_Init(void);
 void Control_Tick(void);
 void Control_SetMode(ControlMode mode);
 ControlMode Control_GetMode(void);
+void Control_SetLineProfile(ControlLineProfile profile);
+ControlLineProfile Control_GetLineProfile(void);
 void Control_SetBaseSpeed(float rpm);
 float Control_GetLeftRpm(void);
 float Control_GetRightRpm(void);

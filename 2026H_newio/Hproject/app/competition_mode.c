@@ -56,6 +56,7 @@ static void start_task(uint32_t now_ms)
         case COMP_Q2:
             /* Pure line follow, fast lap */
             speed_rpm = mode_speed_cm_s(COMP_Q2) * 60.0f / APP_WHEEL_CIRCUMFERENCE_CM;
+            Control_SetLineProfile(CTRL_LINE_PROFILE_Q2_Q4);
             Control_SetBaseSpeed(speed_rpm);
             Control_SetMode(CTRL_LINE);
             LineFollow_Start(LFMODE_FULL_LAP);
@@ -68,29 +69,32 @@ static void start_task(uint32_t now_ms)
             break;
 
         case COMP_Q4:
-            /* Line A->B with balance */
+            /* Line A->B with balance; odometry stop at 1.6 m */
             speed_rpm = mode_speed_cm_s(COMP_Q4) * 60.0f / APP_WHEEL_CIRCUMFERENCE_CM;
+            Control_SetLineProfile(CTRL_LINE_PROFILE_Q2_Q4);
             Control_SetBaseSpeed(speed_rpm);
             Control_SetMode(CTRL_LINE);
-            LineFollow_Start(LFMODE_A_TO_B);
+            LineFollow_Start(LFMODE_Q4_DISTANCE_STOP);
             BalanceTask_Start(BTASK_HOLD_CENTER);
             break;
 
         case COMP_Q5:
-            /* Full lap + ball center */
+            /* Full lap + ball center; odometry stop at 110% lap */
             speed_rpm = mode_speed_cm_s(COMP_Q5) * 60.0f / APP_WHEEL_CIRCUMFERENCE_CM;
+            Control_SetLineProfile(CTRL_LINE_PROFILE_Q5_Q6);
             Control_SetBaseSpeed(speed_rpm);
             Control_SetMode(CTRL_LINE);
-            LineFollow_Start(LFMODE_FULL_LAP);
+            LineFollow_Start(LFMODE_Q5_Q6_DISTANCE_STOP);
             BalanceTask_Start(BTASK_HOLD_CENTER);
             break;
 
         case COMP_Q6:
-            /* Full lap + ball at designated position */
+            /* Full lap + ball at designated position; 110% odometry stop */
             speed_rpm = mode_speed_cm_s(COMP_Q6) * 60.0f / APP_WHEEL_CIRCUMFERENCE_CM;
+            Control_SetLineProfile(CTRL_LINE_PROFILE_Q5_Q6);
             Control_SetBaseSpeed(speed_rpm);
             Control_SetMode(CTRL_LINE);
-            LineFollow_Start(LFMODE_FULL_LAP);
+            LineFollow_Start(LFMODE_Q5_Q6_DISTANCE_STOP);
             BalanceTask_Start(BTASK_HOLD_POSITION);
             break;
 

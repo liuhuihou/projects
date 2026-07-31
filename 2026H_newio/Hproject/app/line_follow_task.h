@@ -5,8 +5,9 @@
 
 typedef enum {
     LFMODE_NONE = 0,
-    LFMODE_FULL_LAP,   /* A -> (full circle) -> A stop */
-    LFMODE_A_TO_B      /* A -> B passage; no automatic stop */
+    LFMODE_FULL_LAP,              /* Q2: odometry-arm + A-line stop */
+    LFMODE_Q4_DISTANCE_STOP,      /* Q4: stop at configured A->B distance */
+    LFMODE_Q5_Q6_DISTANCE_STOP    /* Q5/Q6: stop at 110% lap distance */
 } LineFollowMode;
 
 void LineFollow_Init(void);

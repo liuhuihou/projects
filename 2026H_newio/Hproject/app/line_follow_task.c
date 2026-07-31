@@ -31,12 +31,12 @@ static uint8_t is_stop_line_pattern(uint8_t state)
         APP_STOP_PATTERN_3456_MASK) {
         return 1U;
     }
-    if ((state & APP_STOP_PATTERN_2456_MASK) ==
-        APP_STOP_PATTERN_2456_MASK) {
+    if ((state & APP_STOP_PATTERN_2345_MASK) ==
+        APP_STOP_PATTERN_2345_MASK) {
         return 1U;
     }
-    if ((state & APP_STOP_PATTERN_3457_MASK) ==
-        APP_STOP_PATTERN_3457_MASK) {
+    if ((state & APP_STOP_PATTERN_4567_MASK) ==
+        APP_STOP_PATTERN_4567_MASK) {
         return 1U;
     }
     return 0U;
@@ -67,6 +67,17 @@ static float get_average_wheel_distance_cm(void)
     if (left_cm < 0.0f) left_cm = -left_cm;
     if (right_cm < 0.0f) right_cm = -right_cm;
     return (left_cm + right_cm) * 0.5f;
+}
+
+static float get_odometry_stop_distance_cm(LineFollowMode mode)
+{
+    if (mode == LFMODE_Q4_DISTANCE_STOP) {
+        return APP_STOP_Q4_DISTANCE_CM;
+    }
+    if (mode == LFMODE_Q5_Q6_DISTANCE_STOP) {
+        return APP_STOP_Q5_Q6_DISTANCE_CM;
+    }
+    return 0.0f;
 }
 
 static void reset_stop_line_detector(void)
@@ -102,9 +113,9 @@ void LineFollow_Start(LineFollowMode mode)
     s_brake_start_ms = 0U;
     s_last_line_sample_sequence = LineSensor_GetSampleSequence();
 
-    if (mode == LFMODE_FULL_LAP) {
-        /* Each full-lap run needs its own zero; counts collected while idle or
-         * by a previous question must not arm this run's stop detector. */
+    if (mode != LFMODE_NONE) {
+        /* Every automatic-stop run needs its own zero. Counts collected while
+         * idle or by a previous question must not affect this run. */
         Control_ResetDistance();
     }
 }
@@ -137,9 +148,9 @@ void LineFollow_Update(uint32_t now_ms)
                     s_lf_state = LF_CRUISING;
                 }
             } else {
-                /* A-to-B only needs to pass B. It has no odometry arming or
-                 * automatic stop; the competition button remains available
-                 * for a manual stop. */
+                /* Q4/Q5/Q6 start measuring from zero immediately. Their
+                 * configured distance is the stop trigger, rather than an
+                 * arming gate for the A-line detector. */
                 s_lf_state = LF_CRUISING;
             }
             break;
@@ -165,6 +176,14 @@ void LineFollow_Update(uint32_t now_ms)
 
                 if (count_stop_votes(s_stop_vote_history) >=
                     APP_STOP_VOTE_REQUIRED) {
+                    start_braking(now_ms);
+                }
+            } else {
+                const float stop_distance_cm =
+                    get_odometry_stop_distance_cm(s_mode);
+
+                if (stop_distance_cm > 0.0f &&
+                    get_average_wheel_distance_cm() >= stop_distance_cm) {
                     start_braking(now_ms);
                 }
             }

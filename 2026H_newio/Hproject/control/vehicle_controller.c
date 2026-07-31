@@ -5,7 +5,47 @@
 #include "motor_driver.h"
 #include "board_hardware.h"
 
+typedef struct {
+    float kp;
+    float kd;
+    float correction_limit;
+    float correction_step;
+    uint16_t lost_hold_ticks;
+    float lost_decay;
+    float curve_slowdown_gain;
+    float curve_speed_min_scale;
+    float right_decel_step_rpm;
+    float integrate_steer_max;
+} LineControlParams;
+
+static const LineControlParams s_line_params_q2_q4 = {
+    LINE_Q2_Q4_KP,
+    LINE_Q2_Q4_KD,
+    LINE_Q2_Q4_CORRECTION_LIMIT,
+    LINE_Q2_Q4_CORRECTION_STEP,
+    LINE_Q2_Q4_LOST_HOLD_TICKS,
+    LINE_Q2_Q4_LOST_DECAY,
+    LINE_Q2_Q4_CURVE_SLOWDOWN_GAIN,
+    LINE_Q2_Q4_CURVE_SPEED_MIN_SCALE,
+    LINE_Q2_Q4_RIGHT_DECEL_STEP_RPM,
+    LINE_Q2_Q4_INTEGRATE_STEER_MAX
+};
+
+static const LineControlParams s_line_params_q5_q6 = {
+    LINE_Q5_Q6_KP,
+    LINE_Q5_Q6_KD,
+    LINE_Q5_Q6_CORRECTION_LIMIT,
+    LINE_Q5_Q6_CORRECTION_STEP,
+    LINE_Q5_Q6_LOST_HOLD_TICKS,
+    LINE_Q5_Q6_LOST_DECAY,
+    LINE_Q5_Q6_CURVE_SLOWDOWN_GAIN,
+    LINE_Q5_Q6_CURVE_SPEED_MIN_SCALE,
+    LINE_Q5_Q6_RIGHT_DECEL_STEP_RPM,
+    LINE_Q5_Q6_INTEGRATE_STEER_MAX
+};
+
 static volatile ControlMode s_mode;
+static volatile ControlLineProfile s_line_profile;
 static volatile float s_base_rpm;
 static volatile float s_left_integral;
 static volatile float s_right_integral;
@@ -29,6 +69,12 @@ static volatile float s_previous_line_error;
 static volatile int s_previous_heading_error;
 static volatile float s_last_line_correction;
 static volatile uint32_t s_control_ticks;
+
+static const LineControlParams *get_line_params(void)
+{
+    return (s_line_profile == CTRL_LINE_PROFILE_Q5_Q6) ?
+           &s_line_params_q5_q6 : &s_line_params_q2_q4;
+}
 
 static float clamp_float(float value, float low, float high)
 {
@@ -84,6 +130,7 @@ static int32_t speed_pi(float target_rpm, float measured_rpm,
 void Control_Init(void)
 {
     s_mode = CTRL_STOP;
+    s_line_profile = CTRL_LINE_PROFILE_Q2_Q4;
     s_base_rpm = 0.0f;
     s_left_integral = 0.0f;
     s_right_integral = 0.0f;
@@ -121,6 +168,24 @@ void Control_SetMode(ControlMode mode)
     if (mode == CTRL_STOP) Motor_Brake();
 }
 ControlMode Control_GetMode(void) { return s_mode; }
+void Control_SetLineProfile(ControlLineProfile profile)
+{
+    if (profile != CTRL_LINE_PROFILE_Q5_Q6) {
+        profile = CTRL_LINE_PROFILE_Q2_Q4;
+    }
+
+    __disable_irq();
+    if (profile != s_line_profile) {
+        s_left_integral = 0.0f;
+        s_right_integral = 0.0f;
+        s_previous_line_error = 0.0f;
+        s_last_line_correction = 0.0f;
+        s_line_lost_ticks = 0U;
+    }
+    s_line_profile = profile;
+    __enable_irq();
+}
+ControlLineProfile Control_GetLineProfile(void) { return s_line_profile; }
 void Control_SetBaseSpeed(float rpm) { s_base_rpm = (rpm > 0.0f) ? rpm : 0.0f; }
 float Control_GetLeftRpm(void) { return s_left_rpm; }
 float Control_GetRightRpm(void) { return s_right_rpm; }
@@ -148,6 +213,7 @@ void Control_Tick(void)
     int32_t left_count, right_count;
     float target_left, target_right;
     float correction, line_error;
+    const LineControlParams *line_params = get_line_params();
     /* Called only from the TIMER_0 ISR. A same-priority interrupt cannot
      * pre-empt itself on Cortex-M0+, so no re-entry guard is needed - and a
      * guard that early-returns would stall s_control_ticks, which is the
@@ -214,14 +280,15 @@ void Control_Tick(void)
         target_right = s_base_rpm + correction;
     } else { /* CTRL_LINE - line_error already computed above */
         if (s_line_valid != 0U) {
-            correction = LINE_KP * line_error
-                       + LINE_KD * (line_error - s_previous_line_error);
+            correction = line_params->kp * line_error
+                       + line_params->kd *
+                         (line_error - s_previous_line_error);
             s_previous_line_error = line_error;
             correction = clamp_float(correction,
-                                     -LINE_CORRECTION_LIMIT,
-                                     LINE_CORRECTION_LIMIT);
+                                     -line_params->correction_limit,
+                                     line_params->correction_limit);
             correction = slew_float(s_last_line_correction, correction,
-                                    LINE_CORRECTION_STEP);
+                                    line_params->correction_step);
             s_last_line_correction = correction;
             s_line_lost_ticks = 0U;
         } else {
@@ -232,10 +299,10 @@ void Control_Tick(void)
             if (s_line_lost_ticks < 0xFFFFU) {
                 ++s_line_lost_ticks;
             }
-            if (s_line_lost_ticks <= LINE_LOST_HOLD_TICKS) {
+            if (s_line_lost_ticks <= line_params->lost_hold_ticks) {
                 correction = s_last_line_correction;
             } else {
-                s_last_line_correction *= LINE_LOST_DECAY;
+                s_last_line_correction *= line_params->lost_decay;
                 correction = s_last_line_correction;
             }
         }
@@ -247,11 +314,12 @@ void Control_Tick(void)
          * whether the car makes the corner. */
         {
             const float steer_mag = (correction >= 0.0f) ? correction : -correction;
-            float scale = 1.0f - CURVE_SLOWDOWN_GAIN
-                                 * (steer_mag / LINE_CORRECTION_LIMIT);
+            float scale = 1.0f - line_params->curve_slowdown_gain
+                                 * (steer_mag /
+                                    line_params->correction_limit);
 
-            if (scale < CURVE_SPEED_MIN_SCALE) {
-                scale = CURVE_SPEED_MIN_SCALE;
+            if (scale < line_params->curve_speed_min_scale) {
+                scale = line_params->curve_speed_min_scale;
             }
             s_curve_base_rpm = s_base_rpm * scale;
         }
@@ -259,7 +327,7 @@ void Control_Tick(void)
         target_right = s_curve_base_rpm - correction;
         target_right = limit_target_decrease(s_right_target_rpm,
                                              target_right,
-                                             RIGHT_TARGET_DECEL_STEP_RPM);
+                                             line_params->right_decel_step_rpm);
     }
 
     target_left = (target_left > 0.0f) ? target_left : 0.0f;
@@ -276,7 +344,8 @@ void Control_Tick(void)
     {
         const float steer = (s_last_line_correction >= 0.0f) ?
                             s_last_line_correction : -s_last_line_correction;
-        const uint8_t straight = (steer < SPEED_INTEGRATE_STEER_MAX) ? 1U : 0U;
+        const uint8_t straight =
+            (steer < line_params->integrate_steer_max) ? 1U : 0U;
         const uint8_t integrate = ((s_speed_sample_ticks == 0U) && straight) ?
                                   1U : 0U;
 
