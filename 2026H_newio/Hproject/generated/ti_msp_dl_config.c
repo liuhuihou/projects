@@ -55,6 +55,7 @@ SYSCONFIG_WEAK void SYSCFG_DL_init(void)
     SYSCFG_DL_SYSCTL_init();
     SYSCFG_DL_PWM_0_init();
     SYSCFG_DL_PWM_STEPPER_init();
+    SYSCFG_DL_STEPPER_POS_CAP_init();
     SYSCFG_DL_TIMER_0_init();
     SYSCFG_DL_LINE_I2C_init();
     SYSCFG_DL_USB_init();
@@ -64,6 +65,7 @@ SYSCONFIG_WEAK void SYSCFG_DL_init(void)
     /* Ensure backup structures have no valid state */
 	gPWM_0Backup.backupRdy 	= false;
 	gPWM_STEPPERBackup.backupRdy 	= false;
+
 
 
 
@@ -99,6 +101,7 @@ SYSCONFIG_WEAK void SYSCFG_DL_initPower(void)
     DL_GPIO_reset(GPIOB);
     DL_TimerA_reset(PWM_0_INST);
     DL_TimerG_reset(PWM_STEPPER_INST);
+    DL_TimerG_reset(STEPPER_POS_CAP_INST);
     DL_TimerG_reset(TIMER_0_INST);
     DL_I2C_reset(LINE_I2C_INST);
     DL_UART_Main_reset(USB_INST);
@@ -110,6 +113,7 @@ SYSCONFIG_WEAK void SYSCFG_DL_initPower(void)
     DL_GPIO_enablePower(GPIOB);
     DL_TimerA_enablePower(PWM_0_INST);
     DL_TimerG_enablePower(PWM_STEPPER_INST);
+    DL_TimerG_enablePower(STEPPER_POS_CAP_INST);
     DL_TimerG_enablePower(TIMER_0_INST);
     DL_I2C_enablePower(LINE_I2C_INST);
     DL_UART_Main_enablePower(USB_INST);
@@ -128,6 +132,8 @@ SYSCONFIG_WEAK void SYSCFG_DL_GPIO_init(void)
     DL_GPIO_enableOutput(GPIO_PWM_0_C1_PORT, GPIO_PWM_0_C1_PIN);
     DL_GPIO_initPeripheralOutputFunction(GPIO_PWM_STEPPER_C1_IOMUX,GPIO_PWM_STEPPER_C1_IOMUX_FUNC);
     DL_GPIO_enableOutput(GPIO_PWM_STEPPER_C1_PORT, GPIO_PWM_STEPPER_C1_PIN);
+
+    DL_GPIO_initPeripheralInputFunction(GPIO_STEPPER_POS_CAP_C1_IOMUX,GPIO_STEPPER_POS_CAP_C1_IOMUX_FUNC);
 
     DL_GPIO_initPeripheralInputFunctionFeatures(GPIO_LINE_I2C_IOMUX_SDA,
         GPIO_LINE_I2C_IOMUX_SDA_FUNC, DL_GPIO_INVERSION_DISABLE,
@@ -194,6 +200,18 @@ SYSCONFIG_WEAK void SYSCFG_DL_GPIO_init(void)
     DL_GPIO_initDigitalOutput(STEPPER_DIR1_IOMUX);
 
     DL_GPIO_initDigitalOutput(STEPPER_EN1_IOMUX);
+
+    DL_GPIO_initDigitalInputFeatures(STEPPER_ENC_A_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
+
+    DL_GPIO_initDigitalInputFeatures(STEPPER_ENC_B_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
+
+    DL_GPIO_initDigitalInputFeatures(STEPPER_ENC_Z_IOMUX,
+		 DL_GPIO_INVERSION_DISABLE, DL_GPIO_RESISTOR_PULL_UP,
+		 DL_GPIO_HYSTERESIS_DISABLE, DL_GPIO_WAKEUP_DISABLE);
 
     DL_GPIO_clearPins(GPIOA, MOTOR_A_DIR_AIN1_PIN |
 		MOTOR_A_DIR_AIN2_PIN |
@@ -358,6 +376,44 @@ SYSCONFIG_WEAK void SYSCFG_DL_PWM_STEPPER_init(void) {
 
 }
 
+
+
+/*
+ * Timer clock configuration to be sourced by BUSCLK /  (40000000 Hz)
+ * timerClkFreq = (timerClkSrc / (timerClkDivRatio * (timerClkPrescale + 1)))
+ *   10000000 Hz = 40000000 Hz / (1 * (3 + 1))
+ */
+static const DL_TimerG_ClockConfig gSTEPPER_POS_CAPClockConfig = {
+    .clockSel    = DL_TIMER_CLOCK_BUSCLK,
+    .divideRatio = DL_TIMER_CLOCK_DIVIDE_1,
+    .prescale = 3U
+};
+
+/*
+ * Timer load value (where the counter starts from) is calculated as (timerPeriod * timerClockFreq) - 1
+ * STEPPER_POS_CAP_INST_LOAD_VALUE = (6.5535 ms * 10000000 Hz) - 1
+ */
+static const DL_TimerG_CaptureCombinedConfig gSTEPPER_POS_CAPCaptureConfig = {
+    .captureMode    = DL_TIMER_CAPTURE_COMBINED_MODE_PULSE_WIDTH_AND_PERIOD,
+    .period         = STEPPER_POS_CAP_INST_LOAD_VALUE,
+    .startTimer     = DL_TIMER_STOP,
+    .inputChan      = DL_TIMER_INPUT_CHAN_1,
+    .inputInvMode   = DL_TIMER_CC_INPUT_INV_NOINVERT,
+};
+
+SYSCONFIG_WEAK void SYSCFG_DL_STEPPER_POS_CAP_init(void) {
+
+    DL_TimerG_setClockConfig(STEPPER_POS_CAP_INST,
+        (DL_TimerG_ClockConfig *) &gSTEPPER_POS_CAPClockConfig);
+
+    DL_TimerG_initCaptureCombinedMode(STEPPER_POS_CAP_INST,
+        (DL_TimerG_CaptureCombinedConfig *) &gSTEPPER_POS_CAPCaptureConfig);
+    DL_TimerG_enableInterrupt(STEPPER_POS_CAP_INST , DL_TIMERG_INTERRUPT_CC0_DN_EVENT |
+		DL_TIMERG_INTERRUPT_ZERO_EVENT);
+
+    DL_TimerG_enableClock(STEPPER_POS_CAP_INST);
+
+}
 
 
 /*

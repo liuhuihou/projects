@@ -109,6 +109,21 @@ extern "C" {
 
 
 
+/* Defines for STEPPER_POS_CAP */
+#define STEPPER_POS_CAP_INST                                             (TIMG8)
+#define STEPPER_POS_CAP_INST_IRQHandler                         TIMG8_IRQHandler
+#define STEPPER_POS_CAP_INST_INT_IRQN                           (TIMG8_INT_IRQn)
+#define STEPPER_POS_CAP_INST_LOAD_VALUE                                 (65534U)
+/* GPIO defines for channel 1 */
+#define GPIO_STEPPER_POS_CAP_C1_PORT                                       GPIOA
+#define GPIO_STEPPER_POS_CAP_C1_PIN                               DL_GPIO_PIN_27
+#define GPIO_STEPPER_POS_CAP_C1_IOMUX                            (IOMUX_PINCM60)
+#define GPIO_STEPPER_POS_CAP_C1_IOMUX_FUNC             IOMUX_PINCM60_PF_TIMG8_CCP1
+
+
+
+
+
 /* Defines for TIMER_0 */
 #define TIMER_0_INST                                                     (TIMG0)
 #define TIMER_0_INST_IRQHandler                                 TIMG0_IRQHandler
@@ -268,6 +283,18 @@ extern "C" {
 #define STEPPER_EN1_PORT                                                 (GPIOA)
 #define STEPPER_EN1_PIN                                         (DL_GPIO_PIN_12)
 #define STEPPER_EN1_IOMUX                                        (IOMUX_PINCM34)
+/* Port definition for Pin Group STEPPER_ENC */
+#define STEPPER_ENC_PORT                                                 (GPIOA)
+
+/* Defines for A: GPIOA.22 with pinCMx 47 on package pin 40 */
+#define STEPPER_ENC_A_PIN                                       (DL_GPIO_PIN_22)
+#define STEPPER_ENC_A_IOMUX                                      (IOMUX_PINCM47)
+/* Defines for B: GPIOA.24 with pinCMx 54 on package pin 44 */
+#define STEPPER_ENC_B_PIN                                       (DL_GPIO_PIN_24)
+#define STEPPER_ENC_B_IOMUX                                      (IOMUX_PINCM54)
+/* Defines for Z: GPIOA.9 with pinCMx 20 on package pin 17 */
+#define STEPPER_ENC_Z_PIN                                        (DL_GPIO_PIN_9)
+#define STEPPER_ENC_Z_IOMUX                                      (IOMUX_PINCM20)
 
 
 
@@ -279,6 +306,7 @@ void SYSCFG_DL_GPIO_init(void);
 void SYSCFG_DL_SYSCTL_init(void);
 void SYSCFG_DL_PWM_0_init(void);
 void SYSCFG_DL_PWM_STEPPER_init(void);
+void SYSCFG_DL_STEPPER_POS_CAP_init(void);
 void SYSCFG_DL_TIMER_0_init(void);
 void SYSCFG_DL_LINE_I2C_init(void);
 void SYSCFG_DL_USB_init(void);

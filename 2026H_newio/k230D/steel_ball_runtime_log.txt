@@ -1,0 +1,41 @@
+steel_ball runtime log
+model_candidate /sdcard/examples/kmodel/steel_ball_uint8_k230d_calib.kmodel size=3686072 expected=3686072
+start
+model_size=3686072
+pipeline_create_begin
+pipeline_create_done
+detector_init_begin
+detector_init_done
+preprocess_config_begin
+preprocess_config_done
+steel_ball track pos=(357.50,325.00) raw=(357.50,325.00) norm=(0.5595,0.5086) d=(37.50,5.00) v=(0.00,0.00) a=(0.00,0.00) axis=x s=357.50 s_norm=0.5595 v=0.00 a=0.00 dir=stop box=(336,296,379,354) score=0.524 max=0.524
+steel_ball track pos=(357.50,321.75) raw=(357.50,320.00) norm=(0.5595,0.5008) d=(37.50,0.00) v=(0.00,-8.11) a=(0.00,-17.40) axis=x s=357.50 s_norm=0.5595 v=0.00 a=0.00 dir=stop box=(336,291,379,349) score=0.455 max=0.455
+steel_ball track pos=(355.88,323.54) raw=(355.00,324.50) norm=(0.5556,0.5078) d=(35.00,4.50) v=(-5.61,6.45) a=(-16.66,32.79) axis=x s=355.88 s_norm=0.5569 v=-5.61 a=-16.66 dir=stop box=(335,297,375,352) score=0.544 max=0.544
+steel_ball track pos=(345.23,346.91) raw=(339.50,359.50) norm=(0.5313,0.5626) d=(19.50,39.50) v=(-35.70,77.81) a=(-95.13,221.60) axis=x s=345.23 s_norm=0.5403 v=-35.70 a=-95.13 dir=left box=(318,333,361,386) score=0.374 max=0.374
+steel_ball track pos=(344.76,350.54) raw=(344.50,352.50) norm=(0.5391,0.5516) d=(24.50,32.50) v=(-8.00,23.72) a=(1.99,17.61) axis=x s=344.76 s_norm=0.5395 v=-8.00 a=1.99 dir=stop box=(323,326,366,379) score=0.394 max=0.394
+steel_ball track pos=(350.01,347.70) raw=(350.00,354.50) norm=(0.5477,0.5548) d=(30.00,34.50) v=(-0.10,37.42) a=(-26.92,128.17) axis=x s=350.01 s_norm=0.5477 v=-0.10 a=-26.92 dir=stop box=(330,327,370,382) score=0.586 max=0.586
+steel_ball track pos=(368.09,174.97) raw=(367.50,220.00) norm=(0.5751,0.3443) d=(47.50,-100.00) v=(-2.47,300.27) a=(-37.95,1110.17) axis=x s=368.09 s_norm=0.5760 v=-2.47 a=-37.95 dir=stop box=(345,190,390,250) score=0.475 max=0.475
+steel_ball track pos=(377.75,147.54) raw=(379.50,79.50) norm=(0.5939,0.1244) d=(59.50,-240.50) v=(12.29,-468.34) a=(-15.22,-642.75) axis=x s=377.75 s_norm=0.5912 v=12.29 a=-15.22 dir=right box=(358,53,401,106) score=0.730 max=0.730
+steel_ball track pos=(363.95,500.26) raw=(362.50,535.00) norm=(0.5673,0.8372) d=(42.50,215.00) v=(-12.09,288.60) a=(0.39,-93.20) axis=x s=363.95 s_norm=0.5696 v=-12.09 a=0.39 dir=left box=(341,510,384,560) score=0.455 max=0.455
+steel_ball track pos=(382.09,125.83) raw=(382.00,147.00) norm=(0.5978,0.2300) d=(62.00,-173.00) v=(0.22,109.60) a=(-22.19,948.85) axis=x s=382.09 s_norm=0.5979 v=0.22 a=-22.19 dir=stop box=(358,116,406,178) score=0.292 max=0.292
+steel_ball track pos=(401.61,522.94) raw=(400.00,542.50) norm=(0.6260,0.8490) d=(80.00,222.50) v=(-4.63,124.56) a=(-132.88,380.62) axis=x s=401.61 s_norm=0.6285 v=-4.63 a=-132.88 dir=stop box=(381,517,419,568) score=0.079 max=0.079
+steel_ball not_found locked=True missed=6 max_conf=0.0483 max_ind=7590
+steel_ball not_found locked=False missed=7 max_conf=0.0147 max_ind=7841
+steel_ball not_found locked=False missed=7 max_conf=0.0067 max_ind=6995
+steel_ball not_found locked=False missed=7 max_conf=0.0100 max_ind=1119
+steel_ball track pos=(327.43,412.34) raw=(322.50,427.50) norm=(0.5047,0.6690) d=(2.50,107.50) v=(-21.48,59.29) a=(-1.15,-28.42) axis=x s=327.43 s_norm=0.5124 v=-21.48 a=-1.15 dir=left box=(305,405,340,450) score=0.086 max=0.086
+steel_ball not_found locked=False missed=7 max_conf=0.0411 max_ind=6488
+steel_ball track pos=(365.20,202.06) raw=(364.50,219.50) norm=(0.5704,0.3435) d=(44.50,-100.50) v=(-7.69,139.16) a=(-36.30,464.39) axis=x s=365.20 s_norm=0.5715 v=-7.69 a=-36.30 dir=stop box=(343,193,386,246) score=0.606 max=0.606
+steel_ball track pos=(353.86,485.21) raw=(355.00,487.50) norm=(0.5556,0.7629) d=(35.00,167.50) v=(5.22,42.03) a=(62.03,-487.80) axis=x s=353.86 s_norm=0.5538 v=5.22 a=62.03 dir=stop box=(335,462,375,513) score=0.079 max=0.079
+steel_ball track pos=(378.84,327.65) raw=(380.00,325.00) norm=(0.5947,0.5086) d=(60.00,5.00) v=(6.09,3.49) a=(16.73,-258.66) axis=x s=378.84 s_norm=0.5929 v=6.09 a=16.73 dir=stop box=(360,301,400,349) score=0.353 max=0.353
+steel_ball track pos=(368.29,444.61) raw=(367.00,465.00) norm=(0.5743,0.7277) d=(47.00,145.00) v=(-9.82,148.08) a=(-9.71,259.64) axis=x s=368.29 s_norm=0.5764 v=-9.82 a=-9.71 dir=left box=(347,440,387,490) score=0.168 max=0.168
+steel_ball track pos=(408.20,161.67) raw=(429.50,97.00) norm=(0.6721,0.1518) d=(109.50,-223.00) v=(114.59,-341.53) a=(235.43,-473.58) axis=x s=408.20 s_norm=0.6388 v=114.59 a=235.43 dir=right box=(403,66,456,128) score=0.414 max=0.414
+steel_ball track pos=(359.32,352.79) raw=(359.50,349.50) norm=(0.5626,0.5469) d=(39.50,29.50) v=(-2.20,-8.99) a=(103.90,-409.02) axis=x s=359.32 s_norm=0.5623 v=-2.20 a=103.90 dir=stop box=(337,322,382,377) score=0.227 max=0.227
+steel_ball track pos=(297.50,287.71) raw=(295.00,280.00) norm=(0.4617,0.4382) d=(-25.00,-40.00) v=(-16.27,-52.06) a=(6.46,-98.58) axis=x s=297.50 s_norm=0.4656 v=-16.27 a=6.46 dir=left box=(270,250,320,310) score=0.212 max=0.212
+steel_ball track pos=(302.98,225.25) raw=(302.00,224.50) norm=(0.4726,0.3513) d=(-18.00,-95.50) v=(-6.55,-6.69) a=(-18.62,30.17) axis=x s=302.98 s_norm=0.4741 v=-6.55 a=-18.62 dir=stop box=(277,193,327,256) score=0.157 max=0.157
+steel_ball track pos=(330.19,167.13) raw=(340.00,170.00) norm=(0.5321,0.2660) d=(20.00,-150.00) v=(64.49,18.96) a=(194.50,47.14) axis=x s=330.19 s_norm=0.5167 v=64.49 a=194.50 dir=right box=(316,140,364,200) score=0.168 max=0.168
+steel_ball not_found locked=True missed=3 max_conf=0.0725 max_ind=7319
+steel_ball not_found locked=False missed=7 max_conf=0.0339 max_ind=7839
+steel_ball track pos=(277.83,70.50) raw=(267.50,49.50) norm=(0.4186,0.0775) d=(-52.50,-270.50) v=(-68.75,-139.83) a=(-211.86,-430.91) axis=x s=277.83 s_norm=0.4348 v=-68.75 a=-211.86 dir=left box=(246,26,289,73) score=0.743 max=0.743
+steel_ball not_found locked=True missed=5 max_conf=0.2266 max_ind=5965
+exception=Exception('IDE interrupt',)

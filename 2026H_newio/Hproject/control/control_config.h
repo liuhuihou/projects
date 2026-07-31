@@ -66,5 +66,20 @@
 #define BALANCE_OUTPUT_LIMIT    (3000)   /* max steps/sec */
 #define BALANCE_INTEGRAL_LIMIT  (500.0f)
 #define BALANCE_PERIOD_MS       (20U)    /* 50Hz update rate */
+/* A camera frame older than this means the link is down, not that the ball is
+ * merely out of view - the K230 sends a frame every iteration either way. Three
+ * missed frames at 27 fps is ~110 ms, so 150 ms tolerates a hiccup without
+ * letting the PID drive on genuinely dead data. */
+#define BALANCE_DATA_TIMEOUT_MS (150U)
+/* Take the D term from the velocity the K230 already filtered, instead of
+ * differencing position here. Two reasons: the balance tick runs at 50 Hz while
+ * frames arrive at ~27 Hz, so a per-tick difference is a real delta on some
+ * ticks and exactly zero on the others - a square wave through KD; and the
+ * K230's own filter works on frame timestamps, which are the correct dt.
+ * Set to 0 to fall back to differencing, which now only recomputes on a new
+ * frame and normalises by the actual frame interval. */
+#ifndef BALANCE_USE_CAMERA_VELOCITY
+#define BALANCE_USE_CAMERA_VELOCITY (1)
+#endif
 
 #endif

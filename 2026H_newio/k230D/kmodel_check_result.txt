@@ -1,0 +1,51 @@
+checking: /sdcard/examples/kmodel/steel_ball.kmodel
+kmodel dir files:
+  hand_det.kmodel
+  face_recognition.kmodel
+  hand_reco.kmodel
+  fruit_seg_yolov5n_320.kmodel
+  face_landmark.kmodel
+  fruit_det_yolov5n_320.kmodel
+  yolov8n-obb.kmodel
+  yolov5n-falldown.kmodel
+  hifigan.kmodel
+  multi_kws.kmodel
+  ocr_det_int16.kmodel
+  gesture.kmodel
+  face_parse.kmodel
+  eye_gaze.kmodel
+  fruit_det_yolo11n_320.kmodel
+  yolov8n_224.kmodel
+  ocr_rec_int16.kmodel
+  recognition.kmodel
+  cropped_test127.kmodel
+  handkp_det.kmodel
+  zh_fastspeech_1_f32.kmodel
+  nanotrack_backbone_sim.kmodel
+  zh_fastspeech_2.kmodel
+  LPD_640.kmodel
+  body_seg.kmodel
+  licence_reco.kmodel
+  face_pose.kmodel
+  face_alignment_post.kmodel
+  yolo11n-obb.kmodel
+  fruit_cls_yolov5n_224.kmodel
+  kws.kmodel
+  fruit_cls_yolo11n_224.kmodel
+  face_detection_320.kmodel
+  person_detect_yolov5n.kmodel
+  yunet_640.kmodel
+  yolov8n-pose.kmodel
+  fruit_seg_yolo11n_320.kmodel
+  fruit_cls_yolov8n_224.kmodel
+  fruit_det_yolov8n_320.kmodel
+  fruit_seg_yolov8n_320.kmodel
+  yolov8n_seg_320.kmodel
+  face_recognition_mobile.kmodel
+  yolov8n_320.kmodel
+  face_alignment.kmodel
+  nanotracker_head_calib_k230.kmodel
+  steel_ball.kmodel
+size = 12138752
+head = b'LDMK\x07\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00'
+size_check = OK

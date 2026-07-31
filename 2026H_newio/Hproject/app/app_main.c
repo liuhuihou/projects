@@ -68,6 +68,37 @@ static void oled_show_mode_select(void)
 
     OLED_ShowString(0, 3, state_str(state));
 
+    /* Rest of row 3: K230 vision link. Columns 0..5 hold the state string, so
+     * this starts at 7 and a row holds 21 characters.
+     *   "K-- ---"   no frame in the last 200 ms: link down, check wiring
+     *   "K?? ---"   frames arriving but the ruler is not locked
+     *   "K 123 27"  position in mm, then the camera's own frame rate
+     * A lowercase p in place of the leading space means the position came from
+     * extrapolation rather than a fresh detection. The distinction matters when
+     * debugging: a dead link and a ball out of view look identical otherwise. */
+    {
+        const CameraData *cam = Camera_GetData();
+        uint32_t now = app_time_ms();
+        /* Every branch must fill the same span, columns 7..16, or switching to
+         * a shorter one leaves the tail of the previous message on screen.
+         * ShowSignedInt writes a sign plus `width` columns, which is what makes
+         * the last branch reach 16. */
+        if (!Camera_IsDataFresh(now, 200U)) {
+            OLED_ShowString(7, 3, "K-- ---   ");
+        } else if ((cam->flags & CAMERA_FLAG_VALID) == 0U) {
+            OLED_ShowString(7, 3, "K?? ");
+            OLED_ShowNum(11, 3, cam->fps, 3);
+            OLED_ShowString(14, 3, "   ");
+        } else {
+            OLED_ShowChar(7, 3, 'K');
+            OLED_ShowChar(8, 3,
+                          ((cam->flags & CAMERA_FLAG_DETECTED) != 0U) ? ' ' : 'p');
+            OLED_ShowSignedInt(9, 3, (int)cam->ball_pos_mm, 4);
+            OLED_ShowChar(14, 3, ' ');
+            OLED_ShowNum(15, 3, cam->fps, 2);
+        }
+    }
+
     /* Rows 4/5: measured vs target wheel speed in cm/s.
      * Format "L:12.3 T:25.0" - actual on the left, target after T. */
     OLED_ShowString(0, 4, "L:");
@@ -128,10 +159,28 @@ static void oled_show_mode_select(void)
  * it was never called and no camera byte ever reached the parser. */
 void K230_INST_IRQHandler(void)
 {
-    if (DL_UART_Main_getPendingInterrupt(HW_K230_UART) ==
-        DL_UART_MAIN_IIDX_RX) {
-        uint8_t byte = DL_UART_Main_receiveData(HW_K230_UART);
-        Camera_FeedByte(byte);
+    switch (DL_UART_Main_getPendingInterrupt(HW_K230_UART)) {
+        case DL_UART_MAIN_IIDX_RX: {
+            /* Drain the whole FIFO, not one byte. The FIFO is enabled, so one
+             * interrupt can cover several bytes; taking only the first left the
+             * rest to arrive as a burst on the next interrupt at best, and be
+             * overrun at worst. A 12-byte frame at 115200 is ~1 ms, and the
+             * camera sends ~27 of them a second, so this loop is short. */
+            uint32_t now_ms = app_time_ms();
+            while (!DL_UART_Main_isRXFIFOEmpty(HW_K230_UART)) {
+                Camera_FeedByte(DL_UART_Main_receiveData(HW_K230_UART), now_ms);
+            }
+            break;
+        }
+        case DL_UART_MAIN_IIDX_OVERRUN_ERROR:
+        case DL_UART_MAIN_IIDX_FRAMING_ERROR:
+        case DL_UART_MAIN_IIDX_RX_TIMEOUT_ERROR:
+            /* Reading the IIDX already cleared the flag. Nothing to salvage
+             * from a corrupted byte - the CRC would reject the frame anyway,
+             * and the parser resyncs on the next 0xAA 0x55. */
+            break;
+        default:
+            break;
     }
 }
 

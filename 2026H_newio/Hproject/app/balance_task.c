@@ -72,6 +72,7 @@ uint8_t BalanceTask_IsComplete(void)
 void BalanceTask_Update(uint32_t now_ms)
 {
     int16_t error;
+    uint8_t tracking;
 
     if (s_bt_state == BT_IDLE || s_bt_state == BT_COMPLETE) return;
 
@@ -80,6 +81,14 @@ void BalanceTask_Update(uint32_t now_ms)
 
     if (s_phase_start_ms == 0) s_phase_start_ms = now_ms;
 
+    /* Balance_GetError() only means anything while the PID is actually running
+     * on a usable camera position. Reading it unconditionally was a real bug:
+     * with the camera silent the error stays at its initial 0, every phase sees
+     * |error| < 10 on its first tick, and Q3 walks PHASE1 -> PHASE2 -> PHASE3 ->
+     * COMPLETE in about 500 ms without the ball having moved at all. The phase
+     * timeouts below still run either way, so a dead camera degrades to "each
+     * phase times out" rather than hanging. */
+    tracking = Balance_IsTracking();
     error = Balance_GetError();
 
     switch (s_mode) {
@@ -88,7 +97,7 @@ void BalanceTask_Update(uint32_t now_ms)
             switch (s_bt_state) {
                 case BT_PHASE1:
                     /* Wait until ball reaches +50mm (within 10mm) */
-                    if (error < 10 && error > -10) {
+                    if (tracking && error < 10 && error > -10) {
                         /* Reached +5cm, now go to -5cm */
                         Balance_SetTarget(-50);
                         s_bt_state = BT_PHASE2;
@@ -104,7 +113,7 @@ void BalanceTask_Update(uint32_t now_ms)
 
                 case BT_PHASE2:
                     /* Wait until ball reaches -50mm */
-                    if (error < 10 && error > -10) {
+                    if (tracking && error < 10 && error > -10) {
                         s_bt_state = BT_PHASE3;
                         s_phase_start_ms = now_ms;
                     }
