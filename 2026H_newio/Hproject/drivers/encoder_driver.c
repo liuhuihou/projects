@@ -78,3 +78,11 @@ float Encoder_CountsToRpm(int32_t count, uint32_t sample_ms)
     if (sample_ms == 0U) return 0.0f;
     return ((float)count * 60000.0f) / (counts_per_wheel_rev * (float)sample_ms);
 }
+
+float Encoder_CountsToDistanceCm(int32_t count, float wheel_circumference_cm)
+{
+    const float counts_per_wheel_rev = ENCODER_LINES_PER_MOTOR_REV
+                                     * ENCODER_EDGE_FACTOR
+                                     * ENCODER_GEAR_RATIO;
+    return ((float)count * wheel_circumference_cm) / counts_per_wheel_rev;
+}

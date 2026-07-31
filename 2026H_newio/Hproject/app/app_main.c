@@ -54,8 +54,14 @@ static void oled_show_mode_select(void)
     CompetitionQuestion mode = Competition_GetMode();
     CompetitionState state = Competition_GetState();
     uint32_t elapsed = Competition_GetElapsedMs();
+    const uint32_t display_elapsed =
+        (state == STATE_IDLE) ? 0U : elapsed;
 
-    OLED_ShowString(0, 0, "H BALANCE CAR");
+    /* Common timer for Q2..Q6: zero while idle, running time after start,
+     * and the frozen result after automatic or manual stop. */
+    OLED_ShowString(0, 0, "TIME:");
+    OLED_ShowTenths(5, 0, (int32_t)(display_elapsed / 100U), 3);
+    OLED_ShowString(10, 0, "S          ");
     /* Row 2: selected sub-question */
     switch (mode) {
         case COMP_Q2: OLED_ShowString(0, 2, "Q2:LAP 20S  "); break;

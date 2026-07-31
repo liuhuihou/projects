@@ -45,6 +45,14 @@ static float slew_float(float current, float requested, float step)
     return requested;
 }
 
+/* Limit only a target decrease. An increase remains immediate so curve-exit
+ * recovery is not delayed. */
+static float limit_target_decrease(float current, float requested, float step)
+{
+    if (requested < (current - step)) return current - step;
+    return requested;
+}
+
 static int32_t speed_pi(float target_rpm, float measured_rpm,
                          float feed_forward, volatile float *integral,
                          uint8_t integrate)
@@ -249,6 +257,9 @@ void Control_Tick(void)
         }
         target_left = s_curve_base_rpm + correction;
         target_right = s_curve_base_rpm - correction;
+        target_right = limit_target_decrease(s_right_target_rpm,
+                                             target_right,
+                                             RIGHT_TARGET_DECEL_STEP_RPM);
     }
 
     target_left = (target_left > 0.0f) ? target_left : 0.0f;

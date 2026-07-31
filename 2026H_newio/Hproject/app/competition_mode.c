@@ -52,8 +52,6 @@ static void start_task(uint32_t now_ms)
     s_elapsed_ms = 0;
     s_state = STATE_RUNNING;
 
-    Control_ResetDistance();
-
     switch (s_mode) {
         case COMP_Q2:
             /* Pure line follow, fast lap */

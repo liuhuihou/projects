@@ -33,7 +33,7 @@
 #define SPEED_INTEGRAL_BLEED      (0.90f)
 
 /* ============ Line Following PD ============ */
-#define LINE_KP                 (12.00f)
+#define LINE_KP                 (10.00f)
 #define LINE_KD                 (6.00f)
 #define LINE_CORRECTION_LIMIT   (25.0f)
 #define LINE_CORRECTION_STEP    (20.0f)
@@ -41,19 +41,21 @@
  * 10 ms cycles so a brief dropout mid-curve does not straighten the car,
  * then decayed each cycle so a sustained dropout on a curve exit does not
  * keep the car turning at full scale until it leaves the track. */
-#define LINE_LOST_HOLD_TICKS    (5U)
-#define LINE_LOST_DECAY         (0.85f)
+#define LINE_LOST_HOLD_TICKS    (2U)
+#define LINE_LOST_DECAY         (0.70f)
 
 /* ============ Curve Slowdown ============ */
 /* Base speed is scaled down in proportion to steering effort:
  *   scale = 1 - GAIN * (|correction| / LINE_CORRECTION_LIMIT)
- * At full deflection with GAIN=0.45 the car runs at 55% of the straight-line
+ * At full deflection with GAIN=0.25 the car runs at 75% of the straight-line
  * speed. This decouples cornering from entry speed: without it the first
  * curve (entered slowly after the start) is made and the second (entered at
  * full speed off a 1.5 m straight) is not, because turn radius for a given
  * wheel-speed differential grows with forward speed. */
 #define CURVE_SLOWDOWN_GAIN     (0.30f)
 #define CURVE_SPEED_MIN_SCALE   (0.70f)
+/* Maximum right-wheel target RPM decrease per 10 ms control period. */
+#define RIGHT_TARGET_DECEL_STEP_RPM (15.0f)
 
 /* ============ Straight Heading Correction ============ */
 #define STRAIGHT_KP             (0.20f)

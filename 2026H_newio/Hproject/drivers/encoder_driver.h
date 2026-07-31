@@ -9,5 +9,6 @@ extern volatile int32_t g_encoder_b_count;
 void Encoder_Init(void);
 void Encoder_TakeCounts(int32_t *encoder_a, int32_t *encoder_b);
 float Encoder_CountsToRpm(int32_t count, uint32_t sample_ms);
+float Encoder_CountsToDistanceCm(int32_t count, float wheel_circumference_cm);
 
 #endif

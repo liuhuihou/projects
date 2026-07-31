@@ -17,6 +17,7 @@ static uint8_t s_filtered;
  * A single byte, so the handoff needs no lock - the ISR either sees the
  * previous sample or the new one, never a mix. */
 static volatile uint8_t s_raw;
+static volatile uint32_t s_sample_sequence;
 static uint8_t s_fail_count;
 
 static uint8_t i2c_wait_idle(void)
@@ -99,6 +100,7 @@ void LineSensor_Init(void)
     }
     s_filtered = 0U;
     s_raw = 0U;
+    s_sample_sequence = 0U;
     /* Start at the limit so the sensor only counts as online once a read has
      * actually succeeded, rather than reporting healthy before the first
      * transfer has happened. */
@@ -111,6 +113,7 @@ uint8_t LineSensor_Poll(void)
 
     if (i2c_read_reg(HW_LINE_SENSOR_REG_STATE, &state, 1U)) {
         s_raw = normalise_bits(state);
+        ++s_sample_sequence;
         s_fail_count = 0U;
         return 1U;
     }
@@ -149,14 +152,19 @@ void LineSensor_Update(void)
 }
 
 uint8_t LineSensor_ReadRaw(void) { return s_raw; }
+uint32_t LineSensor_GetSampleSequence(void) { return s_sample_sequence; }
 uint8_t LineSensor_Read(void) { return s_filtered; }
 
 uint8_t LineSensor_GetSteeringError(float *error)
 {
+    static const float weights[LINE_SENSOR_COUNT] = {
+        -5.0f, -3.0f, -1.5f, -0.5f,
+         0.5f,  1.5f,  3.0f,  5.0f
+    };
     const uint8_t state = s_filtered;
     uint8_t started = 0U;
     uint8_t ended = 0U;
-    int sum = 0;
+    float sum = 0.0f;
     int active_count = 0;
     uint32_t i;
 
@@ -177,24 +185,13 @@ uint8_t LineSensor_GetSteeringError(float *error)
         if (black != 0U) {
             if (ended != 0U) return 0U;
             started = 1U;
-            /* Half-channel units, symmetric about centre and odd-valued so no
-             * channel sits exactly at zero. 8 channels give -7,-5,-3,-1,1,3,
-             * 5,7; the 6-channel board gave -5..5.
-             * The unit is half a probe pitch, so for the same physical offset
-             * from the line the number is unchanged by the channel count -
-             * LINE_KP does not scale with it. What changes is the saturation
-             * limit, +/-7 instead of +/-5, so a line pinned at the outermost
-             * channel now asks for about 1.4x the correction it used to.
-             * Probe pitch is what LINE_KP really tracks: a tighter pitch means
-             * a larger number for the same offset, so the gain has to come
-             * down in proportion. */
-            sum += (int)(2U * i) - (int)(LINE_SENSOR_COUNT - 1U);
+            sum += weights[i];
             ++active_count;
         } else if (started != 0U) {
             ended = 1U;
         }
     }
 
-    *error = (float)sum / (float)active_count;
+    *error = sum / (float)active_count;
     return 1U;
 }

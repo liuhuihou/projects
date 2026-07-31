@@ -48,6 +48,11 @@ void LineSensor_Update(void);
 /* Latest cached sample, unfiltered. */
 uint8_t LineSensor_ReadRaw(void);
 
+/* Increments only after a successful I2C state-register read. Consumers that
+ * confirm events across samples can use this to avoid counting a held stale
+ * sample repeatedly when the bus read fails. */
+uint32_t LineSensor_GetSampleSequence(void);
+
 /* Filtered channel bitmask. */
 uint8_t LineSensor_Read(void);
 
