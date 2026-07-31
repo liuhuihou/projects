@@ -71,16 +71,32 @@
 /* AB count at the measured horizontal position and the permanent mechanical
  * travel window. Positive STEP increases AB and raises the tube's positive
  * (front) end. */
-#define BALANCE_LEVEL_AB_COUNT          (330)
+#define BALANCE_LEVEL_AB_COUNT          (270)
 #define BALANCE_TRAVEL_AB_MIN           (50)
 #define BALANCE_TRAVEL_AB_MAX           (1050)
 
 /* Outer loop: ball position/velocity -> requested beam offset in AB counts.
- * These are the reference system's conservative starting gains; they require
- * final tuning on the assembled mechanism. */
-#define BALANCE_POSITION_KP             (0.20f)
-#define BALANCE_POSITION_KI             (0.00f)
-#define BALANCE_VELOCITY_KD             (0.20f)
+ * Each competition question has its own gains.  They intentionally start with
+ * the previously tuned common values so selecting a profile does not change
+ * behaviour; from now on each question can be tuned independently. */
+#define BALANCE_Q3_POSITION_KP          (0.70f)
+#define BALANCE_Q3_POSITION_KI          (0.10f)
+#define BALANCE_Q3_VELOCITY_KD          (0.30f)
+
+#define BALANCE_Q4_POSITION_KP          (0.70f)
+#define BALANCE_Q4_POSITION_KI          (0.10f)
+#define BALANCE_Q4_VELOCITY_KD          (0.30f)
+
+#define BALANCE_Q5_POSITION_KP          (0.70f)
+#define BALANCE_Q5_POSITION_KI          (0.10f)
+#define BALANCE_Q5_VELOCITY_KD          (0.30f)
+
+#define BALANCE_Q6_POSITION_KP          (0.70f)
+#define BALANCE_Q6_POSITION_KI          (0.10f)
+#define BALANCE_Q6_VELOCITY_KD          (0.30f)
+
+/* These limits and the AB angle loop describe the common mechanism, so they
+ * remain shared by all four outer-loop profiles. */
 #define BALANCE_POSITION_INTEGRAL_LIMIT (500.0f)
 #define BALANCE_TILT_LIMIT_AB           (250.0f)
 

@@ -18,6 +18,9 @@ typedef struct {
 
 void StepperFeedback_Init(void);
 void StepperFeedback_ResetCounts(void);
+/* Declare the mechanism's current physical pose to be quadrature_count. This
+ * is used when the operator places the tube horizontal before starting Q3. */
+void StepperFeedback_ResetCountsAt(int32_t quadrature_count);
 void StepperFeedback_GetSnapshot(StepperFeedbackSnapshot *snapshot);
 void StepperFeedback_HandleGpioInterrupt(uint32_t status);
 

@@ -76,7 +76,7 @@
   ..\control\control_config.h ..\drivers\motor_driver.h \
   ..\drivers\encoder_driver.h ..\drivers\line_sensor.h \
   ..\drivers\oled_driver.h ..\drivers\button_input.h \
-  ..\drivers\stepper_driver.h ..\drivers\camera_uart.h \
-  ..\control\vehicle_controller.h ..\control\balance_controller.h \
-  ..\app\competition_mode.h ..\app\line_follow_task.h \
-  ..\app\balance_task.h
+  ..\drivers\stepper_driver.h ..\drivers\stepper_feedback.h \
+  ..\drivers\camera_uart.h ..\control\vehicle_controller.h \
+  ..\control\balance_controller.h ..\app\competition_mode.h \
+  ..\app\line_follow_task.h ..\app\balance_task.h

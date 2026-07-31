@@ -12,6 +12,7 @@
 "..\build\keil\objects\debug_uart.o"
 "..\build\keil\objects\button_input.o"
 "..\build\keil\objects\stepper_driver.o"
+"..\build\keil\objects\stepper_feedback.o"
 "..\build\keil\objects\camera_uart.o"
 "..\build\keil\objects\ti_msp_dl_config.o"
 "..\build\keil\objects\startup_mspm0g350x_uvision.o"

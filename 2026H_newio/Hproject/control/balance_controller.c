@@ -14,6 +14,10 @@ static int16_t s_ball_velocity_mm_s;
 static int32_t s_target_ab;
 static uint32_t s_last_tick_ms;
 static uint8_t s_tick_started;
+static BalancePidProfile s_pid_profile;
+static float s_position_kp;
+static float s_position_ki;
+static float s_velocity_kd;
 
 #if !BALANCE_USE_CAMERA_VELOCITY
 /* Derivative state, only needed when differencing position here. The camera
@@ -43,6 +47,50 @@ static void derivative_reset(void)
 #define derivative_reset() ((void)0)
 #endif
 
+static void load_pid_profile(BalancePidProfile profile)
+{
+    switch (profile) {
+        case BALANCE_PID_PROFILE_Q4:
+            s_position_kp = BALANCE_Q4_POSITION_KP;
+            s_position_ki = BALANCE_Q4_POSITION_KI;
+            s_velocity_kd = BALANCE_Q4_VELOCITY_KD;
+            break;
+
+        case BALANCE_PID_PROFILE_Q5:
+            s_position_kp = BALANCE_Q5_POSITION_KP;
+            s_position_ki = BALANCE_Q5_POSITION_KI;
+            s_velocity_kd = BALANCE_Q5_VELOCITY_KD;
+            break;
+
+        case BALANCE_PID_PROFILE_Q6:
+            s_position_kp = BALANCE_Q6_POSITION_KP;
+            s_position_ki = BALANCE_Q6_POSITION_KI;
+            s_velocity_kd = BALANCE_Q6_VELOCITY_KD;
+            break;
+
+        case BALANCE_PID_PROFILE_Q3:
+        default:
+            profile = BALANCE_PID_PROFILE_Q3;
+            s_position_kp = BALANCE_Q3_POSITION_KP;
+            s_position_ki = BALANCE_Q3_POSITION_KI;
+            s_velocity_kd = BALANCE_Q3_VELOCITY_KD;
+            break;
+    }
+    s_pid_profile = profile;
+}
+
+void Balance_SelectPidProfile(BalancePidProfile profile)
+{
+    load_pid_profile(profile);
+    s_integral = 0.0f;
+    derivative_reset();
+}
+
+BalancePidProfile Balance_GetPidProfile(void)
+{
+    return s_pid_profile;
+}
+
 void Balance_Init(void)
 {
     s_target_mm = 0;
@@ -55,6 +103,7 @@ void Balance_Init(void)
     s_target_ab = BALANCE_LEVEL_AB_COUNT;
     s_last_tick_ms = 0U;
     s_tick_started = 0U;
+    load_pid_profile(BALANCE_PID_PROFILE_Q3);
     derivative_reset();
 }
 
@@ -189,9 +238,9 @@ void Balance_Tick(uint32_t now_ms)
          * tube. Positive AB raises the positive/front end and therefore causes
          * negative acceleration, so negate the outer result before adding it
          * to the horizontal AB count. */
-        outer_output = -(BALANCE_POSITION_KP * error_f
-                       + BALANCE_POSITION_KI * s_integral
-                       - BALANCE_VELOCITY_KD * ball_velocity);
+        outer_output = -(s_position_kp * error_f
+                       + s_position_ki * s_integral
+                       - s_velocity_kd * ball_velocity);
         if (outer_output > BALANCE_TILT_LIMIT_AB) {
             outer_output = BALANCE_TILT_LIMIT_AB;
         }

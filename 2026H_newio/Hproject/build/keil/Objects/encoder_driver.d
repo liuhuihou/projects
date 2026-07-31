@@ -72,4 +72,5 @@
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\dl_vref.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\dl_wwdt.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\m0p\dl_interrupt.h \
-  E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\m0p\dl_systick.h
+  E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\m0p\dl_systick.h \
+  ..\drivers\stepper_feedback.h

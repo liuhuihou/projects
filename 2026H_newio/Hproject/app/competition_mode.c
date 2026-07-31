@@ -9,15 +9,25 @@
 #include "control_config.h"
 #include "stepper_driver.h"
 #include "stepper_feedback.h"
-
-#define Q3_LEVEL_SPEED_STEPS_S      (67)
-#define Q3_LEVEL_TIMEOUT_MS         (10000U)
+#include "board_hardware.h"
 
 static CompetitionQuestion s_mode;
 static CompetitionState s_state;
 static uint32_t s_start_ms;
 static uint32_t s_elapsed_ms;
-static uint8_t s_q3_level_complete;
+
+/* The C07A core-board LED and the S28A baseboard LED share PB9 and are both
+ * active LOW.  Their red/blue light can reflect from the steel ball, so keep
+ * both lamps off in every mode that uses camera ball feedback.  Q2 retains the
+ * original illuminated status indication. */
+static void update_status_led_for_mode(CompetitionQuestion mode)
+{
+    if (mode == COMP_Q2) {
+        HW_GPIO_LOW(HW_STATUS_LED_PORT, HW_STATUS_LED_PIN);
+    } else {
+        HW_GPIO_HIGH(HW_STATUS_LED_PORT, HW_STATUS_LED_PIN);
+    }
+}
 
 static float mode_speed_cm_s(CompetitionQuestion q)
 {
@@ -37,7 +47,7 @@ void Competition_Init(void)
     s_state = STATE_IDLE;
     s_start_ms = 0;
     s_elapsed_ms = 0;
-    s_q3_level_complete = 0U;
+    update_status_led_for_mode(s_mode);
 }
 
 CompetitionQuestion Competition_GetMode(void) { return s_mode; }
@@ -64,17 +74,19 @@ static void start_task(uint32_t now_ms)
             break;
 
         case COMP_Q3:
-            /* The mechanism is manually placed at its lowest point before
-             * starting Q3. Define that point as AB=0, then move upward until
-             * the measured horizontal position AB=330 is reached. */
+            /* Q3 starts with the tube placed horizontal and the ball at O by
+             * hand. Calibrate that current pose directly as the known level
+             * count, then enter the -50 mm -> +50 mm visual-control sequence;
+             * there is no preliminary lift from a mechanical low point. */
             Control_SetMode(CTRL_STOP);
             Balance_Disable();
             StepperFeedback_ClearTravelLimits();
-            StepperFeedback_ResetCounts();
-            Stepper_Enable();
+            StepperFeedback_ResetCountsAt(BALANCE_LEVEL_AB_COUNT);
+            StepperFeedback_SetTravelLimits(BALANCE_TRAVEL_AB_MIN,
+                                            BALANCE_TRAVEL_AB_MAX);
             Stepper_ResetPosition();
-            s_q3_level_complete = 0U;
-            Stepper_SetSpeed(Q3_LEVEL_SPEED_STEPS_S);
+            Balance_SelectPidProfile(BALANCE_PID_PROFILE_Q3);
+            BalanceTask_Start(BTASK_STATIC_MOVE);
             break;
 
         case COMP_Q4:
@@ -84,6 +96,7 @@ static void start_task(uint32_t now_ms)
             Control_SetBaseSpeed(speed_rpm);
             Control_SetMode(CTRL_LINE);
             LineFollow_Start(LFMODE_Q4_DISTANCE_STOP);
+            Balance_SelectPidProfile(BALANCE_PID_PROFILE_Q4);
             BalanceTask_Start(BTASK_HOLD_CENTER);
             break;
 
@@ -94,6 +107,7 @@ static void start_task(uint32_t now_ms)
             Control_SetBaseSpeed(speed_rpm);
             Control_SetMode(CTRL_LINE);
             LineFollow_Start(LFMODE_Q5_Q6_DISTANCE_STOP);
+            Balance_SelectPidProfile(BALANCE_PID_PROFILE_Q5);
             BalanceTask_Start(BTASK_HOLD_CENTER);
             break;
 
@@ -104,6 +118,7 @@ static void start_task(uint32_t now_ms)
             Control_SetBaseSpeed(speed_rpm);
             Control_SetMode(CTRL_LINE);
             LineFollow_Start(LFMODE_Q5_Q6_DISTANCE_STOP);
+            Balance_SelectPidProfile(BALANCE_PID_PROFILE_Q6);
             BalanceTask_Start(BTASK_HOLD_POSITION);
             break;
 
@@ -135,6 +150,7 @@ void Competition_Update(uint32_t now_ms)
                 start_task(now_ms);
             } else if (ev == BTN_EVENT_DOUBLE_CLICK) {
                 s_mode = (CompetitionQuestion)((s_mode + 1) % COMP_MODE_COUNT);
+                update_status_led_for_mode(s_mode);
             }
             break;
 
@@ -142,33 +158,9 @@ void Competition_Update(uint32_t now_ms)
             s_elapsed_ms = now_ms - s_start_ms;
 
             if (s_mode == COMP_Q3) {
-                StepperFeedbackSnapshot feedback;
-                StepperFeedback_GetSnapshot(&feedback);
-
-                if (s_q3_level_complete == 0U) {
-                    if (feedback.quadrature_count >= BALANCE_LEVEL_AB_COUNT) {
-                        Stepper_SetSpeed(0);
-                        Stepper_Enable();
-                        StepperFeedback_SetTravelLimits(BALANCE_TRAVEL_AB_MIN,
-                                                        BALANCE_TRAVEL_AB_MAX);
-                        BalanceTask_Start(BTASK_STATIC_MOVE);
-                        /* Leveling is a setup stage. Start the Q3 <=5 s task
-                         * clock only after AB has reached horizontal. */
-                        s_start_ms = now_ms;
-                        s_elapsed_ms = 0U;
-                        s_q3_level_complete = 1U;
-                    } else if (s_elapsed_ms >= Q3_LEVEL_TIMEOUT_MS) {
-                        Stepper_SetSpeed(0);
-                        Stepper_Disable();
-                        s_state = STATE_DONE;
-                    } else {
-                        Stepper_SetSpeed(Q3_LEVEL_SPEED_STEPS_S);
-                    }
-                } else {
-                    BalanceTask_Update(now_ms);
-                    if (BalanceTask_IsComplete()) {
-                        s_state = STATE_DONE;
-                    }
+                BalanceTask_Update(now_ms);
+                if (BalanceTask_IsComplete()) {
+                    s_state = STATE_DONE;
                 }
             } else {
                 LineFollow_Update(now_ms);
@@ -184,7 +176,7 @@ void Competition_Update(uint32_t now_ms)
             break;
 
         case STATE_DONE:
-            if (s_mode == COMP_Q3 && s_q3_level_complete != 0U) {
+            if (s_mode == COMP_Q3) {
                 BalanceTask_Update(now_ms);
             }
             /* Clear the result and return to idle. */

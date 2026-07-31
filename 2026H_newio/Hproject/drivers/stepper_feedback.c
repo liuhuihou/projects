@@ -82,11 +82,11 @@ uint8_t StepperFeedback_IsTravelCommandAllowed(int32_t steps_per_sec)
     return 1U;
 }
 
-void StepperFeedback_ResetCounts(void)
+void StepperFeedback_ResetCountsAt(int32_t quadrature_count)
 {
     const uint32_t primask = __get_PRIMASK();
     __disable_irq();
-    s_quadrature_count = 0;
+    s_quadrature_count = quadrature_count;
     s_index_count = 0;
     s_invalid_transition_count = 0U;
     s_previous_ab = read_ab();
@@ -94,6 +94,11 @@ void StepperFeedback_ResetCounts(void)
         HW_STEPPER_ENC_A_PIN | HW_STEPPER_ENC_B_PIN |
         HW_STEPPER_ENC_Z_PIN);
     if (primask == 0U) __enable_irq();
+}
+
+void StepperFeedback_ResetCounts(void)
+{
+    StepperFeedback_ResetCountsAt(0);
 }
 
 void StepperFeedback_GetSnapshot(StepperFeedbackSnapshot *snapshot)

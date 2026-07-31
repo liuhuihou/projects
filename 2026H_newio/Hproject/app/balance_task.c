@@ -3,16 +3,16 @@
 
 /*
  * Balance task implementation.
- * Q3 specific: O -> +50mm -> -50mm, total <=5s, accuracy <=10mm
+ * Q3 specific: O -> -50mm -> +50mm, total <=5s, accuracy <=10mm
  * Q4/Q5: hold at center (target=0)
  * Q6: hold at designated position
  */
 
 typedef enum {
     BT_IDLE = 0,
-    BT_PHASE1,      /* Q3: moving to +5cm */
-    BT_PHASE2,      /* Q3: moving to -5cm */
-    BT_PHASE3,      /* Q3: stabilizing at -5cm */
+    BT_PHASE1,      /* Q3: moving to -5cm */
+    BT_PHASE2,      /* Q3: moving to +5cm */
+    BT_PHASE3,      /* Q3: stabilizing at +5cm */
     BT_HOLDING,     /* Q4/Q5/Q6: holding position */
     BT_COMPLETE
 } BtState;
@@ -57,8 +57,8 @@ void BalanceTask_Start(BalanceTaskMode mode)
 
     switch (mode) {
         case BTASK_STATIC_MOVE:
-            /* Start by moving to +50mm (5cm) from center */
-            Balance_SetTarget(50);
+            /* Start by moving to -50mm (-5cm) from center */
+            Balance_SetTarget(-50);
             s_bt_state = BT_PHASE1;
             break;
 
@@ -94,7 +94,7 @@ void BalanceTask_Update(uint32_t now_ms)
     Balance_Tick(now_ms);
 
     /* Once Q3 has met its final-position criterion, keep running the visual
-     * loop so the ball remains near -5 cm instead of freezing the last motor
+     * loop so the ball remains near +5 cm instead of freezing the last motor
      * command. */
     if (s_bt_state == BT_COMPLETE) return;
 
@@ -109,22 +109,22 @@ void BalanceTask_Update(uint32_t now_ms)
 
     switch (s_mode) {
         case BTASK_STATIC_MOVE:
-            /* Q3 state machine: O -> +5cm -> -5cm (stabilize) */
+            /* Q3 state machine: O -> -5cm -> +5cm (stabilize) */
             switch (s_bt_state) {
                 case BT_PHASE1:
-                    /* Reverse only after the ball is near +50 mm and has
+                    /* Reverse only after the ball is near -50 mm and has
                      * slowed down. The deadline preserves enough of the 5 s
                      * budget to reach the final -50 mm point. */
                     if (!tracking) break;
                     if (s_phase_start_ms == 0U) s_phase_start_ms = now_ms;
                     if (within_abs_limit(error, Q3_POSITION_TOLERANCE_MM) &&
                         within_abs_limit(velocity, Q3_STOP_SPEED_MAX_MM_S)) {
-                        Balance_SetTarget(-50);
+                        Balance_SetTarget(50);
                         s_bt_state = BT_PHASE2;
                         s_phase_start_ms = now_ms;
                     } else if ((now_ms - s_phase_start_ms) >=
                                Q3_FORWARD_DEADLINE_MS) {
-                        Balance_SetTarget(-50);
+                        Balance_SetTarget(50);
                         s_bt_state = BT_PHASE2;
                         s_phase_start_ms = now_ms;
                     }

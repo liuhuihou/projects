@@ -3,6 +3,13 @@
 
 #include <stdint.h>
 
+typedef enum {
+    BALANCE_PID_PROFILE_Q3 = 0,
+    BALANCE_PID_PROFILE_Q4,
+    BALANCE_PID_PROFILE_Q5,
+    BALANCE_PID_PROFILE_Q6
+} BalancePidProfile;
+
 /*
  * Balance controller for the steel ball on the PPR pipe.
  * Uses K230 camera position feedback + stepper motor output.
@@ -19,6 +26,12 @@
  */
 
 void Balance_Init(void);
+
+/* Select the independent outer-loop gains for the active question. Changing
+ * profile clears integral/derivative history so one question cannot carry
+ * controller state into another. */
+void Balance_SelectPidProfile(BalancePidProfile profile);
+BalancePidProfile Balance_GetPidProfile(void);
 
 /* Set target ball position in mm relative to center O (-120 to +120) */
 void Balance_SetTarget(int16_t target_mm);
