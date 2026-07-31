@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-set "SYSCONFIG_CLI=E:\ti\sysconfig-1.20.0_3587\sysconfig_cli.bat"
+set "SYSCONFIG_CLI=E:\ti\sysconfig_1.20.0\sysconfig_cli.bat"
 set "SDK_PRODUCT=E:\ti\mspm0_sdk_2_01_00_03\.metadata\product.json"
 set "PROJECT_ROOT=%~dp0.."
 set "CONFIG_FILE=%PROJECT_ROOT%\config\board.syscfg"

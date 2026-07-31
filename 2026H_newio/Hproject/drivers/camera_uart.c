@@ -46,6 +46,7 @@ void Camera_Init(void)
     s_data.last_update_ms = 0U;
 
     s_stats.rx_bytes = 0U;
+    s_stats.headers = 0U;
     s_stats.rx_frames = 0U;
     s_stats.rx_pongs = 0U;
     s_stats.crc_errors = 0U;
@@ -128,6 +129,7 @@ void Camera_FeedByte(uint8_t byte, uint32_t now_ms)
     if (s_frame_len == 1U) {
         if (byte == CAMERA_SYNC1) {
             s_buf[1] = byte;
+            s_stats.headers++;
             s_frame_len = 2U;
         } else if (byte == CAMERA_SYNC0) {
             s_stats.resyncs++;

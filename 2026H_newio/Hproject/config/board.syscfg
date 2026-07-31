@@ -355,6 +355,7 @@ UART1.peripheral.txPin.$assign = "PA10";
 UART2.$name = "K230";
 UART2.targetBaudRate = 115200;
 UART2.enableFIFO = true;
+UART2.rxFifoThreshold = "DL_UART_RX_FIFO_LEVEL_ONE_ENTRY";
 UART2.peripheral.$assign = "UART1";
 UART2.peripheral.rxPin.$assign = "PB7";
 UART2.peripheral.txPin.$assign = "PB6";

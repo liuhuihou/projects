@@ -86,6 +86,7 @@ typedef struct {
 /* Link health. All counters are free-running and never reset after Init. */
 typedef struct {
     uint32_t rx_bytes;
+    uint32_t headers;          /* AA 55 sync pairs accepted by parser     */
     uint32_t rx_frames;        /* well-formed MSG_BALL frames            */
     uint32_t rx_pongs;
     uint32_t crc_errors;

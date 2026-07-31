@@ -62,6 +62,23 @@ static void oled_show_mode_select(void)
     OLED_ShowString(0, 0, "TIME:");
     OLED_ShowTenths(5, 0, (int32_t)(display_elapsed / 100U), 3);
     OLED_ShowString(10, 0, "S          ");
+
+    /* K230 protocol diagnostics, kept on the otherwise unused row 1:
+     * H = AA55 headers, F = CRC-valid ball frames, E = CRC failures,
+     * G = sequence gaps. In a clean link H and F advance together while
+     * E/G stay at zero. */
+    {
+        const CameraStats *stats = Camera_GetStats();
+        OLED_ShowString(0, 1, "H:");
+        OLED_ShowNum(2, 1, stats->headers % 1000U, 3);
+        OLED_ShowString(5, 1, " F:");
+        OLED_ShowNum(8, 1, stats->rx_frames % 1000U, 3);
+        OLED_ShowString(11, 1, " E:");
+        OLED_ShowNum(14, 1, stats->crc_errors % 100U, 2);
+        OLED_ShowString(16, 1, " G:");
+        OLED_ShowNum(19, 1, stats->seq_gaps % 100U, 2);
+    }
+
     /* Row 2: selected sub-question */
     switch (mode) {
         case COMP_Q2: OLED_ShowString(0, 2, "Q2:LAP 20S  "); break;
@@ -232,6 +249,7 @@ int main(void)
 
     /* Enable K230 UART RX interrupt */
     DL_UART_Main_enableInterrupt(HW_K230_UART, DL_UART_MAIN_INTERRUPT_RX);
+    NVIC_ClearPendingIRQ(K230_INST_INT_IRQN);
     NVIC_EnableIRQ(K230_INST_INT_IRQN);
 
     /* Prime the line sensor cache before the control timer starts filtering
