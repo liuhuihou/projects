@@ -235,9 +235,10 @@ extern "C" {
 #define ENCODERA_PORT                                                    (GPIOA)
 
 /* Defines for E1A: GPIOA.25 with pinCMx 55 on package pin 45 */
-// pins affected by this interrupt request:["E1A","E1B"]
-#define ENCODERA_INT_IRQN                                       (GPIOA_INT_IRQn)
-#define ENCODERA_INT_IIDX                       (DL_INTERRUPT_GROUP1_IIDX_GPIOA)
+// groups represented: ["STEPPER_ENC","ENCODERA"]
+// pins affected: ["A","B","Z","E1A","E1B"]
+#define GPIO_MULTIPLE_GPIOA_INT_IRQN                            (GPIOA_INT_IRQn)
+#define GPIO_MULTIPLE_GPIOA_INT_IIDX            (DL_INTERRUPT_GROUP1_IIDX_GPIOA)
 #define ENCODERA_E1A_IIDX                                   (DL_GPIO_IIDX_DIO25)
 #define ENCODERA_E1A_PIN                                        (DL_GPIO_PIN_25)
 #define ENCODERA_E1A_IOMUX                                       (IOMUX_PINCM55)
@@ -287,12 +288,15 @@ extern "C" {
 #define STEPPER_ENC_PORT                                                 (GPIOA)
 
 /* Defines for A: GPIOA.22 with pinCMx 47 on package pin 40 */
+#define STEPPER_ENC_A_IIDX                                  (DL_GPIO_IIDX_DIO22)
 #define STEPPER_ENC_A_PIN                                       (DL_GPIO_PIN_22)
 #define STEPPER_ENC_A_IOMUX                                      (IOMUX_PINCM47)
 /* Defines for B: GPIOA.24 with pinCMx 54 on package pin 44 */
+#define STEPPER_ENC_B_IIDX                                  (DL_GPIO_IIDX_DIO24)
 #define STEPPER_ENC_B_PIN                                       (DL_GPIO_PIN_24)
 #define STEPPER_ENC_B_IOMUX                                      (IOMUX_PINCM54)
 /* Defines for Z: GPIOA.9 with pinCMx 20 on package pin 17 */
+#define STEPPER_ENC_Z_IIDX                                   (DL_GPIO_IIDX_DIO9)
 #define STEPPER_ENC_Z_PIN                                        (DL_GPIO_PIN_9)
 #define STEPPER_ENC_Z_IOMUX                                      (IOMUX_PINCM20)
 

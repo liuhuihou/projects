@@ -67,12 +67,27 @@
 #define STRAIGHT_KP             (0.20f)
 #define STRAIGHT_KD             (0.70f)
 
-/* ============ Balance PID (Stepper) ============ */
-#define BALANCE_KP              (5.0f)
-#define BALANCE_KI              (0.1f)
-#define BALANCE_KD              (2.0f)
-#define BALANCE_OUTPUT_LIMIT    (3000)   /* max steps/sec */
-#define BALANCE_INTEGRAL_LIMIT  (500.0f)
+/* ============ Ball/Beam Cascade Control ============ */
+/* AB count at the measured horizontal position and the permanent mechanical
+ * travel window. Positive STEP increases AB and raises the tube's positive
+ * (front) end. */
+#define BALANCE_LEVEL_AB_COUNT          (330)
+#define BALANCE_TRAVEL_AB_MIN           (50)
+#define BALANCE_TRAVEL_AB_MAX           (1050)
+
+/* Outer loop: ball position/velocity -> requested beam offset in AB counts.
+ * These are the reference system's conservative starting gains; they require
+ * final tuning on the assembled mechanism. */
+#define BALANCE_POSITION_KP             (0.20f)
+#define BALANCE_POSITION_KI             (0.00f)
+#define BALANCE_VELOCITY_KD             (0.20f)
+#define BALANCE_POSITION_INTEGRAL_LIMIT (500.0f)
+#define BALANCE_TILT_LIMIT_AB           (250.0f)
+
+/* Inner loop: requested AB count -> signed STEP frequency. */
+#define BALANCE_ANGLE_KP                (8.0f)
+#define BALANCE_OUTPUT_LIMIT            (1500)   /* max steps/sec */
+#define BALANCE_MOTOR_COMMAND_SIGN      (+1)
 #define BALANCE_PERIOD_MS       (20U)    /* 50Hz update rate */
 /* A camera frame older than this means the link is down, not that the ball is
  * merely out of view - the K230 sends a frame every iteration either way. Three

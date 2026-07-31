@@ -7,15 +7,15 @@
  * Balance controller for the steel ball on the PPR pipe.
  * Uses K230 camera position feedback + stepper motor output.
  *
- * Control loop: PID on ball position error -> stepper speed command.
+ * Cascaded control:
+ *   ball position/velocity -> target beam AB count -> stepper speed command.
  *
  * The loop is gated on Camera_IsBallUsable(), not on link freshness alone: a
  * frame arrives every camera iteration whether or not the ball is visible, so
  * fresh data does not imply a usable position. When the position is not usable
- * the stepper is stopped, the integral is cleared, and Balance_IsTracking()
- * goes false. Callers that act on Balance_GetError() - the Q3 phase machine
- * especially - must check Balance_IsTracking() first, or they will read a stale
- * error and treat "no data" as "target reached".
+ * the target beam angle returns to horizontal, the outer-loop state is cleared,
+ * and Balance_IsTracking() goes false. Callers that act on Balance_GetError()
+ * must check Balance_IsTracking() first.
  */
 
 void Balance_Init(void);
@@ -49,5 +49,11 @@ uint8_t Balance_IsTracking(void);
 
 /* Last stepper speed command in steps/sec, for display and tuning. */
 int16_t Balance_GetOutput(void);
+
+/* Velocity used by the outer loop, in mm/s. */
+int16_t Balance_GetBallVelocity(void);
+
+/* Current beam-angle request expressed as an absolute AB count. */
+int32_t Balance_GetTargetAb(void);
 
 #endif

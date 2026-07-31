@@ -439,7 +439,7 @@ def test_stream_drives_pid(ns, uart, h):
         now += 37
     check(t["track"] == 1, "PID tracks a real stream")
     check(t["err"] == -40, "error is -40mm for a ball 4cm right (got %d)" % t["err"])
-    check(t["out"] < 0, "ball right of target drives negative (got %d)" % t["out"])
+    check(t["out"] > 0, "ball right of target drives positive (got %d)" % t["out"])
     check(t["step"] == t["out"], "stepper follows the PID output")
 
     # Mirror image, on the other side.
@@ -454,7 +454,7 @@ def test_stream_drives_pid(ns, uart, h):
         seq = (seq + 1) & 0xFF
         now += 37
     check(t["err"] == 40, "error is +40mm for a ball 4cm left (got %d)" % t["err"])
-    check(t["out"] > 0, "ball left of target drives positive (got %d)" % t["out"])
+    check(t["out"] < 0, "ball left of target drives negative (got %d)" % t["out"])
 
     # Ball goes out of sight: frames keep coming, PID must stand down and the
     # stepper must stop - without the link ever being declared dead.

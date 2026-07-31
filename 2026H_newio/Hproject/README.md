@@ -12,6 +12,7 @@ Hproject/
 │   ├── line_sensor.c/h            # 幻尔I2C巡线传感器（6/8路可配）
 │   ├── oled_driver.c/h            # OLED显示
 │   ├── stepper_driver.c/h         # 步进电机驱动（摆杆控制）
+│   ├── stepper_feedback.c/h       # 步进编码器 A/B/Z/PWM 反馈
 │   ├── camera_uart.c/h            # K230D摄像头通信
 │   ├── button_input.c/h           # 按键输入（单击/双击）
 │   └── debug_uart.c/h             # 调试串口
@@ -24,7 +25,7 @@ Hproject/
 │   ├── app_main.c                 # 主入口
 │   ├── competition_mode.c/h       # 比赛模式状态机
 │   ├── line_follow_task.c/h       # 巡线任务
-│   └── balance_task.c/h           # 平衡任务
+│   ├── balance_task.c/h           # 平衡任务
 ├── config/
 │   └── board.syscfg               # 引脚定义唯一来源（.bak 为改造前备份）
 ├── generated/
@@ -33,7 +34,7 @@ Hproject/
 │   └── generate_syscfg.bat        # 重新生成上面两个文件
 ├── docs/
 │   ├── 硬件说明.md                # 硬件全貌、外设资源、时钟与中断
-│   └── 接线指导.md                # 接线步骤、拨码表、上电调试顺序
+│   ├── 接线指导.md                # 接线步骤、拨码表、上电调试顺序
 ├── keil/                          # Keil 工程
 └── ti_msp_dl_config.h             # 两行重定向到 generated/
 ```
@@ -66,7 +67,7 @@ Hproject/
 | 模式 | 描述 | 时间要求 |
 |------|------|---------|
 | Q2 | 纯巡线一圈 | ≤20s |
-| Q3 | 静止控球 O→+5→-5 | ≤5s |
+| Q3 | 基础步进电机开环测试 | 调试用 |
 | Q4 | 巡线A→B + 球稳中心 | ≤8s |
 | Q5 | 巡线一圈 + 球稳中心 | ≤30s |
 | Q6 | 巡线一圈 + 球稳指定位置 | ≤30s |
@@ -96,6 +97,9 @@ Hproject/
 | 步进 ST1（脉冲） | PB16 | TIMG7_CCP1 硬件PWM | J10 → D36A ST1 |
 | 步进 DIR1 | PB17 | GPIO | J10 → D36A DIR1 |
 | 步进 EN1 | PA12 | GPIO，**高电平使能** | J10 → D36A EN1 |
+| 步进反馈 A/B | PA22/PA24 | GPIO 双边沿中断，软件 QEI | J6.1/J6.2 |
+| 步进反馈 PWM | PA27 | TIMG8 联合捕获 | J6.3 |
+| 步进反馈 Z | PA9 | GPIO 上升沿中断 | J6.4 |
 | K230D TX | PB6 | UART1_TX | 蓝牙插座 H8 → K230D RX |
 | K230D RX | PB7 | UART1_RX | 蓝牙插座 H8 ← K230D TX |
 | 电机 PWM A/B | PB2/PB3 | TIMA1 CCP0/CCP1, 10kHz | J1/J2 |
@@ -110,7 +114,7 @@ Hproject/
 | 电池检测 | PA15 | ADC1 CH0 | — |
 | 调试串口 | PA10/PA11 | UART0, 115200 | USB |
 
-改口后空出的引脚：PA7、PA9、PA22、PA24、PA27。
+改口并接入步进反馈后只剩 PA7 空闲。
 
 几点接线注意：
 

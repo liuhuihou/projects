@@ -1,5 +1,6 @@
 #include "encoder_driver.h"
 #include "board_hardware.h"
+#include "stepper_feedback.h"
 
 /* Verified against a stopwatch: the reported speed matches reality, so the
  * 13-line / 2-counts-per-line / 30:1 scaling is correct. */
@@ -38,12 +39,23 @@ void Encoder_Init(void)
 
 void GROUP1_IRQHandler(void)
 {
+    const uint32_t wheel_a_mask =
+        HW_MOTOR_A_ENCODER_A_PIN | HW_MOTOR_A_ENCODER_B_PIN;
+    const uint32_t stepper_mask =
+        HW_STEPPER_ENC_A_PIN | HW_STEPPER_ENC_B_PIN |
+        HW_STEPPER_ENC_Z_PIN;
     const uint32_t status_a = DL_GPIO_getEnabledInterruptStatus(
         HW_MOTOR_A_ENCODER_PORT,
-        HW_MOTOR_A_ENCODER_A_PIN | HW_MOTOR_A_ENCODER_B_PIN);
+        wheel_a_mask | stepper_mask);
     const uint32_t status_b = DL_GPIO_getEnabledInterruptStatus(
         HW_MOTOR_B_ENCODER_PORT,
         HW_MOTOR_B_ENCODER_A_PIN | HW_MOTOR_B_ENCODER_B_PIN);
+
+    /* Clear the captured flags before decoding. An edge arriving while the
+     * ISR runs then remains pending for the next entry instead of being erased
+     * by a blanket clear at the end. */
+    DL_GPIO_clearInterruptStatus(HW_MOTOR_A_ENCODER_PORT, status_a);
+    DL_GPIO_clearInterruptStatus(HW_MOTOR_B_ENCODER_PORT, status_b);
 
     if ((status_a & HW_MOTOR_A_ENCODER_A_PIN) != 0U)
         g_encoder_a_count += encoder_a_phase_b() ? 1 : -1;
@@ -54,10 +66,8 @@ void GROUP1_IRQHandler(void)
     if ((status_b & HW_MOTOR_B_ENCODER_B_PIN) != 0U)
         g_encoder_b_count += encoder_b_phase_a() ? -1 : 1;
 
-    DL_GPIO_clearInterruptStatus(HW_MOTOR_A_ENCODER_PORT,
-        HW_MOTOR_A_ENCODER_A_PIN | HW_MOTOR_A_ENCODER_B_PIN);
-    DL_GPIO_clearInterruptStatus(HW_MOTOR_B_ENCODER_PORT,
-        HW_MOTOR_B_ENCODER_A_PIN | HW_MOTOR_B_ENCODER_B_PIN);
+    StepperFeedback_HandleGpioInterrupt(status_a & stepper_mask);
+
 }
 
 void Encoder_TakeCounts(int32_t *encoder_a, int32_t *encoder_b)

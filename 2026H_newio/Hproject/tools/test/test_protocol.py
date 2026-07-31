@@ -24,9 +24,14 @@ import protocol as P  # noqa: E402
 # command, so a change on one side cannot drift silently.
 BALANCE_PERIOD_MS = 20
 BALANCE_DATA_TIMEOUT_MS = 150
-BALANCE_KP, BALANCE_KI, BALANCE_KD = 5.0, 0.1, 2.0
-BALANCE_INTEGRAL_LIMIT = 500.0
-BALANCE_OUTPUT_LIMIT = 3000
+BALANCE_LEVEL_AB_COUNT = 330
+BALANCE_POSITION_KP = 0.20
+BALANCE_POSITION_KI = 0.00
+BALANCE_VELOCITY_KD = 0.20
+BALANCE_ANGLE_KP = 8.0
+BALANCE_TILT_LIMIT_AB = 250.0
+BALANCE_POSITION_INTEGRAL_LIMIT = 500.0
+BALANCE_OUTPUT_LIMIT = 1500
 
 SOURCES = [
     os.path.join(HERE, "test_protocol.c"),
@@ -113,6 +118,9 @@ class Harness:
         f = self.fields(self.cmd("tick %d" % now_ms))
         return {k: int(v) for k, v in f.items()}
 
+    def ab(self, count):
+        self.cmd("ab %d" % count)
+
     def config(self):
         return self.fields(self.cmd("config"))
 
@@ -142,31 +150,40 @@ class PidModel:
         self.prev_seq = None
         self.prev_frame_ms = None
 
-    def tick(self, target, pos, vel, seq, frame_ms):
+    def tick(self, target, pos, vel, seq, frame_ms, ab):
         error = target - pos
-        self.integral = clamp(self.integral + error,
-                             -BALANCE_INTEGRAL_LIMIT, BALANCE_INTEGRAL_LIMIT)
+        self.integral = clamp(
+            self.integral + error * (BALANCE_PERIOD_MS / 1000.0),
+            -BALANCE_POSITION_INTEGRAL_LIMIT,
+            BALANCE_POSITION_INTEGRAL_LIMIT)
         if self.use_velocity:
-            derivative = -float(vel) * (BALANCE_PERIOD_MS / 1000.0)
+            ball_velocity = float(vel)
         else:
             if self.prev_error is None:
-                derivative = 0.0
+                ball_velocity = 0.0
                 self.prev_error, self.prev_seq = float(error), seq
                 self.prev_frame_ms = frame_ms
             elif seq != self.prev_seq:
                 dt = (frame_ms - self.prev_frame_ms) & 0xFFFFFFFF
                 derivative = 0.0 if dt == 0 else (
-                    (error - self.prev_error) * (BALANCE_PERIOD_MS / float(dt)))
+                    (error - self.prev_error) * (1000.0 / float(dt)))
                 self.prev_error, self.prev_seq = float(error), seq
                 self.prev_frame_ms = frame_ms
+                ball_velocity = -derivative
             else:
-                derivative = self.prev_derivative
-            self.prev_derivative = derivative
-        out = BALANCE_KP * error + BALANCE_KI * self.integral \
-            + BALANCE_KD * derivative
+                ball_velocity = -self.prev_derivative
+            self.prev_derivative = -ball_velocity
+
+        outer = -(BALANCE_POSITION_KP * error
+                  + BALANCE_POSITION_KI * self.integral
+                  - BALANCE_VELOCITY_KD * ball_velocity)
+        outer = clamp(outer, -BALANCE_TILT_LIMIT_AB,
+                      BALANCE_TILT_LIMIT_AB)
+        target_ab = BALANCE_LEVEL_AB_COUNT + int(outer)
+        out = BALANCE_ANGLE_KP * (target_ab - ab)
         out = clamp(out, -float(BALANCE_OUTPUT_LIMIT),
                     float(BALANCE_OUTPUT_LIMIT))
-        return error, int(out)  # C truncates toward zero on the cast
+        return error, int(ball_velocity), target_ab, int(out)
 
 
 FAILURES = []
@@ -186,10 +203,13 @@ def test_config(h):
     c = h.config()
     check(int(c["period"]) == BALANCE_PERIOD_MS, "period mirror")
     check(int(c["timeout"]) == BALANCE_DATA_TIMEOUT_MS, "timeout mirror")
-    check(float(c["kp"]) == BALANCE_KP, "kp mirror")
-    check(float(c["ki"]) == BALANCE_KI, "ki mirror")
-    check(float(c["kd"]) == BALANCE_KD, "kd mirror")
-    check(float(c["ilim"]) == BALANCE_INTEGRAL_LIMIT, "ilim mirror")
+    check(int(c["level"]) == BALANCE_LEVEL_AB_COUNT, "level AB mirror")
+    check(float(c["p_kp"]) == BALANCE_POSITION_KP, "position kp mirror")
+    check(float(c["p_ki"]) == BALANCE_POSITION_KI, "position ki mirror")
+    check(float(c["v_kd"]) == BALANCE_VELOCITY_KD, "velocity kd mirror")
+    check(float(c["a_kp"]) == BALANCE_ANGLE_KP, "angle kp mirror")
+    check(float(c["tilt"]) == BALANCE_TILT_LIMIT_AB, "tilt limit mirror")
+    check(float(c["ilim"]) == BALANCE_POSITION_INTEGRAL_LIMIT, "ilim mirror")
     check(int(c["olim"]) == BALANCE_OUTPUT_LIMIT, "olim mirror")
 
 
@@ -546,10 +566,11 @@ def test_balance_gate(h):
 
 
 def test_balance_pid(h, use_velocity):
-    """PID output must match an independent model of the same arithmetic."""
+    """Both cascade loops must match an independent arithmetic model."""
     h.cmd("disable")
     h.cmd("enable")
     h.cmd("target 0")
+    h.ab(BALANCE_LEVEL_AB_COUNT)
     model = PidModel(use_velocity)
 
     seq, now = 0, 30000
@@ -561,37 +582,74 @@ def test_balance_pid(h, use_velocity):
         now += 40
         h.feed(now, P.encode_ball(seq, flags, pos, vel, 25))
         t = h.tick(now)
-        want_err, want_out = model.tick(0, pos, vel, seq, now)
+        want_err, want_vel, want_tab, want_out = model.tick(
+            0, pos, vel, seq, now, BALANCE_LEVEL_AB_COUNT)
         check(t["track"] == 1, "tracking at pos=%d" % pos)
         check(t["err"] == want_err,
               "error pos=%d: %d vs %d" % (pos, t["err"], want_err))
+        check(abs(t["vel"] - want_vel) <= 1,
+              "velocity pos=%d: %d vs %d" % (pos, t["vel"], want_vel))
+        check(abs(t["tab"] - want_tab) <= 1,
+              "target AB pos=%d: %d vs %d" % (pos, t["tab"], want_tab))
         # float on the C side vs double here: allow one unit of rounding.
         check(abs(t["out"] - want_out) <= 1,
               "output pos=%d vel=%d: %d vs %d" % (pos, vel, t["out"], want_out))
         check(t["step"] == t["out"], "stepper follows output")
 
-    # Sign convention: ball right of target -> negative error -> negative drive.
+    # A ball on/moving toward +axis needs +STEP to raise that end and brake it.
     h.cmd("disable")
     h.cmd("enable")
     h.cmd("target 0")
+    h.ab(BALANCE_LEVEL_AB_COUNT)
     seq, now = (seq + 1) & 0xFF, now + 40
     h.feed(now, P.encode_ball(seq, flags, 50, 0, 25))
     t = h.tick(now)
-    check(t["err"] == -50 and t["out"] < 0, "positive position drives negative")
+    check(t["err"] == -50 and t["out"] > 0, "positive position drives positive")
 
     h.cmd("disable")
     h.cmd("enable")
     h.cmd("target 0")
+    h.ab(BALANCE_LEVEL_AB_COUNT)
     seq, now = (seq + 1) & 0xFF, now + 40
     h.feed(now, P.encode_ball(seq, flags, -50, 0, 25))
     t = h.tick(now)
-    check(t["err"] == 50 and t["out"] > 0, "negative position drives positive")
+    check(t["err"] == 50 and t["out"] < 0, "negative position drives negative")
+
+
+def test_beam_inner_loop(h):
+    """The AB inner loop must reach and retain its requested beam angle."""
+    h.cmd("disable")
+    h.cmd("enable")
+    h.cmd("target 0")
+    flags = P.FLAG_VALID | P.FLAG_DETECTED
+
+    h.ab(BALANCE_LEVEL_AB_COUNT + 20)
+    h.feed(39000, P.encode_ball(1, flags, 0, 0, 25))
+    t = h.tick(39000)
+    check(t["tab"] == BALANCE_LEVEL_AB_COUNT, "centered ball requests level AB")
+    check(t["out"] == -160, "AB above target drives negative")
+
+    h.ab(BALANCE_LEVEL_AB_COUNT - 20)
+    h.feed(39040, P.encode_ball(2, flags, 0, 0, 25))
+    t = h.tick(39040)
+    check(t["out"] == 160, "AB below target drives positive")
+
+    # If vision is lost while tilted, the outer loop requests horizontal and
+    # the AB loop remains in charge instead of holding the stale tilt.
+    h.ab(BALANCE_LEVEL_AB_COUNT + 20)
+    h.feed(39080, P.encode_ball(3, 0, 0, 0, 25))
+    t = h.tick(39080)
+    check(t["track"] == 0 and t["tab"] == BALANCE_LEVEL_AB_COUNT,
+          "vision loss requests horizontal")
+    check(t["out"] == -160, "vision loss still runs the AB inner loop")
+    h.ab(BALANCE_LEVEL_AB_COUNT)
 
 
 def test_output_clamp(h):
     h.cmd("disable")
     h.cmd("enable")
     h.cmd("target 0")
+    h.ab(BALANCE_LEVEL_AB_COUNT)
     seq, now = 200, 40000
     flags = P.FLAG_VALID | P.FLAG_DETECTED
     for _ in range(30):
@@ -599,22 +657,25 @@ def test_output_clamp(h):
         now += 40
         h.feed(now, P.encode_ball(seq, flags, -3000, 0, 25))
         t = h.tick(now)
-    check(t["out"] == BALANCE_OUTPUT_LIMIT, "output clamps at the limit")
-    check(t["step"] == BALANCE_OUTPUT_LIMIT, "clamped value reaches stepper")
+    check(t["out"] == -BALANCE_OUTPUT_LIMIT, "output clamps at the limit")
+    check(t["step"] == -BALANCE_OUTPUT_LIMIT, "clamped value reaches stepper")
 
 
-def test_integral_cleared_on_loss(h):
-    """A dropout must not leave charge that unwinds on reacquisition."""
+def test_outer_state_cleared_on_loss(h):
+    """A dropout must clear the outer-loop history before reacquisition."""
     h.cmd("disable")
     h.cmd("enable")
     h.cmd("target 0")
+    h.ab(BALANCE_LEVEL_AB_COUNT)
     seq, now = 0, 50000
     flags = P.FLAG_VALID | P.FLAG_DETECTED
-    for _ in range(10):                            # charge the integral
-        seq = (seq + 1) & 0xFF
-        now += 40
-        h.feed(now, P.encode_ball(seq, flags, -100, 0, 25))
-        h.tick(now)
+    seq = (seq + 1) & 0xFF
+    now += 40
+    h.feed(now, P.encode_ball(seq, flags, -20, -200, 25))
+    h.tick(now)
+    seq = (seq + 1) & 0xFF
+    now += 40
+    h.feed(now, P.encode_ball(seq, flags, -100, -200, 25))
     charged = h.tick(now)["out"]
 
     now += BALANCE_DATA_TIMEOUT_MS + 10            # lose the link
@@ -624,11 +685,14 @@ def test_integral_cleared_on_loss(h):
     now += 40
     h.feed(now, P.encode_ball(seq, flags, -100, 0, 25))
     t = h.tick(now)
-    first = int(BALANCE_KP * 100 + BALANCE_KI * 100)
+    first_target_ab = BALANCE_LEVEL_AB_COUNT - int(BALANCE_POSITION_KP * 100)
+    first = int(BALANCE_ANGLE_KP *
+                (first_target_ab - BALANCE_LEVEL_AB_COUNT))
     check(t["track"] == 1, "reacquired")
     check(abs(t["out"] - first) <= 1,
-          "integral cleared: %d vs %d (was %d)" % (t["out"], first, charged))
-    check(t["out"] < charged, "post-dropout output below charged output")
+          "outer state cleared: %d vs %d (was %d)"
+          % (t["out"], first, charged))
+    check(abs(t["out"]) < abs(charged), "post-dropout output below charged output")
 
 
 def run(use_velocity):
@@ -650,8 +714,9 @@ def run(use_velocity):
         test_freshness(h)
         test_balance_gate(h)
         test_balance_pid(h, use_velocity)
+        test_beam_inner_loop(h)
         test_output_clamp(h)
-        test_integral_cleared_on_loss(h)
+        test_outer_state_cleared_on_loss(h)
         print("  stats: " + str(h.stats()))
     finally:
         h.close()

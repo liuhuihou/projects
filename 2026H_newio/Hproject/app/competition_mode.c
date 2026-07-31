@@ -7,19 +7,17 @@
 #include "balance_task.h"
 #include "oled_driver.h"
 #include "control_config.h"
+#include "stepper_driver.h"
+#include "stepper_feedback.h"
+
+#define Q3_LEVEL_SPEED_STEPS_S      (67)
+#define Q3_LEVEL_TIMEOUT_MS         (10000U)
 
 static CompetitionQuestion s_mode;
 static CompetitionState s_state;
 static uint32_t s_start_ms;
 static uint32_t s_elapsed_ms;
-
-static const char *mode_names[COMP_MODE_COUNT] = {
-    "Q2:LAP 20S",
-    "Q3:BALL +-5",
-    "Q4:AB+BALL",
-    "Q5:LAP+BALL",
-    "Q6:LAP+POS"
-};
+static uint8_t s_q3_level_complete;
 
 static float mode_speed_cm_s(CompetitionQuestion q)
 {
@@ -39,6 +37,7 @@ void Competition_Init(void)
     s_state = STATE_IDLE;
     s_start_ms = 0;
     s_elapsed_ms = 0;
+    s_q3_level_complete = 0U;
 }
 
 CompetitionQuestion Competition_GetMode(void) { return s_mode; }
@@ -52,6 +51,8 @@ static void start_task(uint32_t now_ms)
     s_elapsed_ms = 0;
     s_state = STATE_RUNNING;
 
+    Control_ResetDistance();
+
     switch (s_mode) {
         case COMP_Q2:
             /* Pure line follow, fast lap */
@@ -63,9 +64,17 @@ static void start_task(uint32_t now_ms)
             break;
 
         case COMP_Q3:
-            /* Static ball control */
+            /* The mechanism is manually placed at its lowest point before
+             * starting Q3. Define that point as AB=0, then move upward until
+             * the measured horizontal position AB=330 is reached. */
             Control_SetMode(CTRL_STOP);
-            BalanceTask_Start(BTASK_STATIC_MOVE);
+            Balance_Disable();
+            StepperFeedback_ClearTravelLimits();
+            StepperFeedback_ResetCounts();
+            Stepper_Enable();
+            Stepper_ResetPosition();
+            s_q3_level_complete = 0U;
+            Stepper_SetSpeed(Q3_LEVEL_SPEED_STEPS_S);
             break;
 
         case COMP_Q4:
@@ -132,12 +141,41 @@ void Competition_Update(uint32_t now_ms)
         case STATE_RUNNING:
             s_elapsed_ms = now_ms - s_start_ms;
 
-            LineFollow_Update(now_ms);
-            BalanceTask_Update(now_ms);
+            if (s_mode == COMP_Q3) {
+                StepperFeedbackSnapshot feedback;
+                StepperFeedback_GetSnapshot(&feedback);
 
-            if (LineFollow_IsComplete()) {
-                stop_task();
-            } else if (s_mode == COMP_Q3 && BalanceTask_IsComplete()) {
+                if (s_q3_level_complete == 0U) {
+                    if (feedback.quadrature_count >= BALANCE_LEVEL_AB_COUNT) {
+                        Stepper_SetSpeed(0);
+                        Stepper_Enable();
+                        StepperFeedback_SetTravelLimits(BALANCE_TRAVEL_AB_MIN,
+                                                        BALANCE_TRAVEL_AB_MAX);
+                        BalanceTask_Start(BTASK_STATIC_MOVE);
+                        /* Leveling is a setup stage. Start the Q3 <=5 s task
+                         * clock only after AB has reached horizontal. */
+                        s_start_ms = now_ms;
+                        s_elapsed_ms = 0U;
+                        s_q3_level_complete = 1U;
+                    } else if (s_elapsed_ms >= Q3_LEVEL_TIMEOUT_MS) {
+                        Stepper_SetSpeed(0);
+                        Stepper_Disable();
+                        s_state = STATE_DONE;
+                    } else {
+                        Stepper_SetSpeed(Q3_LEVEL_SPEED_STEPS_S);
+                    }
+                } else {
+                    BalanceTask_Update(now_ms);
+                    if (BalanceTask_IsComplete()) {
+                        s_state = STATE_DONE;
+                    }
+                }
+            } else {
+                LineFollow_Update(now_ms);
+                BalanceTask_Update(now_ms);
+            }
+
+            if (s_mode != COMP_Q3 && LineFollow_IsComplete()) {
                 stop_task();
             } else if (ev == BTN_EVENT_SINGLE_CLICK) {
                 /* Manual stop */
@@ -146,8 +184,12 @@ void Competition_Update(uint32_t now_ms)
             break;
 
         case STATE_DONE:
-            /* Clear the result and return to idle */
+            if (s_mode == COMP_Q3 && s_q3_level_complete != 0U) {
+                BalanceTask_Update(now_ms);
+            }
+            /* Clear the result and return to idle. */
             if (ev == BTN_EVENT_SINGLE_CLICK) {
+                if (s_mode == COMP_Q3) Balance_Disable();
                 s_state = STATE_IDLE;
             }
             break;

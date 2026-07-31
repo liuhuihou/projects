@@ -460,6 +460,11 @@
               <FilePath>../drivers/stepper_driver.c</FilePath>
             </File>
             <File>
+              <FileName>stepper_feedback.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../drivers/stepper_feedback.c</FilePath>
+            </File>
+            <File>
               <FileName>camera_uart.c</FileName>
               <FileType>1</FileType>
               <FilePath>../drivers/camera_uart.c</FilePath>

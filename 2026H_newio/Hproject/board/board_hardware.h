@@ -70,11 +70,11 @@
 #define HW_MOTOR_A_ENCODER_PORT         ENCODERA_PORT
 #define HW_MOTOR_A_ENCODER_A_PIN        ENCODERA_E1A_PIN
 #define HW_MOTOR_A_ENCODER_B_PIN        ENCODERA_E1B_PIN
-#define HW_MOTOR_A_ENCODER_IRQN         ENCODERA_INT_IRQN
+#define HW_MOTOR_A_ENCODER_IRQN         GPIOA_INT_IRQn
 #define HW_MOTOR_B_ENCODER_PORT         ENCODERB_PORT
 #define HW_MOTOR_B_ENCODER_A_PIN        ENCODERB_E2A_PIN
 #define HW_MOTOR_B_ENCODER_B_PIN        ENCODERB_E2B_PIN
-#define HW_MOTOR_B_ENCODER_IRQN         ENCODERB_INT_IRQN
+#define HW_MOTOR_B_ENCODER_IRQN         GPIOB_INT_IRQn
 
 /* =================== Line Sensor Bus (Hiwonder I2C) =================== */
 /* Wired through the unused MPU6050 socket (H5). PA0/PA1 are the only 5 V
@@ -187,80 +187,19 @@
  * the A4988/DRV8825 convention the old code assumed. */
 #define HW_STEPPER_EN_ACTIVE_LEVEL      (1U)
 
-/* ============== Stepper Feedback (closed-loop encoder, J6) ============== */
-/* Four pins on baseboard J6, all previously unused:
- *   J6.1 PA22 -> A phase          (GPIO input, pull-up)
- *   J6.2 PA24 -> B phase          (GPIO input, pull-up)
- *   J6.3 PA27 -> PWM abs position (TIMG8 CC1, combined duty+period capture)
- *   J6.4 PA9  -> Z phase / index  (GPIO input, pull-up)
- *
- * LEVEL WARNING, check before plugging anything in: none of these four pins is
- * 5 V tolerant. Only PA0/PA1 are on this device (abs max 5.5 V; every other pin
- * is VDD+0.3 V = 3.6 V) and both are already taken by the line-sensor I2C. If
- * the driver's encoder outputs swing to 5 V, they need level shifting or a
- * divider - driving them straight in exceeds the IO absolute maximum rating.
- *
- * SOCKET CONFLICT: J6's four signals are also wired in parallel to the CCD
- * socket (PA22/PA27/PA9), and PA27 additionally appears on the gamepad socket
- * U3. Neither is used by this project, but nothing may be plugged into them
- * while J6 is in use - both ends would drive the same nets. */
+/* Stepper encoder feedback on J6: A/B/Z GPIO plus PWM absolute position. */
 #define HW_STEPPER_ENC_PORT             STEPPER_ENC_PORT
 #define HW_STEPPER_ENC_A_PIN            STEPPER_ENC_A_PIN
 #define HW_STEPPER_ENC_B_PIN            STEPPER_ENC_B_PIN
 #define HW_STEPPER_ENC_Z_PIN            STEPPER_ENC_Z_PIN
-
 #define HW_STEPPER_ENC_READ_A()         HW_GPIO_READ(HW_STEPPER_ENC_PORT, HW_STEPPER_ENC_A_PIN)
 #define HW_STEPPER_ENC_READ_B()         HW_GPIO_READ(HW_STEPPER_ENC_PORT, HW_STEPPER_ENC_B_PIN)
 #define HW_STEPPER_ENC_READ_Z()         HW_GPIO_READ(HW_STEPPER_ENC_PORT, HW_STEPPER_ENC_Z_PIN)
 
-/* A/B/Z are inputs WITHOUT interrupts enabled, so they are poll-only as wired.
- * GPIOA and GPIOB share one NVIC line (GPIO Group1) whose handler,
- * GROUP1_IRQHandler in drivers/encoder_driver.c, reads and clears only the four
- * wheel-encoder pins. Enabling an edge here without extending that handler
- * would leave the flag set permanently and the ISR would re-enter forever,
- * taking the wheel encoders down with it. Extend the handler first if edge
- * counting on A/B is needed. */
-
-/* ---- PWM absolute-position capture (PA27, TIMG8 CC1) ---- */
-/* Combined capture reads pulse width and period from the one pin, so position
- * comes out as a ratio and the encoder's own carrier drift cancels:
- *     period_ticks = LOAD - CC0      (CC0 captures the RISING edge)
- *     high_ticks   = LOAD - CC1      (CC1 captures the FALLING edge)
- *     duty         = high_ticks / period_ticks
- *
- * Edge roles are the reverse of the SDK's duty+period example because this
- * instance uses inputChan = 1, not 0. Reading CC0/CC1 the other way round gives
- * duty and period swapped.
- *
- * The counter counts DOWN from LOAD and combined capture forces load condition
- * NONE, so the ISR must reload the count on every rising edge (CC0_DN) by hand;
- * the SDK example does the same. The timer does not auto-start (startTimer =
- * DL_TIMER_STOP): call HW_STEPPER_POS_CAP_START() once the IRQ is enabled.
- *
- * NOT YET WIRED INTO THE FIRMWARE. SYSCFG_DL_STEPPER_POS_CAP_init() enables
- * CC0_DN and ZERO at the peripheral, but nothing calls NVIC_EnableIRQ() and no
- * TIMG8_IRQHandler (STEPPER_POS_CAP_INST_IRQHandler) exists, so the flags set
- * and the ISR never runs. Harmless as it stands - an un-enabled NVIC line
- * cannot spin - but the reload never happens either, so only the first period
- * would ever be captured. A driver taking this over must:
- *   1. define STEPPER_POS_CAP_INST_IRQHandler, calling
- *      HW_STEPPER_POS_CAP_RELOAD() on CC0_DN and invalidating on ZERO,
- *   2. NVIC_EnableIRQ(HW_STEPPER_POS_CAP_IRQN),
- *   3. HW_STEPPER_POS_CAP_START().
- *
- * ZERO means no rising edge arrived for a full 6.5535 ms window, i.e. the
- * encoder is unplugged or dead - treat the reading as invalid, not stale. */
 #define HW_STEPPER_POS_CAP_TIMER        STEPPER_POS_CAP_INST
 #define HW_STEPPER_POS_CAP_IRQN         STEPPER_POS_CAP_INST_INT_IRQN
 #define HW_STEPPER_POS_CAP_LOAD         STEPPER_POS_CAP_INST_LOAD_VALUE
-
-/* 10 MHz = 0.1 us per tick: TIMG8 is in PD0, so BUSCLK is ULPCLK = 40 MHz (not
- * 80), divided by prescale 4. SysConfig emits no CLK_FREQ macro for capture
- * instances, so this is stated here; it must track timerClkPrescale in
- * config/board.syscfg. TIMG8 is 16-bit, so LOAD 65534 is the full-scale
- * 6.5535 ms window - carriers slower than ~153 Hz need a bigger prescale. */
 #define HW_STEPPER_POS_CAP_TICK_HZ      (10000000UL)
-
 #define HW_STEPPER_POS_CAP_START() \
     DL_TimerG_startCounter(HW_STEPPER_POS_CAP_TIMER)
 #define HW_STEPPER_POS_CAP_RELOAD() \

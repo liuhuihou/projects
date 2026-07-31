@@ -32,6 +32,7 @@
 
 extern int32_t stub_stepper_speed;
 extern int     stub_stepper_enabled;
+extern int32_t stub_feedback_count;
 
 /* Parse whitespace-separated hex bytes from *cursor into out. */
 static uint32_t parse_hex(char **cursor, uint8_t *out, uint32_t max)
@@ -138,13 +139,18 @@ int main(void)
             Balance_SetTarget((int16_t)strtol(cursor, &cursor, 10));
             printf("target %d\n", (int)Balance_GetTarget());
 
+        } else if (strcmp(cmd, "ab") == 0) {
+            stub_feedback_count = (int32_t)strtol(cursor, &cursor, 10);
+            printf("ab %ld\n", (long)stub_feedback_count);
+
         } else if (strcmp(cmd, "tick") == 0) {
             unsigned long now = strtoul(cursor, &cursor, 10);
             Balance_Tick((uint32_t)now);
-            printf("tick track=%u err=%d out=%d step=%ld en=%d\n",
+            printf("tick track=%u err=%d vel=%d tab=%ld out=%d step=%ld en=%d\n",
                    (unsigned)Balance_IsTracking(), (int)Balance_GetError(),
-                   (int)Balance_GetOutput(), (long)stub_stepper_speed,
-                   stub_stepper_enabled);
+                   (int)Balance_GetBallVelocity(),
+                   (long)Balance_GetTargetAb(), (int)Balance_GetOutput(),
+                   (long)stub_stepper_speed, stub_stepper_enabled);
 
         } else if (strcmp(cmd, "reset") == 0) {
             /* Back to power-on state, so a case that cares about absolute
@@ -157,13 +163,18 @@ int main(void)
             printf("reset\n");
 
         } else if (strcmp(cmd, "config") == 0) {
-            printf("config period=%u timeout=%u use_vel=%d kp=%g ki=%g kd=%g "
-                   "ilim=%g olim=%d\n",
+            printf("config period=%u timeout=%u use_vel=%d level=%d p_kp=%g "
+                   "p_ki=%g v_kd=%g a_kp=%g tilt=%g ilim=%g olim=%d\n",
                    (unsigned)BALANCE_PERIOD_MS,
                    (unsigned)BALANCE_DATA_TIMEOUT_MS,
                    BALANCE_USE_CAMERA_VELOCITY,
-                   (double)BALANCE_KP, (double)BALANCE_KI, (double)BALANCE_KD,
-                   (double)BALANCE_INTEGRAL_LIMIT,
+                   (int)BALANCE_LEVEL_AB_COUNT,
+                   (double)BALANCE_POSITION_KP,
+                   (double)BALANCE_POSITION_KI,
+                   (double)BALANCE_VELOCITY_KD,
+                   (double)BALANCE_ANGLE_KP,
+                   (double)BALANCE_TILT_LIMIT_AB,
+                   (double)BALANCE_POSITION_INTEGRAL_LIMIT,
                    (int)BALANCE_OUTPUT_LIMIT);
 
         } else {

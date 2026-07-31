@@ -30,6 +30,11 @@
 #define STEPPER_MAX_FREQ_HZ         (5000U)
 #define STEPPER_MIN_FREQ_HZ         (16U)
 
+/* Proven safe commissioning window from D:\D\Q3. With 1/16 microstepping,
+ * 200 pulses are 22.5 motor-shaft degrees. The mechanism documentation gives
+ * no numeric shaft-angle limit, so do not enlarge this from drawings alone. */
+#define STEPPER_SAFE_LIMIT_STEPS    (200)
+
 void Stepper_Init(void);
 
 /* Enable/disable the driver outputs. EN1 is active HIGH on the D36A: enabled
@@ -41,6 +46,8 @@ void Stepper_Disable(void);
  * Magnitudes above STEPPER_MAX_FREQ_HZ are clamped, magnitudes below
  * STEPPER_MIN_FREQ_HZ stop it. */
 void Stepper_SetSpeed(int32_t steps_per_sec);
+
+void Stepper_SetTravelLimits(int32_t minimum, int32_t maximum);
 
 /* Signed pulse count since the last reset, maintained by the PWM period
  * interrupt. Divide by STEPPER_PULSES_PER_REV for revolutions. */

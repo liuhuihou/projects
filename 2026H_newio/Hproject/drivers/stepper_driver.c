@@ -3,6 +3,8 @@
 
 static volatile int32_t s_position;
 static volatile int8_t s_dir;      /* +1, -1, or 0 when stopped */
+static volatile int32_t s_min_position;
+static volatile int32_t s_max_position;
 static uint32_t s_freq_hz;         /* 0 = no pulse train */
 
 /* Timer period for a given pulse rate. The counter ticks at
@@ -82,6 +84,8 @@ void Stepper_Init(void)
 {
     s_position = 0;
     s_dir = 0;
+    s_min_position = INT32_MIN;
+    s_max_position = INT32_MAX;
     s_freq_hz = 0U;
 
     HW_GPIO_LOW(HW_STEPPER_DIR_PORT, HW_STEPPER_DIR_PIN);
@@ -119,9 +123,17 @@ void Stepper_SetSpeed(int32_t steps_per_sec)
     int8_t dir;
 
     if (steps_per_sec > 0) {
+        if (s_position >= s_max_position) {
+            pulses_stop();
+            return;
+        }
         dir = 1;
         freq = (uint32_t)steps_per_sec;
     } else if (steps_per_sec < 0) {
+        if (s_position <= s_min_position) {
+            pulses_stop();
+            return;
+        }
         dir = -1;
         freq = (uint32_t)(-steps_per_sec);
     } else {
@@ -150,6 +162,14 @@ void Stepper_SetSpeed(int32_t steps_per_sec)
     }
 }
 
+void Stepper_SetTravelLimits(int32_t minimum, int32_t maximum)
+{
+    if (minimum >= maximum) return;
+    pulses_stop();
+    s_min_position = minimum;
+    s_max_position = maximum;
+}
+
 int32_t Stepper_GetPosition(void) { return s_position; }
 void Stepper_ResetPosition(void) { s_position = 0; }
 
@@ -160,8 +180,10 @@ void PWM_STEPPER_INST_IRQHandler(void)
         /* One zero event per output period, i.e. one emitted pulse. */
         if (s_dir > 0) {
             ++s_position;
+            if (s_position >= s_max_position) pulses_stop();
         } else if (s_dir < 0) {
             --s_position;
+            if (s_position <= s_min_position) pulses_stop();
         }
     }
 }

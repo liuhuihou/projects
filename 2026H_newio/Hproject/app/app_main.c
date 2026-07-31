@@ -16,6 +16,7 @@
 #include "oled_driver.h"
 #include "button_input.h"
 #include "stepper_driver.h"
+#include "stepper_feedback.h"
 #include "camera_uart.h"
 
 /* Control */
@@ -49,6 +50,7 @@ static const char *state_str(CompetitionState st)
         default:            return "???   ";
     }
 }
+
 static void oled_show_mode_select(void)
 {
     CompetitionQuestion mode = Competition_GetMode();
@@ -82,7 +84,7 @@ static void oled_show_mode_select(void)
     /* Row 2: selected sub-question */
     switch (mode) {
         case COMP_Q2: OLED_ShowString(0, 2, "Q2:LAP 20S  "); break;
-        case COMP_Q3: OLED_ShowString(0, 2, "Q3:BALL +-5 "); break;
+        case COMP_Q3: OLED_ShowString(0, 2, "Q3:STEPPER  "); break;
         case COMP_Q4: OLED_ShowString(0, 2, "Q4:AB+BALL  "); break;
         case COMP_Q5: OLED_ShowString(0, 2, "Q5:LAP+BALL "); break;
         case COMP_Q6: OLED_ShowString(0, 2, "Q6:LAP+POS  "); break;
@@ -122,20 +124,39 @@ static void oled_show_mode_select(void)
         }
     }
 
-    /* Rows 4/5: measured vs target wheel speed in cm/s.
-     * Format "L:12.3 T:25.0" - actual on the left, target after T. */
-    OLED_ShowString(0, 4, "L:");
-    OLED_ShowTenths(2, 4, rpm_to_cm_s_x10(Control_GetLeftRpm()), 2);
-    OLED_ShowString(8, 4, "T:");
-    OLED_ShowTenths(10, 4, rpm_to_cm_s_x10(Control_GetLeftTargetRpm()), 2);
+    if (mode == COMP_Q3) {
+        StepperFeedbackSnapshot feedback;
+        StepperFeedback_GetSnapshot(&feedback);
+        OLED_ShowString(0, 4, "STEP:");
+        OLED_ShowSignedInt(5, 4, (int)Stepper_GetPosition(), 6);
+        OLED_ShowString(12, 4, "         ");
+        OLED_ShowString(0, 5, "AB:");
+        OLED_ShowSignedInt(3, 5, (int)feedback.quadrature_count, 6);
+        OLED_ShowString(10, 5, "T:");
+        OLED_ShowSignedInt(12, 5, (int)Balance_GetTargetAb(), 5);
+        OLED_ShowString(18, 5, "   ");
+    } else {
+        /* Rows 4/5: measured vs target wheel speed in cm/s. */
+        OLED_ShowString(0, 4, "L:");
+        OLED_ShowTenths(2, 4, rpm_to_cm_s_x10(Control_GetLeftRpm()), 2);
+        OLED_ShowString(8, 4, "T:");
+        OLED_ShowTenths(10, 4, rpm_to_cm_s_x10(Control_GetLeftTargetRpm()), 2);
 
-    OLED_ShowString(0, 5, "R:");
-    OLED_ShowTenths(2, 5, rpm_to_cm_s_x10(Control_GetRightRpm()), 2);
-    OLED_ShowString(8, 5, "T:");
-    OLED_ShowTenths(10, 5, rpm_to_cm_s_x10(Control_GetRightTargetRpm()), 2);
+        OLED_ShowString(0, 5, "R:");
+        OLED_ShowTenths(2, 5, rpm_to_cm_s_x10(Control_GetRightRpm()), 2);
+        OLED_ShowString(8, 5, "T:");
+        OLED_ShowTenths(10, 5, rpm_to_cm_s_x10(Control_GetRightTargetRpm()), 2);
+    }
 
-    /* Row 6: elapsed time while running, key hint otherwise */
-    if (state == STATE_RUNNING || state == STATE_DONE) {
+    /* Q3 uses the lower rows for visual-loop telemetry. */
+    if (mode == COMP_Q3) {
+        const CameraData *cam = Camera_GetData();
+        OLED_ShowString(0, 6, "P:");
+        OLED_ShowSignedInt(2, 6, (int)cam->ball_pos_mm, 4);
+        OLED_ShowString(8, 6, "T:");
+        OLED_ShowSignedInt(10, 6, (int)Balance_GetTarget(), 4);
+        OLED_ShowString(15, 6, "      ");
+    } else if (state == STATE_RUNNING || state == STATE_DONE) {
         OLED_ShowString(0, 6, "T:");
         OLED_ShowTenths(2, 6, (int32_t)(elapsed / 100), 3);
         OLED_ShowString(8, 6, "S      ");
@@ -151,7 +172,14 @@ static void oled_show_mode_select(void)
      * out: at 8 channels the digits reach column 10, which is where "E:" used
      * to start, so a fixed 10 would have overwritten the last channel. A row
      * holds 21 characters (128 px / 6), so there is room to spare. */
-    {
+    if (mode == COMP_Q3) {
+        const CameraData *cam = Camera_GetData();
+        OLED_ShowString(0, 7, "V:");
+        OLED_ShowSignedInt(2, 7, (int)cam->ball_vel_mm_s, 4);
+        OLED_ShowString(8, 7, "O:");
+        OLED_ShowSignedInt(10, 7, (int)Balance_GetOutput(), 5);
+        OLED_ShowString(16, 7, "     ");
+    } else {
         const uint8_t err_col = (uint8_t)(3U + LINE_SENSOR_COUNT + 1U);
         uint8_t ir = LineSensor_ReadRaw();
         uint8_t i;
@@ -213,7 +241,6 @@ int main(void)
 {
     uint32_t last_oled_tick;
     uint32_t last_btn_tick;
-    uint32_t last_debug_tick;
     uint32_t last_line_tick;
 
     SYSCFG_DL_init();
@@ -238,6 +265,9 @@ int main(void)
      * SPI bit-bang must not be interrupted mid-byte or the panel latches
      * garbage and stays blank. */
     oled_show_mode_select();
+
+    /* Start encoder feedback only after the first bit-banged OLED frame. */
+    StepperFeedback_Init();
 
     /* Enable interrupts */
     NVIC_ClearPendingIRQ(HW_MOTOR_A_ENCODER_IRQN);
