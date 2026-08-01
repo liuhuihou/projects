@@ -8,6 +8,7 @@
 #include "stepper_driver.h"
 #include "stepper_feedback.h"
 #include "control_config.h"
+#include "vehicle_controller.h"
 
 uint8_t  stub_tx_buf[256];
 uint32_t stub_tx_len;
@@ -62,3 +63,6 @@ void StepperFeedback_GetSnapshot(StepperFeedbackSnapshot *snapshot)
     snapshot->phase_b = 0U;
     snapshot->index_level = 0U;
 }
+
+ControlMode Control_GetMode(void) { return CTRL_STOP; }
+float Control_GetStartRampScale(void) { return 1.0f; }

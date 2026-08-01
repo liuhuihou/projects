@@ -104,6 +104,12 @@
 #define BALANCE_Q4_POSITION_KP          (0.70f)
 #define BALANCE_Q4_POSITION_KI          (0.10f)
 #define BALANCE_Q4_VELOCITY_KD          (0.30f)
+/* Q4 launch acceleration feed-forward magnitude. The installed mechanism was
+ * verified on the vehicle: increasing the AB target produces the direction
+ * that opposes the ball's rearward inertial motion at launch. */
+#define BALANCE_Q4_START_FF_AB           (45.0f)
+#define BALANCE_Q4_START_FF_LIMIT_AB     (80.0f)
+#define BALANCE_Q4_FF_SLEW_AB            (20.0f)
 
 #define BALANCE_Q5_POSITION_KP          (0.70f)
 #define BALANCE_Q5_POSITION_KI          (0.10f)

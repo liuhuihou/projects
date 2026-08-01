@@ -12,7 +12,7 @@
 
 /* Smooth-start duration for ball-carrying modes. Q4 has the tightest time
  * budget, so it reaches cruise speed sooner; Q5/Q6 can use a gentler ramp. */
-#define APP_START_RAMP_Q4_MS       (1000U)
+#define APP_START_RAMP_Q4_MS       (1500U)
 #define APP_START_RAMP_Q5_MS       (1500U)
 #define APP_START_RAMP_Q6_MS       (1500U)
 
@@ -48,7 +48,7 @@
 /* Q4/Q5/Q6 use odometry as the actual stop trigger. Q4 stops after the
  * requested 1.6 m. Q5/Q6 deliberately run 110% of the nominal lap so the
  * vehicle has passed A before braking even with moderate under-counting. */
-#define APP_STOP_Q4_DISTANCE_CM           (180.0f)
+#define APP_STOP_Q4_DISTANCE_CM           (170.0f)
 #define APP_STOP_Q5_Q6_DISTANCE_RATIO     (1.10f)
 #define APP_STOP_Q5_Q6_DISTANCE_CM        \
     (APP_TRACK_LAP_LENGTH_CM * APP_STOP_Q5_Q6_DISTANCE_RATIO)

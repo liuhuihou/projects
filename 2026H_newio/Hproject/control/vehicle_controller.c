@@ -205,6 +205,7 @@ void Control_SetStartRamp(uint32_t duration_ms)
     s_start_ramp_scale = (duration_ms == 0U) ? 1.0f : 0.0f;
     __enable_irq();
 }
+float Control_GetStartRampScale(void) { return s_start_ramp_scale; }
 float Control_GetLeftRpm(void) { return s_left_rpm; }
 float Control_GetRightRpm(void) { return s_right_rpm; }
 float Control_GetBaseSpeedRpm(void) { return s_base_rpm; }
