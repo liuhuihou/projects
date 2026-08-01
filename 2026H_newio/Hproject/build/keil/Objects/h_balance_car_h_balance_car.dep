@@ -76,7 +76,7 @@ I (E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\dl_wwdt.h)(0x66631CE6)
 I (E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\m0p\dl_interrupt.h)(0x66631CE6)
 I (E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\m0p\dl_systick.h)(0x66631CE6)
 I (..\board\board_hardware.h)(0x6A6CF039)
-I (..\control\control_config.h)(0x6A6D34F9)
+I (..\control\control_config.h)(0x6A6D4774)
 I (..\drivers\motor_driver.h)(0x6A6C04D0)
 I (..\drivers\encoder_driver.h)(0x6A6C92CE)
 I (..\drivers\line_sensor.h)(0x6A6C92CE)
@@ -85,21 +85,21 @@ I (..\drivers\button_input.h)(0x6A6D3224)
 I (..\drivers\stepper_driver.h)(0x6A6CF039)
 I (..\drivers\stepper_feedback.h)(0x6A6D0070)
 I (..\drivers\camera_uart.h)(0x6A6CCFCF)
-I (..\control\vehicle_controller.h)(0x6A6D299D)
+I (..\control\vehicle_controller.h)(0x6A6D39A3)
 I (..\control\balance_controller.h)(0x6A6D2247)
 I (..\app\competition_mode.h)(0x6A6D3656)
 I (..\app\line_follow_task.h)(0x6A6C9C79)
 I (..\app\balance_task.h)(0x6A6D1802)
 F (../app/competition_mode.c)(0x6A6D3657)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m0plus -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O2 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../ -I ../board -I ../drivers -I ../control -I ../app -I ../generated -I E:/ti/mspm0_sdk_2_01_00_03/source/third_party/CMSIS/Core/Include -I E:/ti/mspm0_sdk_2_01_00_03/source -fshort-enums -fshort-wchar -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier-D__UVISION_VERSION="543" -D__MSPM0G3507__ -D__MSPM0G3507__-o ../build/keil/objects/competition_mode.o -MMD)
 I (..\app\competition_mode.h)(0x6A6D3656)
-I (..\app\app_config.h)(0x6A6D3655)
+I (..\app\app_config.h)(0x6A6D4774)
 I (..\drivers\button_input.h)(0x6A6D3224)
-I (..\control\vehicle_controller.h)(0x6A6D299D)
+I (..\control\vehicle_controller.h)(0x6A6D39A3)
 I (..\control\balance_controller.h)(0x6A6D2247)
 I (..\app\line_follow_task.h)(0x6A6C9C79)
 I (..\app\balance_task.h)(0x6A6D1802)
 I (..\drivers\oled_driver.h)(0x6A6C04D0)
-I (..\control\control_config.h)(0x6A6D34F9)
+I (..\control\control_config.h)(0x6A6D4774)
 I (..\drivers\stepper_driver.h)(0x6A6CF039)
 I (..\drivers\stepper_feedback.h)(0x6A6D0070)
 I (..\board\board_hardware.h)(0x6A6CF039)
@@ -179,8 +179,8 @@ I (E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\m0p\dl_interrupt.h)(0x66631CE6
 I (E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\m0p\dl_systick.h)(0x66631CE6)
 F (../app/line_follow_task.c)(0x6A6CA48E)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m0plus -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O2 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../ -I ../board -I ../drivers -I ../control -I ../app -I ../generated -I E:/ti/mspm0_sdk_2_01_00_03/source/third_party/CMSIS/Core/Include -I E:/ti/mspm0_sdk_2_01_00_03/source -fshort-enums -fshort-wchar -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier-D__UVISION_VERSION="543" -D__MSPM0G3507__ -D__MSPM0G3507__-o ../build/keil/objects/line_follow_task.o -MMD)
 I (..\app\line_follow_task.h)(0x6A6C9C79)
-I (..\app\app_config.h)(0x6A6D3655)
-I (..\control\vehicle_controller.h)(0x6A6D299D)
+I (..\app\app_config.h)(0x6A6D4774)
+I (..\control\vehicle_controller.h)(0x6A6D39A3)
 I (..\drivers\line_sensor.h)(0x6A6C92CE)
 I (..\board\board_hardware.h)(0x6A6CF039)
 I (..\ti_msp_dl_config.h)(0x6A6C04D0)
@@ -261,9 +261,9 @@ I (..\drivers\encoder_driver.h)(0x6A6C92CE)
 F (../app/balance_task.c)(0x6A6D1800)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m0plus -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O2 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../ -I ../board -I ../drivers -I ../control -I ../app -I ../generated -I E:/ti/mspm0_sdk_2_01_00_03/source/third_party/CMSIS/Core/Include -I E:/ti/mspm0_sdk_2_01_00_03/source -fshort-enums -fshort-wchar -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier-D__UVISION_VERSION="543" -D__MSPM0G3507__ -D__MSPM0G3507__-o ../build/keil/objects/balance_task.o -MMD)
 I (..\app\balance_task.h)(0x6A6D1802)
 I (..\control\balance_controller.h)(0x6A6D2247)
-F (../control/vehicle_controller.c)(0x6A6D299F)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m0plus -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O2 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../ -I ../board -I ../drivers -I ../control -I ../app -I ../generated -I E:/ti/mspm0_sdk_2_01_00_03/source/third_party/CMSIS/Core/Include -I E:/ti/mspm0_sdk_2_01_00_03/source -fshort-enums -fshort-wchar -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier-D__UVISION_VERSION="543" -D__MSPM0G3507__ -D__MSPM0G3507__-o ../build/keil/objects/vehicle_controller.o -MMD)
-I (..\control\vehicle_controller.h)(0x6A6D299D)
-I (..\control\control_config.h)(0x6A6D34F9)
+F (../control/vehicle_controller.c)(0x6A6D39A4)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m0plus -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O2 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../ -I ../board -I ../drivers -I ../control -I ../app -I ../generated -I E:/ti/mspm0_sdk_2_01_00_03/source/third_party/CMSIS/Core/Include -I E:/ti/mspm0_sdk_2_01_00_03/source -fshort-enums -fshort-wchar -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier-D__UVISION_VERSION="543" -D__MSPM0G3507__ -D__MSPM0G3507__-o ../build/keil/objects/vehicle_controller.o -MMD)
+I (..\control\vehicle_controller.h)(0x6A6D39A3)
+I (..\control\control_config.h)(0x6A6D4774)
 I (..\drivers\encoder_driver.h)(0x6A6C92CE)
 I (..\drivers\line_sensor.h)(0x6A6C92CE)
 I (..\board\board_hardware.h)(0x6A6CF039)
@@ -342,12 +342,13 @@ I (E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\dl_wwdt.h)(0x66631CE6)
 I (E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\m0p\dl_interrupt.h)(0x66631CE6)
 I (E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\m0p\dl_systick.h)(0x66631CE6)
 I (..\drivers\motor_driver.h)(0x6A6C04D0)
-F (../control/balance_controller.c)(0x6A6D2248)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m0plus -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O2 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../ -I ../board -I ../drivers -I ../control -I ../app -I ../generated -I E:/ti/mspm0_sdk_2_01_00_03/source/third_party/CMSIS/Core/Include -I E:/ti/mspm0_sdk_2_01_00_03/source -fshort-enums -fshort-wchar -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier-D__UVISION_VERSION="543" -D__MSPM0G3507__ -D__MSPM0G3507__-o ../build/keil/objects/balance_controller.o -MMD)
+F (../control/balance_controller.c)(0x6A6D3C8B)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m0plus -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O2 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../ -I ../board -I ../drivers -I ../control -I ../app -I ../generated -I E:/ti/mspm0_sdk_2_01_00_03/source/third_party/CMSIS/Core/Include -I E:/ti/mspm0_sdk_2_01_00_03/source -fshort-enums -fshort-wchar -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier-D__UVISION_VERSION="543" -D__MSPM0G3507__ -D__MSPM0G3507__-o ../build/keil/objects/balance_controller.o -MMD)
 I (..\control\balance_controller.h)(0x6A6D2247)
-I (..\control\control_config.h)(0x6A6D34F9)
+I (..\control\control_config.h)(0x6A6D4774)
 I (..\drivers\camera_uart.h)(0x6A6CCFCF)
 I (..\drivers\stepper_driver.h)(0x6A6CF039)
 I (..\drivers\stepper_feedback.h)(0x6A6D0070)
+I (..\control\vehicle_controller.h)(0x6A6D39A3)
 F (../drivers/motor_driver.c)(0x6A6C04D0)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m0plus -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-gdwarf-4 -O2 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../ -I ../board -I ../drivers -I ../control -I ../app -I ../generated -I E:/ti/mspm0_sdk_2_01_00_03/source/third_party/CMSIS/Core/Include -I E:/ti/mspm0_sdk_2_01_00_03/source -fshort-enums -fshort-wchar -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier-D__UVISION_VERSION="543" -D__MSPM0G3507__ -D__MSPM0G3507__-o ../build/keil/objects/motor_driver.o -MMD)
 I (..\drivers\motor_driver.h)(0x6A6C04D0)
 I (..\board\board_hardware.h)(0x6A6CF039)

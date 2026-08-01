@@ -24,6 +24,8 @@ void Control_SetBaseSpeed(float rpm);
 /* Linearly ramp both wheel targets from zero to their requested values over
  * duration_ms. A duration of zero preserves the original immediate start. */
 void Control_SetStartRamp(uint32_t duration_ms);
+/* Current start-ramp progress: 0 at launch, 1 when complete. */
+float Control_GetStartRampScale(void);
 float Control_GetLeftRpm(void);
 float Control_GetRightRpm(void);
 float Control_GetBaseSpeedRpm(void);

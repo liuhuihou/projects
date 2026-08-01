@@ -3,6 +3,7 @@
 #include "camera_uart.h"
 #include "stepper_driver.h"
 #include "stepper_feedback.h"
+#include "vehicle_controller.h"
 
 static int16_t s_target_mm;
 static int16_t s_error;
@@ -18,6 +19,15 @@ static BalancePidProfile s_pid_profile;
 static float s_position_kp;
 static float s_position_ki;
 static float s_velocity_kd;
+static float s_start_ff_ab;
+
+static float slew_float(float current, float requested, float step)
+{
+    const float delta = requested - current;
+    if (delta > step) return current + step;
+    if (delta < -step) return current - step;
+    return requested;
+}
 
 #if !BALANCE_USE_CAMERA_VELOCITY
 /* Derivative state, only needed when differencing position here. The camera
@@ -83,6 +93,7 @@ void Balance_SelectPidProfile(BalancePidProfile profile)
 {
     load_pid_profile(profile);
     s_integral = 0.0f;
+    s_start_ff_ab = 0.0f;
     derivative_reset();
 }
 
@@ -103,6 +114,7 @@ void Balance_Init(void)
     s_target_ab = BALANCE_LEVEL_AB_COUNT;
     s_last_tick_ms = 0U;
     s_tick_started = 0U;
+    s_start_ff_ab = 0.0f;
     load_pid_profile(BALANCE_PID_PROFILE_Q3);
     derivative_reset();
 }
@@ -134,6 +146,7 @@ void Balance_Enable(void)
     s_target_ab = BALANCE_LEVEL_AB_COUNT;
     s_last_tick_ms = 0U;
     s_tick_started = 0U;
+    s_start_ff_ab = 0.0f;
     derivative_reset();
     Stepper_Enable();
 }
@@ -146,6 +159,7 @@ void Balance_Disable(void)
     s_ball_velocity_mm_s = 0;
     s_target_ab = BALANCE_LEVEL_AB_COUNT;
     s_tick_started = 0U;
+    s_start_ff_ab = 0.0f;
     Stepper_SetSpeed(0);
     Stepper_Disable();
 }
@@ -248,13 +262,36 @@ void Balance_Tick(uint32_t now_ms)
             outer_output = -BALANCE_TILT_LIMIT_AB;
         }
         s_target_ab = BALANCE_LEVEL_AB_COUNT + (int32_t)outer_output;
-        if (s_target_ab < BALANCE_TRAVEL_AB_MIN) {
-            s_target_ab = BALANCE_TRAVEL_AB_MIN;
-        }
-        if (s_target_ab > BALANCE_TRAVEL_AB_MAX) {
-            s_target_ab = BALANCE_TRAVEL_AB_MAX;
-        }
         s_tracking = 1;
+    }
+
+    /* Q4-only launch feed-forward. The linear vehicle ramp has known positive
+     * longitudinal acceleration, so act before the camera sees the ball move.
+     * Slewing both edges avoids an abrupt beam-target step at launch and when
+     * the one-second vehicle ramp completes. */
+    {
+        float requested_ff = 0.0f;
+        if (s_pid_profile == BALANCE_PID_PROFILE_Q4 &&
+            Control_GetMode() != CTRL_STOP &&
+            Control_GetStartRampScale() < 1.0f) {
+            requested_ff = BALANCE_Q4_START_FF_AB;
+        }
+        if (requested_ff > BALANCE_Q4_START_FF_LIMIT_AB) {
+            requested_ff = BALANCE_Q4_START_FF_LIMIT_AB;
+        }
+        if (requested_ff < -BALANCE_Q4_START_FF_LIMIT_AB) {
+            requested_ff = -BALANCE_Q4_START_FF_LIMIT_AB;
+        }
+        s_start_ff_ab = slew_float(s_start_ff_ab, requested_ff,
+                                   BALANCE_Q4_FF_SLEW_AB);
+        s_target_ab += (int32_t)s_start_ff_ab;
+    }
+
+    if (s_target_ab < BALANCE_TRAVEL_AB_MIN) {
+        s_target_ab = BALANCE_TRAVEL_AB_MIN;
+    }
+    if (s_target_ab > BALANCE_TRAVEL_AB_MAX) {
+        s_target_ab = BALANCE_TRAVEL_AB_MAX;
     }
 
     StepperFeedback_GetSnapshot(&feedback);
