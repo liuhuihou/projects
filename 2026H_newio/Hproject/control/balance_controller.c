@@ -14,10 +14,14 @@ static int16_t s_ball_velocity_mm_s;
 static int32_t s_target_ab;
 static uint32_t s_last_tick_ms;
 static uint8_t s_tick_started;
+static BalanceQ3Direction s_q3_direction;
 static BalancePidProfile s_pid_profile;
 static float s_position_kp;
 static float s_position_ki;
 static float s_velocity_kd;
+static float s_fixed_tilt_distance_mm;
+static float s_fixed_tilt_ab_offset;
+static int16_t s_q3_leg_start_mm;
 
 #if !BALANCE_USE_CAMERA_VELOCITY
 /* Derivative state, only needed when differencing position here. The camera
@@ -47,6 +51,36 @@ static void derivative_reset(void)
 #define derivative_reset() ((void)0)
 #endif
 
+static void load_q3_direction(BalanceQ3Direction direction)
+{
+    switch (direction) {
+        case BALANCE_Q3_DIRECTION_REVERSE:
+            s_position_kp = BALANCE_Q3_REVERSE_POSITION_KP;
+            s_position_ki = BALANCE_Q3_REVERSE_POSITION_KI;
+            s_velocity_kd = BALANCE_Q3_REVERSE_VELOCITY_KD;
+            s_fixed_tilt_distance_mm =
+                BALANCE_Q3_REVERSE_FIXED_TILT_DISTANCE_MM;
+            s_fixed_tilt_ab_offset =
+                BALANCE_Q3_REVERSE_FIXED_TILT_ANGLE_DEG *
+                BALANCE_TILT_AB_COUNTS_PER_DEGREE;
+            break;
+
+        case BALANCE_Q3_DIRECTION_FORWARD:
+        default:
+            direction = BALANCE_Q3_DIRECTION_FORWARD;
+            s_position_kp = BALANCE_Q3_FORWARD_POSITION_KP;
+            s_position_ki = BALANCE_Q3_FORWARD_POSITION_KI;
+            s_velocity_kd = BALANCE_Q3_FORWARD_VELOCITY_KD;
+            s_fixed_tilt_distance_mm =
+                BALANCE_Q3_FORWARD_FIXED_TILT_DISTANCE_MM;
+            s_fixed_tilt_ab_offset =
+                BALANCE_Q3_FORWARD_FIXED_TILT_ANGLE_DEG *
+                BALANCE_TILT_AB_COUNTS_PER_DEGREE;
+            break;
+    }
+    s_q3_direction = direction;
+}
+
 static void load_pid_profile(BalancePidProfile profile)
 {
     switch (profile) {
@@ -71,9 +105,7 @@ static void load_pid_profile(BalancePidProfile profile)
         case BALANCE_PID_PROFILE_Q3:
         default:
             profile = BALANCE_PID_PROFILE_Q3;
-            s_position_kp = BALANCE_Q3_POSITION_KP;
-            s_position_ki = BALANCE_Q3_POSITION_KI;
-            s_velocity_kd = BALANCE_Q3_VELOCITY_KD;
+            load_q3_direction(BALANCE_Q3_DIRECTION_FORWARD);
             break;
     }
     s_pid_profile = profile;
@@ -82,6 +114,9 @@ static void load_pid_profile(BalancePidProfile profile)
 void Balance_SelectPidProfile(BalancePidProfile profile)
 {
     load_pid_profile(profile);
+    if (s_pid_profile == BALANCE_PID_PROFILE_Q3) {
+        s_q3_leg_start_mm = 0;
+    }
     s_integral = 0.0f;
     derivative_reset();
 }
@@ -89,6 +124,34 @@ void Balance_SelectPidProfile(BalancePidProfile profile)
 BalancePidProfile Balance_GetPidProfile(void)
 {
     return s_pid_profile;
+}
+
+void Balance_SelectQ3Direction(BalanceQ3Direction direction)
+{
+    if (s_pid_profile == BALANCE_PID_PROFILE_Q3) {
+        if (direction == BALANCE_Q3_DIRECTION_REVERSE) {
+            if (s_tracking != 0U) {
+                int32_t position_mm = (int32_t)s_target_mm -
+                                      (int32_t)s_error;
+                if (position_mm > 32767) position_mm = 32767;
+                if (position_mm < -32768) position_mm = -32768;
+                s_q3_leg_start_mm = (int16_t)position_mm;
+            } else {
+                s_q3_leg_start_mm = -50;
+            }
+        } else {
+            direction = BALANCE_Q3_DIRECTION_FORWARD;
+            s_q3_leg_start_mm = 0;
+        }
+        load_q3_direction(direction);
+        s_integral = 0.0f;
+        derivative_reset();
+    }
+}
+
+BalanceQ3Direction Balance_GetQ3Direction(void)
+{
+    return s_q3_direction;
 }
 
 void Balance_Init(void)
@@ -104,6 +167,7 @@ void Balance_Init(void)
     s_last_tick_ms = 0U;
     s_tick_started = 0U;
     load_pid_profile(BALANCE_PID_PROFILE_Q3);
+    s_q3_leg_start_mm = 0;
     derivative_reset();
 }
 
@@ -159,6 +223,8 @@ void Balance_Tick(uint32_t now_ms)
     float outer_output;
     float beam_error;
     float output;
+    float fixed_tilt_progress_mm;
+    uint8_t fixed_tilt_active;
     int32_t speed_cmd;
 
     if (!s_enabled) return;
@@ -193,12 +259,37 @@ void Balance_Tick(uint32_t now_ms)
         }
         error_f = (float)s_error;
 
-        s_integral += error_f * ((float)BALANCE_PERIOD_MS / 1000.0f);
-        if (s_integral > BALANCE_POSITION_INTEGRAL_LIMIT) {
-            s_integral = BALANCE_POSITION_INTEGRAL_LIMIT;
+        fixed_tilt_active = 0U;
+        fixed_tilt_progress_mm = 0.0f;
+        if (s_pid_profile == BALANCE_PID_PROFILE_Q3 &&
+            s_fixed_tilt_distance_mm > 0.0f) {
+            if (s_q3_direction == BALANCE_Q3_DIRECTION_FORWARD &&
+                s_target_mm == -50) {
+                fixed_tilt_progress_mm = (float)s_q3_leg_start_mm -
+                                         (float)cam->ball_pos_mm;
+                if (fixed_tilt_progress_mm < s_fixed_tilt_distance_mm) {
+                    fixed_tilt_active = 1U;
+                }
+            } else if (s_q3_direction == BALANCE_Q3_DIRECTION_REVERSE &&
+                       s_target_mm == 50) {
+                fixed_tilt_progress_mm = (float)cam->ball_pos_mm -
+                                         (float)s_q3_leg_start_mm;
+                if (fixed_tilt_progress_mm < s_fixed_tilt_distance_mm) {
+                    fixed_tilt_active = 1U;
+                }
+            }
         }
-        if (s_integral < -BALANCE_POSITION_INTEGRAL_LIMIT) {
-            s_integral = -BALANCE_POSITION_INTEGRAL_LIMIT;
+
+        if (fixed_tilt_active != 0U) {
+            s_integral = 0.0f;
+        } else {
+            s_integral += error_f * ((float)BALANCE_PERIOD_MS / 1000.0f);
+            if (s_integral > BALANCE_POSITION_INTEGRAL_LIMIT) {
+                s_integral = BALANCE_POSITION_INTEGRAL_LIMIT;
+            }
+            if (s_integral < -BALANCE_POSITION_INTEGRAL_LIMIT) {
+                s_integral = -BALANCE_POSITION_INTEGRAL_LIMIT;
+            }
         }
 
 #if BALANCE_USE_CAMERA_VELOCITY
@@ -238,9 +329,17 @@ void Balance_Tick(uint32_t now_ms)
          * tube. Positive AB raises the positive/front end and therefore causes
          * negative acceleration, so negate the outer result before adding it
          * to the horizontal AB count. */
-        outer_output = -(s_position_kp * error_f
-                       + s_position_ki * s_integral
-                       - s_velocity_kd * ball_velocity);
+        if (fixed_tilt_active != 0U) {
+            outer_output = s_fixed_tilt_ab_offset;
+        } else {
+            outer_output = -(s_position_kp * error_f
+                           + s_position_ki * s_integral
+                           - s_velocity_kd * ball_velocity);
+            if (s_pid_profile == BALANCE_PID_PROFILE_Q3 &&
+                outer_output > 0.0f) {
+                outer_output *= BALANCE_Q3_POSITIVE_AB_OFFSET_SCALE;
+            }
+        }
         if (outer_output > BALANCE_TILT_LIMIT_AB) {
             outer_output = BALANCE_TILT_LIMIT_AB;
         }

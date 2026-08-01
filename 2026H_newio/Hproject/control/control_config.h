@@ -74,14 +74,32 @@
 #define BALANCE_LEVEL_AB_COUNT          (300)
 #define BALANCE_TRAVEL_AB_MIN           (50)
 #define BALANCE_TRAVEL_AB_MAX           (1050)
+/* Nominal MS42CG quadrature feedback is 4096 counts/rev. If the beam and
+ * encoder are not 1:1, replace this with the measured beam-angle conversion. */
+#define BALANCE_TILT_AB_COUNTS_PER_DEGREE (4096.0f / 360.0f)
 
 /* Outer loop: ball position/velocity -> requested beam offset in AB counts.
  * Each competition question has its own gains.  They intentionally start with
  * the previously tuned common values so selecting a profile does not change
  * behaviour; from now on each question can be tuned independently. */
-#define BALANCE_Q3_POSITION_KP          (0.70f)
-#define BALANCE_Q3_POSITION_KI          (0.10f)
-#define BALANCE_Q3_VELOCITY_KD          (0.30f)
+/* Q3 forward leg: O -> -5 cm. The first configured distance uses a fixed
+ * beam angle relative to horizontal; set the distance to 0 for all-PID. */
+#define BALANCE_Q3_FORWARD_POSITION_KP             (0.61f)
+#define BALANCE_Q3_FORWARD_POSITION_KI             (0.80f)
+#define BALANCE_Q3_FORWARD_VELOCITY_KD             (1.00f)
+#define BALANCE_Q3_FORWARD_FIXED_TILT_DISTANCE_MM  (33.0f)
+#define BALANCE_Q3_FORWARD_FIXED_TILT_ANGLE_DEG    (+5.2734375f)
+
+/* Q3 reverse leg: -5 cm -> +5 cm. Its fixed distance and fixed angle are
+ * independent from the forward leg. */
+#define BALANCE_Q3_REVERSE_POSITION_KP             (0.50f)
+#define BALANCE_Q3_REVERSE_POSITION_KI             (0.70f)
+#define BALANCE_Q3_REVERSE_VELOCITY_KD             (0.60f)
+#define BALANCE_Q3_REVERSE_FIXED_TILT_DISTANCE_MM  (20.0f)
+#define BALANCE_Q3_REVERSE_FIXED_TILT_ANGLE_DEG    (-4.39453125f)
+/* Q3-only compensation for directional mechanical asymmetry.  The factor
+ * applies to positive AB-count offsets from level; 1.0 disables it. */
+#define BALANCE_Q3_POSITIVE_AB_OFFSET_SCALE (2.0f)
 
 #define BALANCE_Q4_POSITION_KP          (0.70f)
 #define BALANCE_Q4_POSITION_KI          (0.10f)

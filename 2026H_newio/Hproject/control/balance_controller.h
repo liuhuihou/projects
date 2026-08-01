@@ -10,6 +10,11 @@ typedef enum {
     BALANCE_PID_PROFILE_Q6
 } BalancePidProfile;
 
+typedef enum {
+    BALANCE_Q3_DIRECTION_FORWARD = 0, /* O -> -5 cm */
+    BALANCE_Q3_DIRECTION_REVERSE      /* -5 cm -> +5 cm */
+} BalanceQ3Direction;
+
 /*
  * Balance controller for the steel ball on the PPR pipe.
  * Uses K230 camera position feedback + stepper motor output.
@@ -32,6 +37,10 @@ void Balance_Init(void);
  * controller state into another. */
 void Balance_SelectPidProfile(BalancePidProfile profile);
 BalancePidProfile Balance_GetPidProfile(void);
+
+/* Select the complete Q3 PID group for the active movement direction. */
+void Balance_SelectQ3Direction(BalanceQ3Direction direction);
+BalanceQ3Direction Balance_GetQ3Direction(void);
 
 /* Set target ball position in mm relative to center O (-120 to +120) */
 void Balance_SetTarget(int16_t target_mm);

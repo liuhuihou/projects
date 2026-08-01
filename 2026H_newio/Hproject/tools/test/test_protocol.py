@@ -24,10 +24,19 @@ import protocol as P  # noqa: E402
 # command, so a change on one side cannot drift silently.
 BALANCE_PERIOD_MS = 20
 BALANCE_DATA_TIMEOUT_MS = 150
-BALANCE_LEVEL_AB_COUNT = 270
-BALANCE_POSITION_KP = 0.70
-BALANCE_POSITION_KI = 0.10
-BALANCE_VELOCITY_KD = 0.30
+BALANCE_LEVEL_AB_COUNT = 300
+BALANCE_TILT_AB_COUNTS_PER_DEGREE = 4096.0 / 360.0
+BALANCE_FORWARD_POSITION_KP = 0.61
+BALANCE_FORWARD_POSITION_KI = 0.70
+BALANCE_FORWARD_VELOCITY_KD = 0.60
+BALANCE_FORWARD_FIXED_TILT_DISTANCE_MM = 20.0
+BALANCE_FORWARD_FIXED_TILT_ANGLE_DEG = 5.2734375
+BALANCE_REVERSE_POSITION_KP = 0.50
+BALANCE_REVERSE_POSITION_KI = 0.70
+BALANCE_REVERSE_VELOCITY_KD = 0.60
+BALANCE_REVERSE_FIXED_TILT_DISTANCE_MM = 20.0
+BALANCE_REVERSE_FIXED_TILT_ANGLE_DEG = -4.39453125
+BALANCE_POSITIVE_AB_OFFSET_SCALE = 2.0
 BALANCE_ANGLE_KP = 8.0
 BALANCE_TILT_LIMIT_AB = 250.0
 BALANCE_POSITION_INTEGRAL_LIMIT = 500.0
@@ -135,8 +144,29 @@ def clamp(v, lo, hi):
 class PidModel:
     """Independent reimplementation of Balance_Tick's arithmetic."""
 
-    def __init__(self, use_velocity):
+    def __init__(self, use_velocity, reverse=False):
         self.use_velocity = use_velocity
+        self.reverse = reverse
+        if reverse:
+            self.position_kp = BALANCE_REVERSE_POSITION_KP
+            self.position_ki = BALANCE_REVERSE_POSITION_KI
+            self.velocity_kd = BALANCE_REVERSE_VELOCITY_KD
+            self.fixed_tilt_distance_mm = \
+                BALANCE_REVERSE_FIXED_TILT_DISTANCE_MM
+            self.fixed_tilt_ab_offset = \
+                (BALANCE_REVERSE_FIXED_TILT_ANGLE_DEG *
+                 BALANCE_TILT_AB_COUNTS_PER_DEGREE)
+            self.leg_start_mm = -50
+        else:
+            self.position_kp = BALANCE_FORWARD_POSITION_KP
+            self.position_ki = BALANCE_FORWARD_POSITION_KI
+            self.velocity_kd = BALANCE_FORWARD_VELOCITY_KD
+            self.fixed_tilt_distance_mm = \
+                BALANCE_FORWARD_FIXED_TILT_DISTANCE_MM
+            self.fixed_tilt_ab_offset = \
+                (BALANCE_FORWARD_FIXED_TILT_ANGLE_DEG *
+                 BALANCE_TILT_AB_COUNTS_PER_DEGREE)
+            self.leg_start_mm = 0
         self.integral = 0.0
         self.prev_error = None
         self.prev_derivative = 0.0
@@ -152,10 +182,21 @@ class PidModel:
 
     def tick(self, target, pos, vel, seq, frame_ms, ab):
         error = target - pos
-        self.integral = clamp(
-            self.integral + error * (BALANCE_PERIOD_MS / 1000.0),
-            -BALANCE_POSITION_INTEGRAL_LIMIT,
-            BALANCE_POSITION_INTEGRAL_LIMIT)
+        fixed_tilt = False
+        if self.fixed_tilt_distance_mm > 0.0:
+            if not self.reverse and target == -50:
+                fixed_tilt = (self.leg_start_mm - pos <
+                              self.fixed_tilt_distance_mm)
+            elif self.reverse and target == 50:
+                fixed_tilt = (pos - self.leg_start_mm <
+                              self.fixed_tilt_distance_mm)
+        if fixed_tilt:
+            self.integral = 0.0
+        else:
+            self.integral = clamp(
+                self.integral + error * (BALANCE_PERIOD_MS / 1000.0),
+                -BALANCE_POSITION_INTEGRAL_LIMIT,
+                BALANCE_POSITION_INTEGRAL_LIMIT)
         if self.use_velocity:
             ball_velocity = float(vel)
         else:
@@ -174,9 +215,14 @@ class PidModel:
                 ball_velocity = -self.prev_derivative
             self.prev_derivative = -ball_velocity
 
-        outer = -(BALANCE_POSITION_KP * error
-                  + BALANCE_POSITION_KI * self.integral
-                  - BALANCE_VELOCITY_KD * ball_velocity)
+        if fixed_tilt:
+            outer = self.fixed_tilt_ab_offset
+        else:
+            outer = -(self.position_kp * error
+                      + self.position_ki * self.integral
+                      - self.velocity_kd * ball_velocity)
+            if outer > 0.0:
+                outer *= BALANCE_POSITIVE_AB_OFFSET_SCALE
         outer = clamp(outer, -BALANCE_TILT_LIMIT_AB,
                       BALANCE_TILT_LIMIT_AB)
         target_ab = BALANCE_LEVEL_AB_COUNT + int(outer)
@@ -204,9 +250,35 @@ def test_config(h):
     check(int(c["period"]) == BALANCE_PERIOD_MS, "period mirror")
     check(int(c["timeout"]) == BALANCE_DATA_TIMEOUT_MS, "timeout mirror")
     check(int(c["level"]) == BALANCE_LEVEL_AB_COUNT, "level AB mirror")
-    check(float(c["p_kp"]) == BALANCE_POSITION_KP, "position kp mirror")
-    check(float(c["p_ki"]) == BALANCE_POSITION_KI, "position ki mirror")
-    check(float(c["v_kd"]) == BALANCE_VELOCITY_KD, "velocity kd mirror")
+    check(abs(float(c["ab_per_deg"]) -
+              BALANCE_TILT_AB_COUNTS_PER_DEGREE) < 0.000001,
+          "tilt angle conversion mirror")
+    check(float(c["f_kp"]) == BALANCE_FORWARD_POSITION_KP,
+          "forward position kp mirror")
+    check(float(c["f_ki"]) == BALANCE_FORWARD_POSITION_KI,
+          "forward position ki mirror")
+    check(float(c["f_v_kd"]) == BALANCE_FORWARD_VELOCITY_KD,
+          "forward velocity kd mirror")
+    check(float(c["f_fixed_dist"]) ==
+          BALANCE_FORWARD_FIXED_TILT_DISTANCE_MM,
+          "forward fixed-tilt distance mirror")
+    check(float(c["f_fixed_angle"]) ==
+          BALANCE_FORWARD_FIXED_TILT_ANGLE_DEG,
+          "forward fixed-tilt angle mirror")
+    check(float(c["r_kp"]) == BALANCE_REVERSE_POSITION_KP,
+          "reverse position kp mirror")
+    check(float(c["r_ki"]) == BALANCE_REVERSE_POSITION_KI,
+          "reverse position ki mirror")
+    check(float(c["r_v_kd"]) == BALANCE_REVERSE_VELOCITY_KD,
+          "reverse velocity kd mirror")
+    check(float(c["r_fixed_dist"]) ==
+          BALANCE_REVERSE_FIXED_TILT_DISTANCE_MM,
+          "reverse fixed-tilt distance mirror")
+    check(float(c["r_fixed_angle"]) ==
+          BALANCE_REVERSE_FIXED_TILT_ANGLE_DEG,
+          "reverse fixed-tilt angle mirror")
+    check(float(c["pos_ab_scale"]) == BALANCE_POSITIVE_AB_OFFSET_SCALE,
+          "positive AB scale mirror")
     check(float(c["a_kp"]) == BALANCE_ANGLE_KP, "angle kp mirror")
     check(float(c["tilt"]) == BALANCE_TILT_LIMIT_AB, "tilt limit mirror")
     check(float(c["ilim"]) == BALANCE_POSITION_INTEGRAL_LIMIT, "ilim mirror")
@@ -596,9 +668,105 @@ def test_balance_pid(h, use_velocity):
               "output pos=%d vel=%d: %d vs %d" % (pos, vel, t["out"], want_out))
         check(t["step"] == t["out"], "stepper follows output")
 
+    # Q3 forward starts with a literal fixed AB offset. At exactly the
+    # configured distance it hands control to PID without retained integral.
+    h.cmd("disable")
+    h.cmd("enable")
+    h.cmd("q3dir 0")
+    h.cmd("target -50")
+    h.ab(BALANCE_LEVEL_AB_COUNT)
+    model = PidModel(use_velocity)
+    seq, now = (seq + 1) & 0xFF, now + 40
+    h.feed(now, P.encode_ball(seq, flags, -10, 0, 25))
+    t = h.tick(now)
+    want_err, want_vel, want_tab, want_out = model.tick(
+        -50, -10, 0, seq, now, BALANCE_LEVEL_AB_COUNT)
+    check(t["tab"] == BALANCE_LEVEL_AB_COUNT +
+          int(BALANCE_FORWARD_FIXED_TILT_ANGLE_DEG *
+              BALANCE_TILT_AB_COUNTS_PER_DEGREE),
+          "forward fixed-tilt segment")
+    check(t["tab"] == want_tab and t["out"] == want_out,
+          "forward fixed-tilt model")
+
+    seq, now = (seq + 1) & 0xFF, now + 40
+    h.feed(now, P.encode_ball(seq, flags, -20, 0, 25))
+    t = h.tick(now)
+    want_err, want_vel, want_tab, want_out = model.tick(
+        -50, -20, 0, seq, now, BALANCE_LEVEL_AB_COUNT)
+    check(t["tab"] == want_tab and t["out"] == want_out,
+          "forward fixed-tilt boundary enters PID")
+    check(t["tab"] != BALANCE_LEVEL_AB_COUNT +
+          int(BALANCE_FORWARD_FIXED_TILT_ANGLE_DEG *
+              BALANCE_TILT_AB_COUNTS_PER_DEGREE),
+          "forward fixed-tilt segment ends at configured distance")
+
+    # Capture the actual position at the direction change. Starting reverse
+    # at -43 mm makes -24 mm the last millimetre of its 20 mm fixed segment.
+    h.cmd("disable")
+    h.cmd("enable")
+    h.cmd("q3dir 0")
+    h.cmd("target -50")
+    h.ab(BALANCE_LEVEL_AB_COUNT)
+    seq, now = (seq + 1) & 0xFF, now + 40
+    h.feed(now, P.encode_ball(seq, flags, -43, 0, 25))
+    h.tick(now)
+    h.cmd("q3dir 1")
+    h.cmd("target 50")
+    reverse_model = PidModel(use_velocity, reverse=True)
+    reverse_model.leg_start_mm = -43
+    seq, now = (seq + 1) & 0xFF, now + 40
+    h.feed(now, P.encode_ball(seq, flags, -24, 0, 25))
+    t = h.tick(now)
+    want_err, want_vel, want_tab, want_out = reverse_model.tick(
+        50, -24, 0, seq, now, BALANCE_LEVEL_AB_COUNT)
+    check(t["tab"] == BALANCE_LEVEL_AB_COUNT +
+          int(BALANCE_REVERSE_FIXED_TILT_ANGLE_DEG *
+              BALANCE_TILT_AB_COUNTS_PER_DEGREE),
+          "reverse fixed tilt uses actual leg start")
+    check(t["tab"] == want_tab and t["out"] == want_out,
+          "reverse fixed-tilt model")
+
+    # After the fixed-angle segment, forward uses one PID group all the way
+    # to the -50 mm target.
+    h.cmd("disable")
+    h.cmd("enable")
+    h.cmd("q3dir 0")
+    h.cmd("target -50")
+    h.ab(BALANCE_LEVEL_AB_COUNT)
+    model = PidModel(use_velocity)
+    for pos, vel in [(-21, 0), (-25, -100)]:
+        seq, now = (seq + 1) & 0xFF, now + 40
+        h.feed(now, P.encode_ball(seq, flags, pos, vel, 25))
+        t = h.tick(now)
+        want_err, want_vel, want_tab, want_out = model.tick(
+            -50, pos, vel, seq, now, BALANCE_LEVEL_AB_COUNT)
+    check(abs(t["tab"] - want_tab) <= 1,
+          "forward segment uses single PID")
+    check(abs(t["out"] - want_out) <= 1,
+          "forward single-PID output")
+
+    # The reverse leg must load the separate PID group for +50 mm.
+    h.cmd("disable")
+    h.cmd("enable")
+    h.cmd("q3dir 1")
+    h.cmd("target 50")
+    h.ab(BALANCE_LEVEL_AB_COUNT)
+    model = PidModel(use_velocity, reverse=True)
+    for pos, vel in [(21, 0), (25, 100)]:
+        seq, now = (seq + 1) & 0xFF, now + 40
+        h.feed(now, P.encode_ball(seq, flags, pos, vel, 25))
+        t = h.tick(now)
+        want_err, want_vel, want_tab, want_out = model.tick(
+            50, pos, vel, seq, now, BALANCE_LEVEL_AB_COUNT)
+    check(abs(t["tab"] - want_tab) <= 1,
+          "reverse target loads reverse PID group")
+    check(abs(t["out"] - want_out) <= 1,
+          "reverse PID output")
+
     # A ball on/moving toward +axis needs +STEP to raise that end and brake it.
     h.cmd("disable")
     h.cmd("enable")
+    h.cmd("q3dir 0")
     h.cmd("target 0")
     h.ab(BALANCE_LEVEL_AB_COUNT)
     seq, now = (seq + 1) & 0xFF, now + 40
@@ -685,7 +853,15 @@ def test_outer_state_cleared_on_loss(h):
     now += 40
     h.feed(now, P.encode_ball(seq, flags, -100, 0, 25))
     t = h.tick(now)
-    first_target_ab = BALANCE_LEVEL_AB_COUNT - int(BALANCE_POSITION_KP * 100)
+    first_error = 100
+    first_integral = first_error * (BALANCE_PERIOD_MS / 1000.0)
+    first_outer = -(BALANCE_FORWARD_POSITION_KP * first_error
+                    + BALANCE_FORWARD_POSITION_KI * first_integral)
+    if first_outer > 0.0:
+        first_outer *= BALANCE_POSITIVE_AB_OFFSET_SCALE
+    first_outer = clamp(first_outer, -BALANCE_TILT_LIMIT_AB,
+                        BALANCE_TILT_LIMIT_AB)
+    first_target_ab = BALANCE_LEVEL_AB_COUNT + int(first_outer)
     first = int(BALANCE_ANGLE_KP *
                 (first_target_ab - BALANCE_LEVEL_AB_COUNT))
     check(t["track"] == 1, "reacquired")

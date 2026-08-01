@@ -16,6 +16,7 @@
  *   send  <cmd> <arg>         Camera_SendCommand, print the captured TX bytes
  *   ping  <arg>               Camera_Ping, print the captured TX bytes
  *   enable / disable          Balance_Enable / Balance_Disable
+ *   q3dir <0|1>               select Q3 forward/reverse PID group
  *   target <mm>               Balance_SetTarget
  *   tick  <now_ms>            Balance_Tick, print tracking/error/output/stepper
  */
@@ -135,6 +136,14 @@ int main(void)
             Balance_Disable();
             printf("enabled %u\n", (unsigned)Balance_IsEnabled());
 
+        } else if (strcmp(cmd, "q3dir") == 0) {
+            const BalanceQ3Direction direction =
+                (strtol(cursor, &cursor, 10) != 0)
+                    ? BALANCE_Q3_DIRECTION_REVERSE
+                    : BALANCE_Q3_DIRECTION_FORWARD;
+            Balance_SelectQ3Direction(direction);
+            printf("q3dir %d\n", (int)Balance_GetQ3Direction());
+
         } else if (strcmp(cmd, "target") == 0) {
             Balance_SetTarget((int16_t)strtol(cursor, &cursor, 10));
             printf("target %d\n", (int)Balance_GetTarget());
@@ -163,15 +172,29 @@ int main(void)
             printf("reset\n");
 
         } else if (strcmp(cmd, "config") == 0) {
-            printf("config period=%u timeout=%u use_vel=%d level=%d p_kp=%g "
-                   "p_ki=%g v_kd=%g a_kp=%g tilt=%g ilim=%g olim=%d\n",
+            printf("config period=%u timeout=%u use_vel=%d level=%d "
+                   "ab_per_deg=%.9g "
+                   "f_kp=%g f_ki=%g f_v_kd=%g "
+                   "f_fixed_dist=%g f_fixed_angle=%.9g "
+                   "r_kp=%g r_ki=%g r_v_kd=%g "
+                   "r_fixed_dist=%g r_fixed_angle=%.9g pos_ab_scale=%g "
+                   "a_kp=%g tilt=%g ilim=%g olim=%d\n",
                    (unsigned)BALANCE_PERIOD_MS,
                    (unsigned)BALANCE_DATA_TIMEOUT_MS,
                    BALANCE_USE_CAMERA_VELOCITY,
                    (int)BALANCE_LEVEL_AB_COUNT,
-                   (double)BALANCE_Q3_POSITION_KP,
-                   (double)BALANCE_Q3_POSITION_KI,
-                   (double)BALANCE_Q3_VELOCITY_KD,
+                   (double)BALANCE_TILT_AB_COUNTS_PER_DEGREE,
+                   (double)BALANCE_Q3_FORWARD_POSITION_KP,
+                   (double)BALANCE_Q3_FORWARD_POSITION_KI,
+                   (double)BALANCE_Q3_FORWARD_VELOCITY_KD,
+                   (double)BALANCE_Q3_FORWARD_FIXED_TILT_DISTANCE_MM,
+                   (double)BALANCE_Q3_FORWARD_FIXED_TILT_ANGLE_DEG,
+                   (double)BALANCE_Q3_REVERSE_POSITION_KP,
+                   (double)BALANCE_Q3_REVERSE_POSITION_KI,
+                   (double)BALANCE_Q3_REVERSE_VELOCITY_KD,
+                   (double)BALANCE_Q3_REVERSE_FIXED_TILT_DISTANCE_MM,
+                   (double)BALANCE_Q3_REVERSE_FIXED_TILT_ANGLE_DEG,
+                   (double)BALANCE_Q3_POSITIVE_AB_OFFSET_SCALE,
                    (double)BALANCE_ANGLE_KP,
                    (double)BALANCE_TILT_LIMIT_AB,
                    (double)BALANCE_POSITION_INTEGRAL_LIMIT,

@@ -58,6 +58,7 @@ void BalanceTask_Start(BalanceTaskMode mode)
     switch (mode) {
         case BTASK_STATIC_MOVE:
             /* Start by moving to -50mm (-5cm) from center */
+            Balance_SelectQ3Direction(BALANCE_Q3_DIRECTION_FORWARD);
             Balance_SetTarget(-50);
             s_bt_state = BT_PHASE1;
             break;
@@ -119,11 +120,13 @@ void BalanceTask_Update(uint32_t now_ms)
                     if (s_phase_start_ms == 0U) s_phase_start_ms = now_ms;
                     if (within_abs_limit(error, Q3_POSITION_TOLERANCE_MM) &&
                         within_abs_limit(velocity, Q3_STOP_SPEED_MAX_MM_S)) {
+                        Balance_SelectQ3Direction(BALANCE_Q3_DIRECTION_REVERSE);
                         Balance_SetTarget(50);
                         s_bt_state = BT_PHASE2;
                         s_phase_start_ms = now_ms;
                     } else if ((now_ms - s_phase_start_ms) >=
                                Q3_FORWARD_DEADLINE_MS) {
+                        Balance_SelectQ3Direction(BALANCE_Q3_DIRECTION_REVERSE);
                         Balance_SetTarget(50);
                         s_bt_state = BT_PHASE2;
                         s_phase_start_ms = now_ms;
