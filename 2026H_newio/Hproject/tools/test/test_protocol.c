@@ -176,8 +176,10 @@ int main(void)
                    "ab_per_deg=%.9g "
                    "f_kp=%g f_ki=%g f_v_kd=%g "
                    "f_fixed_dist=%g f_fixed_angle=%.9g "
+                   "f_i_release=%g f_i_decay=%g "
                    "r_kp=%g r_ki=%g r_v_kd=%g "
-                   "r_fixed_dist=%g r_fixed_angle=%.9g pos_ab_scale=%g "
+                   "r_fixed_dist=%g r_fixed_angle=%.9g "
+                   "r_i_release=%g r_i_decay=%g r_level=%d pos_ab_scale=%g "
                    "a_kp=%g tilt=%g ilim=%g olim=%d\n",
                    (unsigned)BALANCE_PERIOD_MS,
                    (unsigned)BALANCE_DATA_TIMEOUT_MS,
@@ -189,11 +191,16 @@ int main(void)
                    (double)BALANCE_Q3_FORWARD_VELOCITY_KD,
                    (double)BALANCE_Q3_FORWARD_FIXED_TILT_DISTANCE_MM,
                    (double)BALANCE_Q3_FORWARD_FIXED_TILT_ANGLE_DEG,
+                   (double)BALANCE_Q3_FORWARD_I_RELEASE_ERROR_MM,
+                   (double)BALANCE_Q3_FORWARD_I_DECAY,
                    (double)BALANCE_Q3_REVERSE_POSITION_KP,
                    (double)BALANCE_Q3_REVERSE_POSITION_KI,
                    (double)BALANCE_Q3_REVERSE_VELOCITY_KD,
                    (double)BALANCE_Q3_REVERSE_FIXED_TILT_DISTANCE_MM,
                    (double)BALANCE_Q3_REVERSE_FIXED_TILT_ANGLE_DEG,
+                   (double)BALANCE_Q3_REVERSE_I_RELEASE_ERROR_MM,
+                   (double)BALANCE_Q3_REVERSE_I_DECAY,
+                   (int)BALANCE_Q3_REVERSE_LEVEL_AB_COUNT,
                    (double)BALANCE_Q3_POSITIVE_AB_OFFSET_SCALE,
                    (double)BALANCE_ANGLE_KP,
                    (double)BALANCE_TILT_LIMIT_AB,

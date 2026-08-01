@@ -20,7 +20,7 @@
  * same physical pose, where the incremental AB feedback is initialised to 0.
  * A one-second BLS hold moves it slowly to the calibrated horizontal count;
  * only a later short click starts the vehicle. */
-#define APP_LEVEL_SPEED_STEPS_S    (300)
+#define APP_LEVEL_SPEED_STEPS_S    (150)
 #define APP_LEVEL_TOLERANCE_AB     (3)
 #define APP_LEVEL_STABLE_MS        (300U)
 #define APP_LEVEL_TIMEOUT_MS       (8000U)
@@ -48,7 +48,7 @@
 /* Q4/Q5/Q6 use odometry as the actual stop trigger. Q4 stops after the
  * requested 1.6 m. Q5/Q6 deliberately run 110% of the nominal lap so the
  * vehicle has passed A before braking even with moderate under-counting. */
-#define APP_STOP_Q4_DISTANCE_CM           (170.0f)
+#define APP_STOP_Q4_DISTANCE_CM           (180.0f)
 #define APP_STOP_Q5_Q6_DISTANCE_RATIO     (1.10f)
 #define APP_STOP_Q5_Q6_DISTANCE_CM        \
     (APP_TRACK_LAP_LENGTH_CM * APP_STOP_Q5_Q6_DISTANCE_RATIO)

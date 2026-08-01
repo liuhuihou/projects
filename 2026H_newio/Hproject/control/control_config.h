@@ -87,19 +87,25 @@
 #define BALANCE_Q3_FORWARD_POSITION_KP             (0.61f)
 #define BALANCE_Q3_FORWARD_POSITION_KI             (0.80f)
 #define BALANCE_Q3_FORWARD_VELOCITY_KD             (1.00f)
-#define BALANCE_Q3_FORWARD_FIXED_TILT_DISTANCE_MM  (33.0f)
+#define BALANCE_Q3_FORWARD_FIXED_TILT_DISTANCE_MM  (25.0f)
 #define BALANCE_Q3_FORWARD_FIXED_TILT_ANGLE_DEG    (+5.2734375f)
+#define BALANCE_Q3_FORWARD_I_RELEASE_ERROR_MM      (10.0f)
+#define BALANCE_Q3_FORWARD_I_DECAY                 (0.80f)
 
 /* Q3 reverse leg: -5 cm -> +5 cm. Its fixed distance and fixed angle are
  * independent from the forward leg. */
-#define BALANCE_Q3_REVERSE_POSITION_KP             (0.50f)
+#define BALANCE_Q3_REVERSE_POSITION_KP             (0.60f)
 #define BALANCE_Q3_REVERSE_POSITION_KI             (0.70f)
-#define BALANCE_Q3_REVERSE_VELOCITY_KD             (0.60f)
-#define BALANCE_Q3_REVERSE_FIXED_TILT_DISTANCE_MM  (20.0f)
+#define BALANCE_Q3_REVERSE_VELOCITY_KD             (1.10f)
+#define BALANCE_Q3_REVERSE_FIXED_TILT_DISTANCE_MM  (12.0f)
 #define BALANCE_Q3_REVERSE_FIXED_TILT_ANGLE_DEG    (-4.39453125f)
+#define BALANCE_Q3_REVERSE_I_RELEASE_ERROR_MM      (10.0f)
+#define BALANCE_Q3_REVERSE_I_DECAY                 (0.80f)
+/* Mechanical equilibrium at Q3's final physical -5 cm endpoint. */
+#define BALANCE_Q3_REVERSE_LEVEL_AB_COUNT           (255)
 /* Q3-only compensation for directional mechanical asymmetry.  The factor
  * applies to positive AB-count offsets from level; 1.0 disables it. */
-#define BALANCE_Q3_POSITIVE_AB_OFFSET_SCALE (2.0f)
+#define BALANCE_Q3_POSITIVE_AB_OFFSET_SCALE (1.0f)
 
 #define BALANCE_Q4_POSITION_KP          (0.70f)
 #define BALANCE_Q4_POSITION_KI          (0.10f)
@@ -107,13 +113,13 @@
 /* Q4 launch acceleration feed-forward magnitude. The installed mechanism was
  * verified on the vehicle: increasing the AB target produces the direction
  * that opposes the ball's rearward inertial motion at launch. */
-#define BALANCE_Q4_START_FF_AB           (40.0f)
+#define BALANCE_Q4_START_FF_AB           (30.0f)
 #define BALANCE_Q4_START_FF_LIMIT_AB     (80.0f)
 #define BALANCE_Q4_FF_SLEW_AB            (15.0f)
 
-#define BALANCE_Q5_POSITION_KP          (0.70f)
-#define BALANCE_Q5_POSITION_KI          (0.10f)
-#define BALANCE_Q5_VELOCITY_KD          (0.30f)
+#define BALANCE_Q5_POSITION_KP          (1.80f)
+#define BALANCE_Q5_POSITION_KI          (0.80f)
+#define BALANCE_Q5_VELOCITY_KD          (0.80f)
 
 #define BALANCE_Q6_POSITION_KP          (0.70f)
 #define BALANCE_Q6_POSITION_KI          (0.10f)

@@ -3,7 +3,7 @@
 <title>Static Call Graph - [..\build\keil\Objects\h_balance_car.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image ..\build\keil\Objects\h_balance_car.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6240002: Last Updated: Sat Aug  1 12:24:26 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6240002: Last Updated: Sat Aug  1 16:13:17 2026
 <BR><P>
 <H3>Maximum Stack Usage =        244 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -443,7 +443,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[3f]"></a>BalanceTask_Update</STRONG> (Thumb, 260 bytes, Stack size 24 bytes, balance_task.o(.text.BalanceTask_Update))
-<BR><BR>[Stack]<UL><LI>Max Depth = 136<LI>Call Chain = BalanceTask_Update &rArr; Balance_Tick &rArr; Stepper_SetSpeed &rArr; DL_Timer_setCaptCompUpdateMethod
+<BR><BR>[Stack]<UL><LI>Max Depth = 144<LI>Call Chain = BalanceTask_Update &rArr; Balance_Tick &rArr; Stepper_SetSpeed &rArr; DL_Timer_setCaptCompUpdateMethod
 </UL>
 <BR>[Calls]<UL><LI><a href="#[43]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Balance_GetBallVelocity
 <LI><a href="#[42]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Balance_GetError
@@ -501,11 +501,13 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[3f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BalanceTask_Update
 </UL>
 
-<P><STRONG><a name="[b9]"></a>Balance_SelectPidProfile</STRONG> (Thumb, 88 bytes, Stack size 0 bytes, balance_controller.o(.text.Balance_SelectPidProfile))
-<BR><BR>[Called By]<UL><LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;start_task
+<P><STRONG><a name="[b9]"></a>Balance_SelectPidProfile</STRONG> (Thumb, 104 bytes, Stack size 8 bytes, balance_controller.o(.text.Balance_SelectPidProfile))
+<BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = Balance_SelectPidProfile
+</UL>
+<BR>[Called By]<UL><LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;start_task
 </UL>
 
-<P><STRONG><a name="[3d]"></a>Balance_SelectQ3Direction</STRONG> (Thumb, 156 bytes, Stack size 28 bytes, balance_controller.o(.text.Balance_SelectQ3Direction))
+<P><STRONG><a name="[3d]"></a>Balance_SelectQ3Direction</STRONG> (Thumb, 140 bytes, Stack size 28 bytes, balance_controller.o(.text.Balance_SelectQ3Direction))
 <BR><BR>[Stack]<UL><LI>Max Depth = 28<LI>Call Chain = Balance_SelectQ3Direction
 </UL>
 <BR>[Called By]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BalanceTask_Start
@@ -517,8 +519,8 @@ Global Symbols
 <LI><a href="#[3f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BalanceTask_Update
 </UL>
 
-<P><STRONG><a name="[40]"></a>Balance_Tick</STRONG> (Thumb, 768 bytes, Stack size 72 bytes, balance_controller.o(.text.Balance_Tick))
-<BR><BR>[Stack]<UL><LI>Max Depth = 112<LI>Call Chain = Balance_Tick &rArr; Stepper_SetSpeed &rArr; DL_Timer_setCaptCompUpdateMethod
+<P><STRONG><a name="[40]"></a>Balance_Tick</STRONG> (Thumb, 868 bytes, Stack size 80 bytes, balance_controller.o(.text.Balance_Tick))
+<BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = Balance_Tick &rArr; Stepper_SetSpeed &rArr; DL_Timer_setCaptCompUpdateMethod
 </UL>
 <BR>[Calls]<UL><LI><a href="#[49]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Camera_IsBallUsable
 <LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Control_GetStartRampScale
@@ -527,15 +529,15 @@ Global Symbols
 <LI><a href="#[45]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Stepper_SetSpeed
 <LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StepperFeedback_GetSnapshot
 <LI><a href="#[48]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Camera_GetData
-<LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fmul
+<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fmul
 <LI><a href="#[30]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_i2f
 <LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_f2iz
-<LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fcmplt
+<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fcmplt
 <LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fcmple
-<LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fcmpgt
+<LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fcmpgt
 <LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fcmpge
-<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fsub
-<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fadd
+<LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fsub
+<LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fadd
 </UL>
 <BR>[Called By]<UL><LI><a href="#[3f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BalanceTask_Update
 </UL>
@@ -596,7 +598,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[56]"></a>Competition_Update</STRONG> (Thumb, 480 bytes, Stack size 48 bytes, competition_mode.o(.text.Competition_Update))
-<BR><BR>[Stack]<UL><LI>Max Depth = 184<LI>Call Chain = Competition_Update &rArr; BalanceTask_Update &rArr; Balance_Tick &rArr; Stepper_SetSpeed &rArr; DL_Timer_setCaptCompUpdateMethod
+<BR><BR>[Stack]<UL><LI>Max Depth = 192<LI>Call Chain = Competition_Update &rArr; BalanceTask_Update &rArr; Balance_Tick &rArr; Stepper_SetSpeed &rArr; DL_Timer_setCaptCompUpdateMethod
 </UL>
 <BR>[Calls]<UL><LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StepperFeedback_IsTravelCommandAllowed
 <LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StepperFeedback_ResetCountsAt
@@ -661,7 +663,7 @@ Global Symbols
 <P><STRONG><a name="[63]"></a>Control_SetBaseSpeed</STRONG> (Thumb, 24 bytes, Stack size 8 bytes, vehicle_controller.o(.text.Control_SetBaseSpeed))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = Control_SetBaseSpeed &rArr; __aeabi_fcmpgt
 </UL>
-<BR>[Calls]<UL><LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fcmpgt
+<BR>[Calls]<UL><LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fcmpgt
 </UL>
 <BR>[Called By]<UL><LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;start_task
 </UL>
@@ -693,17 +695,17 @@ Global Symbols
 <LI><a href="#[67]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Encoder_TakeCounts
 <LI><a href="#[66]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LineSensor_Update
 <LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Motor_Brake
-<LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fmul
+<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fmul
 <LI><a href="#[32]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_ui2f
 <LI><a href="#[30]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_i2f
 <LI><a href="#[50]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_f2iz
 <LI><a href="#[6a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fdiv
-<LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fcmplt
+<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fcmplt
 <LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fcmple
-<LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fcmpgt
+<LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fcmpgt
 <LI><a href="#[53]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fcmpge
-<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fsub
-<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fadd
+<LI><a href="#[4f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fsub
+<LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fadd
 </UL>
 <BR>[Called By]<UL><LI><a href="#[13]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;TIMG0_IRQHandler
 </UL>
@@ -833,7 +835,7 @@ Global Symbols
 <P><STRONG><a name="[6e]"></a>Encoder_CountsToDistanceCm</STRONG> (Thumb, 24 bytes, Stack size 8 bytes, encoder_driver.o(.text.Encoder_CountsToDistanceCm))
 <BR><BR>[Stack]<UL><LI>Max Depth = 28<LI>Call Chain = Encoder_CountsToDistanceCm &rArr; __aeabi_fdiv
 </UL>
-<BR>[Calls]<UL><LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fmul
+<BR>[Calls]<UL><LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fmul
 <LI><a href="#[30]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_i2f
 <LI><a href="#[6a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fdiv
 </UL>
@@ -843,7 +845,7 @@ Global Symbols
 <P><STRONG><a name="[68]"></a>Encoder_CountsToRpm</STRONG> (Thumb, 48 bytes, Stack size 16 bytes, encoder_driver.o(.text.Encoder_CountsToRpm))
 <BR><BR>[Stack]<UL><LI>Max Depth = 36<LI>Call Chain = Encoder_CountsToRpm &rArr; __aeabi_fdiv
 </UL>
-<BR>[Calls]<UL><LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fmul
+<BR>[Calls]<UL><LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fmul
 <LI><a href="#[32]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_ui2f
 <LI><a href="#[30]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_i2f
 <LI><a href="#[6a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fdiv
@@ -892,10 +894,10 @@ Global Symbols
 <LI><a href="#[71]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LineSensor_GetSampleSequence
 <LI><a href="#[5d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Control_SetMode
 <LI><a href="#[75]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LineSensor_ReadRaw
-<LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fmul
-<LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fcmplt
+<LI><a href="#[4b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fmul
+<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fcmplt
 <LI><a href="#[4a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fcmple
-<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fadd
+<LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fadd
 </UL>
 <BR>[Called By]<UL><LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Competition_Update
 </UL>
@@ -910,7 +912,7 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[32]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_ui2f
 <LI><a href="#[6a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fdiv
-<LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fadd
+<LI><a href="#[4c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fadd
 </UL>
 <BR>[Called By]<UL><LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Control_Tick
 </UL>
@@ -1330,7 +1332,7 @@ Global Symbols
 <BR><BR>[Calls]<UL><LI><a href="#[bb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_fcmpge
 </UL>
 
-<P><STRONG><a name="[4f]"></a>__aeabi_fcmpgt</STRONG> (Thumb, 0 bytes, Stack size 8 bytes, fcmp.o(i._fgr))
+<P><STRONG><a name="[4d]"></a>__aeabi_fcmpgt</STRONG> (Thumb, 0 bytes, Stack size 8 bytes, fcmp.o(i._fgr))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = __aeabi_fcmpgt
 </UL>
 <BR>[Called By]<UL><LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Control_Tick
@@ -1354,7 +1356,7 @@ Global Symbols
 <BR><BR>[Calls]<UL><LI><a href="#[be]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_fcmple
 </UL>
 
-<P><STRONG><a name="[4c]"></a>__aeabi_fcmplt</STRONG> (Thumb, 0 bytes, Stack size 8 bytes, fcmp.o(i._fls))
+<P><STRONG><a name="[4e]"></a>__aeabi_fcmplt</STRONG> (Thumb, 0 bytes, Stack size 8 bytes, fcmp.o(i._fls))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = __aeabi_fcmplt
 </UL>
 <BR>[Called By]<UL><LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Control_Tick
@@ -1366,7 +1368,7 @@ Global Symbols
 <BR><BR>[Calls]<UL><LI><a href="#[be]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_fcmple
 </UL>
 
-<P><STRONG><a name="[4e]"></a>__aeabi_fadd</STRONG> (Thumb, 0 bytes, Stack size 16 bytes, faddsub.o(x$fpl$fadd))
+<P><STRONG><a name="[4c]"></a>__aeabi_fadd</STRONG> (Thumb, 0 bytes, Stack size 16 bytes, faddsub.o(x$fpl$fadd))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = __aeabi_fadd
 </UL>
 <BR>[Called By]<UL><LI><a href="#[69]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LineSensor_GetSteeringError
@@ -1395,7 +1397,7 @@ Global Symbols
 <LI><a href="#[bd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_fleq
 </UL>
 
-<P><STRONG><a name="[4d]"></a>__aeabi_fmul</STRONG> (Thumb, 0 bytes, Stack size 16 bytes, fmul.o(x$fpl$fmul))
+<P><STRONG><a name="[4b]"></a>__aeabi_fmul</STRONG> (Thumb, 0 bytes, Stack size 16 bytes, fmul.o(x$fpl$fmul))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = __aeabi_fmul
 </UL>
 <BR>[Called By]<UL><LI><a href="#[68]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Encoder_CountsToRpm
@@ -1407,7 +1409,7 @@ Global Symbols
 
 <P><STRONG><a name="[f8]"></a>_fmul</STRONG> (Thumb, 172 bytes, Stack size 16 bytes, fmul.o(x$fpl$fmul), UNUSED)
 
-<P><STRONG><a name="[4b]"></a>__aeabi_fsub</STRONG> (Thumb, 0 bytes, Stack size 16 bytes, faddsub.o(x$fpl$fsub))
+<P><STRONG><a name="[4f]"></a>__aeabi_fsub</STRONG> (Thumb, 0 bytes, Stack size 16 bytes, faddsub.o(x$fpl$fsub))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = __aeabi_fsub
 </UL>
 <BR>[Called By]<UL><LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Control_Tick

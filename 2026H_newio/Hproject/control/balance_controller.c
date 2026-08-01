@@ -33,6 +33,17 @@ static float slew_float(float current, float requested, float step)
     return requested;
 }
 
+static void integral_accumulate(float error)
+{
+    s_integral += error * ((float)BALANCE_PERIOD_MS / 1000.0f);
+    if (s_integral > BALANCE_POSITION_INTEGRAL_LIMIT) {
+        s_integral = BALANCE_POSITION_INTEGRAL_LIMIT;
+    }
+    if (s_integral < -BALANCE_POSITION_INTEGRAL_LIMIT) {
+        s_integral = -BALANCE_POSITION_INTEGRAL_LIMIT;
+    }
+}
+
 #if !BALANCE_USE_CAMERA_VELOCITY
 /* Derivative state, only needed when differencing position here. The camera
  * velocity path is stateless - vel is already a rate.
@@ -239,6 +250,7 @@ void Balance_Tick(uint32_t now_ms)
     float output;
     float fixed_tilt_progress_mm;
     uint8_t fixed_tilt_active;
+    int32_t level_ab;
     int32_t speed_cmd;
 
     if (!s_enabled) return;
@@ -296,14 +308,30 @@ void Balance_Tick(uint32_t now_ms)
 
         if (fixed_tilt_active != 0U) {
             s_integral = 0.0f;
+        } else if (s_pid_profile == BALANCE_PID_PROFILE_Q3) {
+            float release_error;
+            float decay;
+
+            if (s_q3_direction == BALANCE_Q3_DIRECTION_REVERSE) {
+                release_error = BALANCE_Q3_REVERSE_I_RELEASE_ERROR_MM;
+                decay = BALANCE_Q3_REVERSE_I_DECAY;
+            } else {
+                release_error = BALANCE_Q3_FORWARD_I_RELEASE_ERROR_MM;
+                decay = BALANCE_Q3_FORWARD_I_DECAY;
+            }
+
+            /* Near either Q3 endpoint, stop charging the integrator and
+             * release its stored tilt smoothly while the task waits for the
+             * velocity criterion. This prevents a stationary ball from later
+             * breaking friction with a large stale integral command. */
+            if (error_f >= -release_error && error_f <= release_error) {
+                s_integral *= decay;
+            } else {
+                integral_accumulate(error_f);
+            }
         } else {
-            s_integral += error_f * ((float)BALANCE_PERIOD_MS / 1000.0f);
-            if (s_integral > BALANCE_POSITION_INTEGRAL_LIMIT) {
-                s_integral = BALANCE_POSITION_INTEGRAL_LIMIT;
-            }
-            if (s_integral < -BALANCE_POSITION_INTEGRAL_LIMIT) {
-                s_integral = -BALANCE_POSITION_INTEGRAL_LIMIT;
-            }
+            /* Q4-Q6 preserve their existing continuous integral behaviour. */
+            integral_accumulate(error_f);
         }
 
 #if BALANCE_USE_CAMERA_VELOCITY
@@ -360,7 +388,14 @@ void Balance_Tick(uint32_t now_ms)
         if (outer_output < -BALANCE_TILT_LIMIT_AB) {
             outer_output = -BALANCE_TILT_LIMIT_AB;
         }
-        s_target_ab = BALANCE_LEVEL_AB_COUNT + (int32_t)outer_output;
+        level_ab = BALANCE_LEVEL_AB_COUNT;
+        if (s_pid_profile == BALANCE_PID_PROFILE_Q3 &&
+            s_q3_direction == BALANCE_Q3_DIRECTION_REVERSE &&
+            s_target_mm == 50 &&
+            fixed_tilt_active == 0U) {
+            level_ab = BALANCE_Q3_REVERSE_LEVEL_AB_COUNT;
+        }
+        s_target_ab = level_ab + (int32_t)outer_output;
         s_tracking = 1;
     }
 

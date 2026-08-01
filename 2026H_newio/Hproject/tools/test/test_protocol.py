@@ -31,11 +31,16 @@ BALANCE_FORWARD_POSITION_KI = 0.80
 BALANCE_FORWARD_VELOCITY_KD = 1.00
 BALANCE_FORWARD_FIXED_TILT_DISTANCE_MM = 33.0
 BALANCE_FORWARD_FIXED_TILT_ANGLE_DEG = 5.2734375
-BALANCE_REVERSE_POSITION_KP = 0.50
+BALANCE_FORWARD_I_RELEASE_ERROR_MM = 10.0
+BALANCE_FORWARD_I_DECAY = 0.80
+BALANCE_REVERSE_POSITION_KP = 0.60
 BALANCE_REVERSE_POSITION_KI = 0.70
 BALANCE_REVERSE_VELOCITY_KD = 0.60
-BALANCE_REVERSE_FIXED_TILT_DISTANCE_MM = 20.0
+BALANCE_REVERSE_FIXED_TILT_DISTANCE_MM = 45.0
 BALANCE_REVERSE_FIXED_TILT_ANGLE_DEG = -4.39453125
+BALANCE_REVERSE_I_RELEASE_ERROR_MM = 10.0
+BALANCE_REVERSE_I_DECAY = 0.80
+BALANCE_REVERSE_LEVEL_AB_COUNT = 240
 BALANCE_POSITIVE_AB_OFFSET_SCALE = 2.0
 BALANCE_ANGLE_KP = 8.0
 BALANCE_TILT_LIMIT_AB = 250.0
@@ -156,6 +161,8 @@ class PidModel:
             self.fixed_tilt_ab_offset = \
                 (BALANCE_REVERSE_FIXED_TILT_ANGLE_DEG *
                  BALANCE_TILT_AB_COUNTS_PER_DEGREE)
+            self.i_release_error_mm = BALANCE_REVERSE_I_RELEASE_ERROR_MM
+            self.i_decay = BALANCE_REVERSE_I_DECAY
             self.leg_start_mm = -50
         else:
             self.position_kp = BALANCE_FORWARD_POSITION_KP
@@ -166,6 +173,8 @@ class PidModel:
             self.fixed_tilt_ab_offset = \
                 (BALANCE_FORWARD_FIXED_TILT_ANGLE_DEG *
                  BALANCE_TILT_AB_COUNTS_PER_DEGREE)
+            self.i_release_error_mm = BALANCE_FORWARD_I_RELEASE_ERROR_MM
+            self.i_decay = BALANCE_FORWARD_I_DECAY
             self.leg_start_mm = 0
         self.integral = 0.0
         self.prev_error = None
@@ -192,6 +201,8 @@ class PidModel:
                               self.fixed_tilt_distance_mm)
         if fixed_tilt:
             self.integral = 0.0
+        elif abs(error) <= self.i_release_error_mm:
+            self.integral *= self.i_decay
         else:
             self.integral = clamp(
                 self.integral + error * (BALANCE_PERIOD_MS / 1000.0),
@@ -225,7 +236,10 @@ class PidModel:
                 outer *= BALANCE_POSITIVE_AB_OFFSET_SCALE
         outer = clamp(outer, -BALANCE_TILT_LIMIT_AB,
                       BALANCE_TILT_LIMIT_AB)
-        target_ab = BALANCE_LEVEL_AB_COUNT + int(outer)
+        level_ab = (BALANCE_REVERSE_LEVEL_AB_COUNT
+                    if self.reverse and not fixed_tilt
+                    else BALANCE_LEVEL_AB_COUNT)
+        target_ab = level_ab + int(outer)
         out = BALANCE_ANGLE_KP * (target_ab - ab)
         out = clamp(out, -float(BALANCE_OUTPUT_LIMIT),
                     float(BALANCE_OUTPUT_LIMIT))
@@ -265,6 +279,10 @@ def test_config(h):
     check(float(c["f_fixed_angle"]) ==
           BALANCE_FORWARD_FIXED_TILT_ANGLE_DEG,
           "forward fixed-tilt angle mirror")
+    check(float(c["f_i_release"]) == BALANCE_FORWARD_I_RELEASE_ERROR_MM,
+          "forward integral-release error mirror")
+    check(float(c["f_i_decay"]) == BALANCE_FORWARD_I_DECAY,
+          "forward integral decay mirror")
     check(float(c["r_kp"]) == BALANCE_REVERSE_POSITION_KP,
           "reverse position kp mirror")
     check(float(c["r_ki"]) == BALANCE_REVERSE_POSITION_KI,
@@ -277,6 +295,12 @@ def test_config(h):
     check(float(c["r_fixed_angle"]) ==
           BALANCE_REVERSE_FIXED_TILT_ANGLE_DEG,
           "reverse fixed-tilt angle mirror")
+    check(float(c["r_i_release"]) == BALANCE_REVERSE_I_RELEASE_ERROR_MM,
+          "reverse integral-release error mirror")
+    check(float(c["r_i_decay"]) == BALANCE_REVERSE_I_DECAY,
+          "reverse integral decay mirror")
+    check(int(c["r_level"]) == BALANCE_REVERSE_LEVEL_AB_COUNT,
+          "reverse endpoint level AB mirror")
     check(float(c["pos_ab_scale"]) == BALANCE_POSITIVE_AB_OFFSET_SCALE,
           "positive AB scale mirror")
     check(float(c["a_kp"]) == BALANCE_ANGLE_KP, "angle kp mirror")
