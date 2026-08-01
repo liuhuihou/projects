@@ -10,6 +10,7 @@
 #include "stepper_driver.h"
 #include "stepper_feedback.h"
 #include "board_hardware.h"
+#include "camera_uart.h"
 
 static CompetitionQuestion s_mode;
 static CompetitionState s_state;
@@ -18,6 +19,24 @@ static uint32_t s_elapsed_ms;
 static uint32_t s_level_start_ms;
 static uint32_t s_level_stable_since_ms;
 static uint8_t s_level_stable;
+static uint8_t s_q6_ball_hold_active;
+static int32_t s_q6_position_sum_mm;
+static uint8_t s_q6_position_sample_count;
+static uint8_t s_q6_last_sample_seq;
+static uint8_t s_q6_have_sample_seq;
+
+#if APP_Q6_TARGET_SAMPLE_FRAMES == 0U || APP_Q6_TARGET_SAMPLE_FRAMES > 255U
+#error "APP_Q6_TARGET_SAMPLE_FRAMES must be in the range 1..255"
+#endif
+
+static void reset_q6_ball_capture(void)
+{
+    s_q6_ball_hold_active = 0U;
+    s_q6_position_sum_mm = 0;
+    s_q6_position_sample_count = 0U;
+    s_q6_last_sample_seq = 0U;
+    s_q6_have_sample_seq = 0U;
+}
 
 /* The C07A core-board LED and the S28A baseboard LED share PB9 and are both
  * active LOW.  Their red/blue light can reflect from the steel ball, so keep
@@ -59,12 +78,17 @@ void Competition_Init(void)
     s_level_start_ms = 0U;
     s_level_stable_since_ms = 0U;
     s_level_stable = 0U;
+    reset_q6_ball_capture();
     update_status_led_for_mode(s_mode);
 }
 
 CompetitionQuestion Competition_GetMode(void) { return s_mode; }
 CompetitionState Competition_GetState(void) { return s_state; }
 uint32_t Competition_GetElapsedMs(void) { return s_elapsed_ms; }
+uint8_t Competition_IsQ6BallHoldActive(void)
+{
+    return (s_mode == COMP_Q6 && s_q6_ball_hold_active != 0U) ? 1U : 0U;
+}
 
 static void start_initial_level(uint32_t now_ms)
 {
@@ -84,6 +108,7 @@ static void start_initial_level(uint32_t now_ms)
     s_level_start_ms = now_ms;
     s_level_stable_since_ms = 0U;
     s_level_stable = 0U;
+    reset_q6_ball_capture();
     s_elapsed_ms = 0U;
     s_state = STATE_LEVELING;
 }
@@ -94,6 +119,7 @@ static void cancel_initial_level(void)
     Stepper_Disable();
     StepperFeedback_ClearTravelLimits();
     s_level_stable = 0U;
+    reset_q6_ball_capture();
     s_state = STATE_IDLE;
 }
 
@@ -203,7 +229,8 @@ static void start_task(uint32_t now_ms)
             break;
 
         case COMP_Q6:
-            /* Full lap + ball at designated position; 110% odometry stop */
+            /* Full lap + ball held at the position captured after levelling;
+             * 110% odometry stop. */
             speed_rpm = mode_speed_cm_s(COMP_Q6) * 60.0f / APP_WHEEL_CIRCUMFERENCE_CM;
             Control_SetLineProfile(CTRL_LINE_PROFILE_Q5_Q6);
             Control_SetBaseSpeed(speed_rpm);
@@ -223,7 +250,69 @@ static void stop_task(void)
 {
     Control_SetMode(CTRL_STOP);
     Balance_Disable();
+    reset_q6_ball_capture();
     s_state = STATE_DONE;
+}
+
+/* Q6 is armed in two stages.  The tube remains horizontal and the vehicle
+ * remains stopped until the camera supplies enough real ball detections. The
+ * average of those first frames is the "original position" for this run. */
+static void update_q6_ready(uint32_t now_ms, ButtonEvent ev)
+{
+    const CameraData *cam = Camera_GetData();
+    const uint8_t usable =
+        Camera_IsBallUsable(now_ms, BALANCE_DATA_TIMEOUT_MS);
+    const uint8_t was_active = s_q6_ball_hold_active;
+
+    if (usable == 0U) {
+        reset_q6_ball_capture();
+        if (Balance_IsEnabled() != 0U) {
+            /* A lost ball must not leave the last tilted command latched. */
+            Balance_Tick(now_ms);
+        }
+        return;
+    }
+
+    if (s_q6_ball_hold_active != 0U) {
+        BalanceTask_Update(now_ms);
+    } else if ((cam->flags & CAMERA_FLAG_DETECTED) == 0U) {
+        /* Predicted frames are useful after PID starts, but the reference
+         * position must be based only on real ball detections. */
+        s_q6_position_sum_mm = 0;
+        s_q6_position_sample_count = 0U;
+        s_q6_have_sample_seq = 0U;
+    } else if (s_q6_have_sample_seq == 0U ||
+               cam->seq != s_q6_last_sample_seq) {
+        int32_t average_mm;
+
+        s_q6_last_sample_seq = cam->seq;
+        s_q6_have_sample_seq = 1U;
+        s_q6_position_sum_mm += (int32_t)cam->ball_pos_mm;
+        ++s_q6_position_sample_count;
+
+        if (s_q6_position_sample_count >= APP_Q6_TARGET_SAMPLE_FRAMES) {
+            const int32_t half_count =
+                (int32_t)s_q6_position_sample_count / 2;
+            if (s_q6_position_sum_mm >= 0) {
+                average_mm = (s_q6_position_sum_mm + half_count) /
+                             (int32_t)s_q6_position_sample_count;
+            } else {
+                average_mm = (s_q6_position_sum_mm - half_count) /
+                             (int32_t)s_q6_position_sample_count;
+            }
+
+            Balance_SelectPidProfile(BALANCE_PID_PROFILE_Q6);
+            BalanceTask_SetPosition((int16_t)average_mm);
+            BalanceTask_Start(BTASK_HOLD_POSITION);
+            s_q6_ball_hold_active = 1U;
+        }
+    }
+
+    /* Do not treat an event from the sampling cycle as the start command. The
+     * operator must press once after the averaged target is armed. */
+    if (was_active != 0U && ev == BTN_EVENT_SINGLE_CLICK) {
+        start_task(now_ms);
+    }
 }
 void Competition_ForceStop(void)
 {
@@ -240,6 +329,7 @@ void Competition_Update(uint32_t now_ms)
         case STATE_IDLE:
             if (ev == BTN_EVENT_DOUBLE_CLICK) {
                 s_mode = (CompetitionQuestion)((s_mode + 1) % COMP_MODE_COUNT);
+                reset_q6_ball_capture();
                 update_status_led_for_mode(s_mode);
             } else if (ev == BTN_EVENT_LONG_PRESS &&
                        mode_requires_initial_level(s_mode) != 0U) {
@@ -260,7 +350,9 @@ void Competition_Update(uint32_t now_ms)
             break;
 
         case STATE_READY:
-            if (ev == BTN_EVENT_SINGLE_CLICK) {
+            if (s_mode == COMP_Q6) {
+                update_q6_ready(now_ms, ev);
+            } else if (ev == BTN_EVENT_SINGLE_CLICK) {
                 start_task(now_ms);
             }
             break;

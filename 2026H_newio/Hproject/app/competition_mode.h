@@ -8,7 +8,8 @@
  *
  * BLS button:
  *   Q2 single-click = start the selected sub-question
- *   Q3/Q4/Q5/Q6 long-press 1 s = level, then single-click = start
+ *   Q3-Q5 long-press 1 s = level, then single-click = start
+ *   Q6 long-press 1 s = level, wait for a ball, then single-click = start
  *   double-click = switch to the next sub-question (only while idle)
  *   running single-click = stop; done single-click = clear result
  *
@@ -27,7 +28,7 @@ typedef enum {
 typedef enum {
     STATE_IDLE = 0,   /* Select mode; Q3-Q6 wait for a long press */
     STATE_LEVELING,   /* Q3-Q6 moving the fixed startup pose to horizontal */
-    STATE_READY,      /* Tube horizontal and locked; short click starts */
+    STATE_READY,      /* Tube horizontal; Q6 also waits for a usable ball */
     STATE_RUNNING,    /* Task executing */
     STATE_DONE        /* Task finished, showing the result */
 } CompetitionState;
@@ -41,6 +42,7 @@ void Competition_Update(uint32_t now_ms);
 CompetitionQuestion Competition_GetMode(void);
 CompetitionState Competition_GetState(void);
 uint32_t Competition_GetElapsedMs(void);
+uint8_t Competition_IsQ6BallHoldActive(void);
 
 /* Force stop (e.g., from external trigger) */
 void Competition_ForceStop(void);

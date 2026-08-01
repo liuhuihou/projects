@@ -128,6 +128,9 @@ static void oled_show_mode_select(void)
     /* Levelling prompts take priority over Q3's normal visual telemetry. */
     if (state == STATE_LEVELING) {
         OLED_ShowString(0, 6, "LEVELING SHORT:STOP  ");
+    } else if (mode == COMP_Q6 && state == STATE_READY &&
+               Competition_IsQ6BallHoldActive() == 0U) {
+        OLED_ShowString(0, 6, "WAIT BALL           ");
     } else if (state == STATE_READY) {
         OLED_ShowString(0, 6, "READY 1CLK:RUN       ");
     } else if (mode == COMP_Q3 &&

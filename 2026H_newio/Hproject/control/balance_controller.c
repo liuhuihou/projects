@@ -25,6 +25,84 @@ static float s_fixed_tilt_ab_offset;
 static int16_t s_q3_leg_start_mm;
 static float s_start_ff_ab;
 
+typedef struct {
+    int16_t position_mm;
+    int16_t equilibrium_ab;
+} Q6BalanceMapPoint;
+
+static const Q6BalanceMapPoint s_q6_balance_map[
+    BALANCE_Q6_MAP_POINT_COUNT] = {
+    { -90, 365 },
+    { -85, 362 },
+    { -80, 359 },
+    { -75, 346 },
+    { -70, 333 },
+    { -65, 333 },
+    { -60, 332 },
+    { -55, 331 },
+    { -50, 330 },
+    { -45, 329 },
+    { -40, 328 },
+    { -35, 324 },
+    { -30, 320 },
+    { -25, 320 },
+    { -20, 320 },
+    { -15, 312 },
+    { -10, 303 },
+    {  -5, 302 },
+    {   0, 300 },
+    {   5, 291 },
+    {  10, 281 },
+    {  15, 276 },
+    {  20, 270 },
+    {  25, 268 },
+    {  30, 266 },
+    {  35, 262 },
+    {  40, 258 },
+    {  45, 252 },
+    {  50, 245 },
+    {  55, 244 },
+    {  60, 243 },
+    {  65, 243 },
+    {  70, 242 },
+    {  75, 228 },
+    {  80, 213 },
+    {  85, 211 },
+    {  90, 208 }
+};
+
+/* Select the nearest calibrated half-centimetre equilibrium. Clamping keeps
+ * an out-of-range captured position inside the measured mechanical region;
+ * the PID still uses the original target and supplies the residual offset. */
+static int32_t q6_map_equilibrium_ab(int16_t position_mm)
+{
+    int32_t clamped_mm = position_mm;
+    int32_t rounded_mm;
+    uint32_t index;
+
+    if (clamped_mm < BALANCE_Q6_MAP_MIN_POSITION_MM) {
+        clamped_mm = BALANCE_Q6_MAP_MIN_POSITION_MM;
+    }
+    if (clamped_mm > BALANCE_Q6_MAP_MAX_POSITION_MM) {
+        clamped_mm = BALANCE_Q6_MAP_MAX_POSITION_MM;
+    }
+
+    if (clamped_mm >= 0) {
+        rounded_mm = ((clamped_mm + BALANCE_Q6_MAP_STEP_MM / 2) /
+                      BALANCE_Q6_MAP_STEP_MM) * BALANCE_Q6_MAP_STEP_MM;
+    } else {
+        rounded_mm = ((clamped_mm - BALANCE_Q6_MAP_STEP_MM / 2) /
+                      BALANCE_Q6_MAP_STEP_MM) * BALANCE_Q6_MAP_STEP_MM;
+    }
+
+    index = (uint32_t)((rounded_mm - BALANCE_Q6_MAP_MIN_POSITION_MM) /
+                       BALANCE_Q6_MAP_STEP_MM);
+    if (index >= BALANCE_Q6_MAP_POINT_COUNT) {
+        index = BALANCE_Q6_MAP_POINT_COUNT - 1U;
+    }
+    return s_q6_balance_map[index].equilibrium_ab;
+}
+
 static float slew_float(float current, float requested, float step)
 {
     const float delta = requested - current;
@@ -250,7 +328,7 @@ void Balance_Tick(uint32_t now_ms)
     float output;
     float fixed_tilt_progress_mm;
     uint8_t fixed_tilt_active;
-    int32_t level_ab;
+    int32_t base_ab;
     int32_t speed_cmd;
 
     if (!s_enabled) return;
@@ -388,14 +466,19 @@ void Balance_Tick(uint32_t now_ms)
         if (outer_output < -BALANCE_TILT_LIMIT_AB) {
             outer_output = -BALANCE_TILT_LIMIT_AB;
         }
-        level_ab = BALANCE_LEVEL_AB_COUNT;
+        /* Q4/Q5 use the calibrated horizontal datum. Q6 adds the measured
+         * curved-tube equilibrium value for the captured target position;
+         * its PID output remains the dynamic correction around that value. */
+        base_ab = BALANCE_LEVEL_AB_COUNT;
         if (s_pid_profile == BALANCE_PID_PROFILE_Q3 &&
             s_q3_direction == BALANCE_Q3_DIRECTION_REVERSE &&
             s_target_mm == 50 &&
             fixed_tilt_active == 0U) {
-            level_ab = BALANCE_Q3_REVERSE_LEVEL_AB_COUNT;
+            base_ab = BALANCE_Q3_REVERSE_LEVEL_AB_COUNT;
+        } else if (s_pid_profile == BALANCE_PID_PROFILE_Q6) {
+            base_ab = q6_map_equilibrium_ab(s_target_mm);
         }
-        s_target_ab = level_ab + (int32_t)outer_output;
+        s_target_ab = base_ab + (int32_t)outer_output;
         s_tracking = 1;
     }
 

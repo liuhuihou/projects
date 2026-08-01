@@ -26,6 +26,10 @@
 #define APP_LEVEL_TIMEOUT_MS       (8000U)
 #define APP_LEVEL_START_AB_MIN     (0)
 
+/* Q6 captures its arbitrary hold position from this many consecutive, real
+ * camera detections after levelling. Repeated reads of one frame are ignored. */
+#define APP_Q6_TARGET_SAMPLE_FRAMES (5U)
+
 /* ============ Stop Line Detection ============ */
 /* Eight probes are numbered 1..8 from left to right after the driver
  * normalises the sensor byte. Accept the centred 3456 pattern or either

@@ -121,9 +121,9 @@
 #define BALANCE_Q5_POSITION_KI          (0.80f)
 #define BALANCE_Q5_VELOCITY_KD          (0.80f)
 
-#define BALANCE_Q6_POSITION_KP          (0.70f)
-#define BALANCE_Q6_POSITION_KI          (0.10f)
-#define BALANCE_Q6_VELOCITY_KD          (0.30f)
+#define BALANCE_Q6_POSITION_KP          (1.80f)
+#define BALANCE_Q6_POSITION_KI          (0.80f)
+#define BALANCE_Q6_VELOCITY_KD          (0.80f)
 
 /* Q5/Q6 start with the same feed-forward values, but remain independent so
  * their launch behaviour can be tuned without changing the other question. */
@@ -134,6 +134,14 @@
 #define BALANCE_Q6_START_FF_AB          (6.0f)
 #define BALANCE_Q6_START_FF_LIMIT_AB    (40.0f)
 #define BALANCE_Q6_FF_SLEW_AB           (2.0f)
+
+/* Q6 static equilibrium map measured on the curved tube. Integer-centimetre
+ * measurements are expanded to 0.5 cm steps. Q6 selects the nearest step for
+ * its base AB command; PID remains the primary recovery controller. */
+#define BALANCE_Q6_MAP_MIN_POSITION_MM  (-90)
+#define BALANCE_Q6_MAP_MAX_POSITION_MM  (90)
+#define BALANCE_Q6_MAP_STEP_MM          (5)
+#define BALANCE_Q6_MAP_POINT_COUNT      (37U)
 
 /* These limits and the AB angle loop describe the common mechanism, so they
  * remain shared by all four outer-loop profiles. */

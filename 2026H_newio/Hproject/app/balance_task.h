@@ -15,7 +15,7 @@ void BalanceTask_Start(BalanceTaskMode mode);
 void BalanceTask_Update(uint32_t now_ms);
 uint8_t BalanceTask_IsComplete(void);
 
-/* For Q6: set the target position before starting */
+/* For Q6: set the captured target position before starting/arming the hold. */
 void BalanceTask_SetPosition(int16_t pos_mm);
 
 #endif
