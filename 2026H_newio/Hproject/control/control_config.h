@@ -107,9 +107,9 @@
 /* Q4 launch acceleration feed-forward magnitude. The installed mechanism was
  * verified on the vehicle: increasing the AB target produces the direction
  * that opposes the ball's rearward inertial motion at launch. */
-#define BALANCE_Q4_START_FF_AB           (45.0f)
+#define BALANCE_Q4_START_FF_AB           (40.0f)
 #define BALANCE_Q4_START_FF_LIMIT_AB     (80.0f)
-#define BALANCE_Q4_FF_SLEW_AB            (20.0f)
+#define BALANCE_Q4_FF_SLEW_AB            (15.0f)
 
 #define BALANCE_Q5_POSITION_KP          (0.70f)
 #define BALANCE_Q5_POSITION_KI          (0.10f)
@@ -118,6 +118,16 @@
 #define BALANCE_Q6_POSITION_KP          (0.70f)
 #define BALANCE_Q6_POSITION_KI          (0.10f)
 #define BALANCE_Q6_VELOCITY_KD          (0.30f)
+
+/* Q5/Q6 start with the same feed-forward values, but remain independent so
+ * their launch behaviour can be tuned without changing the other question. */
+#define BALANCE_Q5_START_FF_AB          (34.0f)
+#define BALANCE_Q5_START_FF_LIMIT_AB    (80.0f)
+#define BALANCE_Q5_FF_SLEW_AB           (12.0f)
+
+#define BALANCE_Q6_START_FF_AB          (6.0f)
+#define BALANCE_Q6_START_FF_LIMIT_AB    (40.0f)
+#define BALANCE_Q6_FF_SLEW_AB           (2.0f)
 
 /* These limits and the AB angle loop describe the common mechanism, so they
  * remain shared by all four outer-loop profiles. */

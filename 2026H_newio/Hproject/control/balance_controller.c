@@ -364,25 +364,41 @@ void Balance_Tick(uint32_t now_ms)
         s_tracking = 1;
     }
 
-    /* Q4-only launch feed-forward. The linear vehicle ramp has known positive
-     * longitudinal acceleration, so act before the camera sees the ball move.
-     * Slewing both edges avoids an abrupt beam-target step at launch and when
-     * the one-second vehicle ramp completes. */
+    /* Q4-Q6 launch feed-forward. Their linear vehicle ramps have known
+     * positive longitudinal acceleration, so act before the camera sees the
+     * ball move. Q4, Q5 and Q6 each have independent tuning parameters.
+     * Slewing both edges avoids an abrupt beam-target step at ramp boundaries. */
     {
         float requested_ff = 0.0f;
-        if (s_pid_profile == BALANCE_PID_PROFILE_Q4 &&
-            Control_GetMode() != CTRL_STOP &&
-            Control_GetStartRampScale() < 1.0f) {
+        float ff_limit = BALANCE_Q4_START_FF_LIMIT_AB;
+        float ff_slew = BALANCE_Q4_FF_SLEW_AB;
+        const uint8_t ramp_active =
+            (Control_GetMode() != CTRL_STOP &&
+             Control_GetStartRampScale() < 1.0f) ? 1U : 0U;
+
+        if (s_pid_profile == BALANCE_PID_PROFILE_Q5) {
+            ff_limit = BALANCE_Q5_START_FF_LIMIT_AB;
+            ff_slew = BALANCE_Q5_FF_SLEW_AB;
+            if (ramp_active != 0U) {
+                requested_ff = BALANCE_Q5_START_FF_AB;
+            }
+        } else if (s_pid_profile == BALANCE_PID_PROFILE_Q6) {
+            ff_limit = BALANCE_Q6_START_FF_LIMIT_AB;
+            ff_slew = BALANCE_Q6_FF_SLEW_AB;
+            if (ramp_active != 0U) {
+                requested_ff = BALANCE_Q6_START_FF_AB;
+            }
+        } else if (s_pid_profile == BALANCE_PID_PROFILE_Q4 &&
+                   ramp_active != 0U) {
             requested_ff = BALANCE_Q4_START_FF_AB;
         }
-        if (requested_ff > BALANCE_Q4_START_FF_LIMIT_AB) {
-            requested_ff = BALANCE_Q4_START_FF_LIMIT_AB;
+        if (requested_ff > ff_limit) {
+            requested_ff = ff_limit;
         }
-        if (requested_ff < -BALANCE_Q4_START_FF_LIMIT_AB) {
-            requested_ff = -BALANCE_Q4_START_FF_LIMIT_AB;
+        if (requested_ff < -ff_limit) {
+            requested_ff = -ff_limit;
         }
-        s_start_ff_ab = slew_float(s_start_ff_ab, requested_ff,
-                                   BALANCE_Q4_FF_SLEW_AB);
+        s_start_ff_ab = slew_float(s_start_ff_ab, requested_ff, ff_slew);
         s_target_ab += (int32_t)s_start_ff_ab;
     }
 

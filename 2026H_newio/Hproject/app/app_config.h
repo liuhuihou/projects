@@ -7,14 +7,14 @@
 
 /* ============ Speed Presets (cm/s) ============ */
 #define APP_SPEED_Q2_CM_S          (35.0f)   /* Fast lap (Q2: <=20s) */
-#define APP_SPEED_Q4_CM_S          (25.0f)   /* A->B with balance (Q4: <=8s) */
-#define APP_SPEED_Q5_CM_S          (22.0f)   /* Full lap with balance (Q5: <=30s) */
+#define APP_SPEED_Q4_CM_S          (28.0f)   /* A->B with balance (Q4: <=8s) */
+#define APP_SPEED_Q5_CM_S          (23.0f)   /* Full lap with balance (Q5: <=30s) */
 
 /* Smooth-start duration for ball-carrying modes. Q4 has the tightest time
  * budget, so it reaches cruise speed sooner; Q5/Q6 can use a gentler ramp. */
-#define APP_START_RAMP_Q4_MS       (1500U)
-#define APP_START_RAMP_Q5_MS       (1500U)
-#define APP_START_RAMP_Q6_MS       (1500U)
+#define APP_START_RAMP_Q4_MS       (2000U)
+#define APP_START_RAMP_Q5_MS       (2000U)
+#define APP_START_RAMP_Q6_MS       (2000U)
 
 /* Q3/Q4/Q5/Q6 initial tube levelling. The mechanism always powers up at the
  * same physical pose, where the incremental AB feedback is initialised to 0.

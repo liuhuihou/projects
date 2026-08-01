@@ -3,9 +3,9 @@
 <title>Static Call Graph - [..\build\keil\Objects\h_balance_car.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image ..\build\keil\Objects\h_balance_car.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6210000: Last Updated: Sat Aug  1 12:10:21 2026
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6240002: Last Updated: Sat Aug  1 12:24:26 2026
 <BR><P>
-<H3>Maximum Stack Usage =        236 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
+<H3>Maximum Stack Usage =        244 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
 __rt_entry_main &rArr; main &rArr; oled_show_mode_select &rArr; OLED_ShowTenths &rArr; OLED_ShowChar &rArr; oled_cursor
 <P>
@@ -166,7 +166,7 @@ Global Symbols
 <P><STRONG><a name="[e6]"></a>__rt_entry_postsh_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$00000009))
 
 <P><STRONG><a name="[26]"></a>__rt_entry_main</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$0000000D))
-<BR><BR>[Stack]<UL><LI>Max Depth = 236 + Unknown Stack Size
+<BR><BR>[Stack]<UL><LI>Max Depth = 244 + Unknown Stack Size
 <LI>Call Chain = __rt_entry_main &rArr; main &rArr; oled_show_mode_select &rArr; OLED_ShowTenths &rArr; OLED_ShowChar &rArr; oled_cursor
 </UL>
 <BR>[Calls]<UL><LI><a href="#[27]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
@@ -317,6 +317,8 @@ Global Symbols
 <LI><a href="#[6e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Encoder_CountsToDistanceCm
 </UL>
 
+<P><STRONG><a name="[ed]"></a>__divsf3</STRONG> (Thumb, 0 bytes, Stack size 20 bytes, fdiv.o(.text), UNUSED)
+
 <P><STRONG><a name="[2f]"></a>_fdiv</STRONG> (Thumb, 334 bytes, Stack size 20 bytes, fdiv.o(.text), UNUSED)
 <BR><BR>[Called By]<UL><LI><a href="#[2e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_frdiv
 </UL>
@@ -332,7 +334,7 @@ Global Symbols
 <LI><a href="#[40]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Balance_Tick
 </UL>
 
-<P><STRONG><a name="[ed]"></a>_ffix</STRONG> (Thumb, 76 bytes, Stack size 8 bytes, ffixi.o(.text), UNUSED)
+<P><STRONG><a name="[ee]"></a>_ffix</STRONG> (Thumb, 76 bytes, Stack size 8 bytes, ffixi.o(.text), UNUSED)
 
 <P><STRONG><a name="[31]"></a>__aeabi_i2f_normalise</STRONG> (Thumb, 72 bytes, Stack size 0 bytes, fflti.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[32]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_ui2f
@@ -342,23 +344,23 @@ Global Symbols
 <P><STRONG><a name="[30]"></a>__aeabi_i2f</STRONG> (Thumb, 16 bytes, Stack size 0 bytes, fflti.o(.text))
 <BR><BR>[Calls]<UL><LI><a href="#[31]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_i2f_normalise
 </UL>
-<BR>[Called By]<UL><LI><a href="#[69]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LineSensor_GetSteeringError
-<LI><a href="#[68]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Encoder_CountsToRpm
+<BR>[Called By]<UL><LI><a href="#[68]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Encoder_CountsToRpm
 <LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Control_Tick
 <LI><a href="#[40]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Balance_Tick
 <LI><a href="#[6e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Encoder_CountsToDistanceCm
 </UL>
 
-<P><STRONG><a name="[ee]"></a>_fflt</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, fflti.o(.text), UNUSED)
+<P><STRONG><a name="[ef]"></a>_fflt</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, fflti.o(.text), UNUSED)
 
 <P><STRONG><a name="[32]"></a>__aeabi_ui2f</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, fflti.o(.text))
 <BR><BR>[Calls]<UL><LI><a href="#[31]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_i2f_normalise
 </UL>
-<BR>[Called By]<UL><LI><a href="#[68]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Encoder_CountsToRpm
+<BR>[Called By]<UL><LI><a href="#[69]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LineSensor_GetSteeringError
+<LI><a href="#[68]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Encoder_CountsToRpm
 <LI><a href="#[65]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Control_Tick
 </UL>
 
-<P><STRONG><a name="[ef]"></a>_ffltu</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, fflti.o(.text), UNUSED)
+<P><STRONG><a name="[f0]"></a>_ffltu</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, fflti.o(.text), UNUSED)
 
 <P><STRONG><a name="[33]"></a>__fpl_fcmp_InfNaN</STRONG> (Thumb, 96 bytes, Stack size 8 bytes, fcmpin.o(.text), UNUSED)
 <BR><BR>[Calls]<UL><LI><a href="#[35]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__fpl_fcheck_NaN2
@@ -398,13 +400,13 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[33]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__fpl_fcmp_InfNaN
 </UL>
 
-<P><STRONG><a name="[f0]"></a>__user_libspace</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, libspace.o(.text), UNUSED)
+<P><STRONG><a name="[f1]"></a>__user_libspace</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, libspace.o(.text), UNUSED)
 
 <P><STRONG><a name="[36]"></a>__user_perproc_libspace</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, libspace.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[23]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__user_setup_stackheap
 </UL>
 
-<P><STRONG><a name="[f1]"></a>__user_perthread_libspace</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, libspace.o(.text), UNUSED)
+<P><STRONG><a name="[f2]"></a>__user_perthread_libspace</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, libspace.o(.text), UNUSED)
 
 <P><STRONG><a name="[3a]"></a>__fpl_return_NaN</STRONG> (Thumb, 94 bytes, Stack size 8 bytes, retnan.o(.text), UNUSED)
 <BR><BR>[Calls]<UL><LI><a href="#[34]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__fpl_cmpreturn
@@ -416,11 +418,11 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[2b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_exit_exit
 </UL>
 
-<P><STRONG><a name="[f2]"></a>__I$use$semihosting</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, use_no_semi.o(.text), UNUSED)
+<P><STRONG><a name="[f3]"></a>__I$use$semihosting</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, use_no_semi.o(.text), UNUSED)
 
-<P><STRONG><a name="[f3]"></a>__use_no_semihosting_swi</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, use_no_semi.o(.text), UNUSED)
+<P><STRONG><a name="[f4]"></a>__use_no_semihosting_swi</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, use_no_semi.o(.text), UNUSED)
 
-<P><STRONG><a name="[f4]"></a>__semihosting_library_function</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, indicate_semi.o(.text), UNUSED)
+<P><STRONG><a name="[f5]"></a>__semihosting_library_function</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, indicate_semi.o(.text), UNUSED)
 
 <P><STRONG><a name="[a8]"></a>BalanceTask_Init</STRONG> (Thumb, 24 bytes, Stack size 0 bytes, balance_task.o(.text.BalanceTask_Init))
 <BR><BR>[Called By]<UL><LI><a href="#[27]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
@@ -431,7 +433,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[3b]"></a>BalanceTask_Start</STRONG> (Thumb, 72 bytes, Stack size 16 bytes, balance_task.o(.text.BalanceTask_Start))
-<BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = BalanceTask_Start &rArr; Balance_SelectQ3Direction
+<BR><BR>[Stack]<UL><LI>Max Depth = 44<LI>Call Chain = BalanceTask_Start &rArr; Balance_SelectQ3Direction
 </UL>
 <BR>[Calls]<UL><LI><a href="#[3e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Balance_SetTarget
 <LI><a href="#[3d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Balance_SelectQ3Direction
@@ -441,7 +443,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[3f]"></a>BalanceTask_Update</STRONG> (Thumb, 260 bytes, Stack size 24 bytes, balance_task.o(.text.BalanceTask_Update))
-<BR><BR>[Stack]<UL><LI>Max Depth = 128<LI>Call Chain = BalanceTask_Update &rArr; Balance_Tick &rArr; Stepper_SetSpeed &rArr; DL_Timer_setCaptCompUpdateMethod
+<BR><BR>[Stack]<UL><LI>Max Depth = 136<LI>Call Chain = BalanceTask_Update &rArr; Balance_Tick &rArr; Stepper_SetSpeed &rArr; DL_Timer_setCaptCompUpdateMethod
 </UL>
 <BR>[Calls]<UL><LI><a href="#[43]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Balance_GetBallVelocity
 <LI><a href="#[42]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Balance_GetError
@@ -454,7 +456,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[44]"></a>Balance_Disable</STRONG> (Thumb, 48 bytes, Stack size 8 bytes, balance_controller.o(.text.Balance_Disable))
-<BR><BR>[Stack]<UL><LI>Max Depth = 40<LI>Call Chain = Balance_Disable &rArr; Stepper_SetSpeed &rArr; DL_Timer_setCaptCompUpdateMethod
+<BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = Balance_Disable &rArr; Stepper_SetSpeed &rArr; DL_Timer_setCaptCompUpdateMethod
 </UL>
 <BR>[Calls]<UL><LI><a href="#[46]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Stepper_Disable
 <LI><a href="#[45]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Stepper_SetSpeed
@@ -479,11 +481,11 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[3f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BalanceTask_Update
 </UL>
 
-<P><STRONG><a name="[b4]"></a>Balance_GetOutput</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, balance_controller.o(.text.Balance_GetOutput))
+<P><STRONG><a name="[b5]"></a>Balance_GetOutput</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, balance_controller.o(.text.Balance_GetOutput))
 <BR><BR>[Called By]<UL><LI><a href="#[aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;oled_show_mode_select
 </UL>
 
-<P><STRONG><a name="[b3]"></a>Balance_GetTarget</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, balance_controller.o(.text.Balance_GetTarget))
+<P><STRONG><a name="[b4]"></a>Balance_GetTarget</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, balance_controller.o(.text.Balance_GetTarget))
 <BR><BR>[Called By]<UL><LI><a href="#[aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;oled_show_mode_select
 </UL>
 
@@ -503,8 +505,8 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;start_task
 </UL>
 
-<P><STRONG><a name="[3d]"></a>Balance_SelectQ3Direction</STRONG> (Thumb, 148 bytes, Stack size 32 bytes, balance_controller.o(.text.Balance_SelectQ3Direction))
-<BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = Balance_SelectQ3Direction
+<P><STRONG><a name="[3d]"></a>Balance_SelectQ3Direction</STRONG> (Thumb, 156 bytes, Stack size 28 bytes, balance_controller.o(.text.Balance_SelectQ3Direction))
+<BR><BR>[Stack]<UL><LI>Max Depth = 28<LI>Call Chain = Balance_SelectQ3Direction
 </UL>
 <BR>[Called By]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BalanceTask_Start
 <LI><a href="#[3f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BalanceTask_Update
@@ -515,8 +517,8 @@ Global Symbols
 <LI><a href="#[3f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BalanceTask_Update
 </UL>
 
-<P><STRONG><a name="[40]"></a>Balance_Tick</STRONG> (Thumb, 672 bytes, Stack size 72 bytes, balance_controller.o(.text.Balance_Tick))
-<BR><BR>[Stack]<UL><LI>Max Depth = 104<LI>Call Chain = Balance_Tick &rArr; Stepper_SetSpeed &rArr; DL_Timer_setCaptCompUpdateMethod
+<P><STRONG><a name="[40]"></a>Balance_Tick</STRONG> (Thumb, 768 bytes, Stack size 72 bytes, balance_controller.o(.text.Balance_Tick))
+<BR><BR>[Stack]<UL><LI>Max Depth = 112<LI>Call Chain = Balance_Tick &rArr; Stepper_SetSpeed &rArr; DL_Timer_setCaptCompUpdateMethod
 </UL>
 <BR>[Calls]<UL><LI><a href="#[49]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Camera_IsBallUsable
 <LI><a href="#[52]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Control_GetStartRampScale
@@ -552,8 +554,8 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[27]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[a1]"></a>Camera_FeedByte</STRONG> (Thumb, 680 bytes, Stack size 36 bytes, camera_uart.o(.text.Camera_FeedByte))
-<BR><BR>[Stack]<UL><LI>Max Depth = 36<LI>Call Chain = Camera_FeedByte
+<P><STRONG><a name="[a1]"></a>Camera_FeedByte</STRONG> (Thumb, 680 bytes, Stack size 32 bytes, camera_uart.o(.text.Camera_FeedByte))
+<BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = Camera_FeedByte
 </UL>
 <BR>[Called By]<UL><LI><a href="#[10]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;UART1_IRQHandler
 </UL>
@@ -593,8 +595,8 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[27]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[56]"></a>Competition_Update</STRONG> (Thumb, 524 bytes, Stack size 48 bytes, competition_mode.o(.text.Competition_Update))
-<BR><BR>[Stack]<UL><LI>Max Depth = 176<LI>Call Chain = Competition_Update &rArr; BalanceTask_Update &rArr; Balance_Tick &rArr; Stepper_SetSpeed &rArr; DL_Timer_setCaptCompUpdateMethod
+<P><STRONG><a name="[56]"></a>Competition_Update</STRONG> (Thumb, 480 bytes, Stack size 48 bytes, competition_mode.o(.text.Competition_Update))
+<BR><BR>[Stack]<UL><LI>Max Depth = 184<LI>Call Chain = Competition_Update &rArr; BalanceTask_Update &rArr; Balance_Tick &rArr; Stepper_SetSpeed &rArr; DL_Timer_setCaptCompUpdateMethod
 </UL>
 <BR>[Calls]<UL><LI><a href="#[55]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StepperFeedback_IsTravelCommandAllowed
 <LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StepperFeedback_ResetCountsAt
@@ -682,7 +684,7 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;start_task
 </UL>
 
-<P><STRONG><a name="[65]"></a>Control_Tick</STRONG> (Thumb, 1648 bytes, Stack size 48 bytes, vehicle_controller.o(.text.Control_Tick))
+<P><STRONG><a name="[65]"></a>Control_Tick</STRONG> (Thumb, 1624 bytes, Stack size 48 bytes, vehicle_controller.o(.text.Control_Tick))
 <BR><BR>[Stack]<UL><LI>Max Depth = 92<LI>Call Chain = Control_Tick &rArr; LineSensor_GetSteeringError &rArr; __aeabi_fdiv
 </UL>
 <BR>[Calls]<UL><LI><a href="#[6b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Motor_SetDuty
@@ -858,7 +860,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[7]"></a>GROUP1_IRQHandler</STRONG> (Thumb, 168 bytes, Stack size 24 bytes, encoder_driver.o(.text.GROUP1_IRQHandler))
-<BR><BR>[Stack]<UL><LI>Max Depth = 72<LI>Call Chain = GROUP1_IRQHandler &rArr; StepperFeedback_HandleGpioInterrupt &rArr; Stepper_SetSpeed &rArr; DL_Timer_setCaptCompUpdateMethod
+<BR><BR>[Stack]<UL><LI>Max Depth = 80<LI>Call Chain = GROUP1_IRQHandler &rArr; StepperFeedback_HandleGpioInterrupt &rArr; Stepper_SetSpeed &rArr; DL_Timer_setCaptCompUpdateMethod
 </UL>
 <BR>[Calls]<UL><LI><a href="#[6f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StepperFeedback_HandleGpioInterrupt
 </UL>
@@ -881,8 +883,8 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[58]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;start_task
 </UL>
 
-<P><STRONG><a name="[5b]"></a>LineFollow_Update</STRONG> (Thumb, 424 bytes, Stack size 32 bytes, line_follow_task.o(.text.LineFollow_Update))
-<BR><BR>[Stack]<UL><LI>Max Depth = 60<LI>Call Chain = LineFollow_Update &rArr; Encoder_CountsToDistanceCm &rArr; __aeabi_fdiv
+<P><STRONG><a name="[5b]"></a>LineFollow_Update</STRONG> (Thumb, 356 bytes, Stack size 24 bytes, line_follow_task.o(.text.LineFollow_Update))
+<BR><BR>[Stack]<UL><LI>Max Depth = 52<LI>Call Chain = LineFollow_Update &rArr; Encoder_CountsToDistanceCm &rArr; __aeabi_fdiv
 </UL>
 <BR>[Calls]<UL><LI><a href="#[74]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Control_GetRightDistance
 <LI><a href="#[6e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Encoder_CountsToDistanceCm
@@ -903,10 +905,10 @@ Global Symbols
 <LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LineFollow_Update
 </UL>
 
-<P><STRONG><a name="[69]"></a>LineSensor_GetSteeringError</STRONG> (Thumb, 324 bytes, Stack size 24 bytes, line_sensor.o(.text.LineSensor_GetSteeringError))
+<P><STRONG><a name="[69]"></a>LineSensor_GetSteeringError</STRONG> (Thumb, 260 bytes, Stack size 24 bytes, line_sensor.o(.text.LineSensor_GetSteeringError))
 <BR><BR>[Stack]<UL><LI>Max Depth = 44<LI>Call Chain = LineSensor_GetSteeringError &rArr; __aeabi_fdiv
 </UL>
-<BR>[Calls]<UL><LI><a href="#[30]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_i2f
+<BR>[Calls]<UL><LI><a href="#[32]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_ui2f
 <LI><a href="#[6a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fdiv
 <LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_fadd
 </UL>
@@ -917,7 +919,7 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[27]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[b5]"></a>LineSensor_IsOnline</STRONG> (Thumb, 16 bytes, Stack size 0 bytes, line_sensor.o(.text.LineSensor_IsOnline))
+<P><STRONG><a name="[b3]"></a>LineSensor_IsOnline</STRONG> (Thumb, 16 bytes, Stack size 0 bytes, line_sensor.o(.text.LineSensor_IsOnline))
 <BR><BR>[Called By]<UL><LI><a href="#[aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;oled_show_mode_select
 </UL>
 
@@ -958,7 +960,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[27]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[6b]"></a>Motor_SetDuty</STRONG> (Thumb, 132 bytes, Stack size 24 bytes, motor_driver.o(.text.Motor_SetDuty))
+<P><STRONG><a name="[6b]"></a>Motor_SetDuty</STRONG> (Thumb, 128 bytes, Stack size 24 bytes, motor_driver.o(.text.Motor_SetDuty))
 <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = Motor_SetDuty
 </UL>
 <BR>[Calls]<UL><LI><a href="#[79]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DL_Timer_setCaptureCompareValue
@@ -982,7 +984,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[27]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[7d]"></a>OLED_Init</STRONG> (Thumb, 5608 bytes, Stack size 32 bytes, oled_driver.o(.text.OLED_Init))
+<P><STRONG><a name="[7d]"></a>OLED_Init</STRONG> (Thumb, 5856 bytes, Stack size 32 bytes, oled_driver.o(.text.OLED_Init))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = OLED_Init
 </UL>
 <BR>[Calls]<UL><LI><a href="#[7e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DL_Common_delayCycles
@@ -990,7 +992,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[27]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[7f]"></a>OLED_ShowChar</STRONG> (Thumb, 628 bytes, Stack size 40 bytes, oled_driver.o(.text.OLED_ShowChar))
+<P><STRONG><a name="[7f]"></a>OLED_ShowChar</STRONG> (Thumb, 632 bytes, Stack size 40 bytes, oled_driver.o(.text.OLED_ShowChar))
 <BR><BR>[Stack]<UL><LI>Max Depth = 68<LI>Call Chain = OLED_ShowChar &rArr; oled_cursor
 </UL>
 <BR>[Calls]<UL><LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;oled_cursor
@@ -1002,8 +1004,8 @@ Global Symbols
 <LI><a href="#[aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;oled_show_mode_select
 </UL>
 
-<P><STRONG><a name="[80]"></a>OLED_ShowNum</STRONG> (Thumb, 896 bytes, Stack size 72 bytes, oled_driver.o(.text.OLED_ShowNum))
-<BR><BR>[Stack]<UL><LI>Max Depth = 140<LI>Call Chain = OLED_ShowNum &rArr; OLED_ShowChar &rArr; oled_cursor
+<P><STRONG><a name="[80]"></a>OLED_ShowNum</STRONG> (Thumb, 888 bytes, Stack size 80 bytes, oled_driver.o(.text.OLED_ShowNum))
+<BR><BR>[Stack]<UL><LI>Max Depth = 148<LI>Call Chain = OLED_ShowNum &rArr; OLED_ShowChar &rArr; oled_cursor
 </UL>
 <BR>[Calls]<UL><LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;OLED_ShowChar
 <LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_uidiv
@@ -1030,8 +1032,8 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;oled_show_mode_select
 </UL>
 
-<P><STRONG><a name="[85]"></a>OLED_ShowTenths</STRONG> (Thumb, 844 bytes, Stack size 96 bytes, oled_driver.o(.text.OLED_ShowTenths))
-<BR><BR>[Stack]<UL><LI>Max Depth = 164<LI>Call Chain = OLED_ShowTenths &rArr; OLED_ShowChar &rArr; oled_cursor
+<P><STRONG><a name="[85]"></a>OLED_ShowTenths</STRONG> (Thumb, 868 bytes, Stack size 104 bytes, oled_driver.o(.text.OLED_ShowTenths))
+<BR><BR>[Stack]<UL><LI>Max Depth = 172<LI>Call Chain = OLED_ShowTenths &rArr; OLED_ShowChar &rArr; oled_cursor
 </UL>
 <BR>[Calls]<UL><LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;OLED_ShowChar
 <LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_uidiv
@@ -1174,7 +1176,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[6f]"></a>StepperFeedback_HandleGpioInterrupt</STRONG> (Thumb, 144 bytes, Stack size 16 bytes, stepper_feedback.o(.text.StepperFeedback_HandleGpioInterrupt))
-<BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = StepperFeedback_HandleGpioInterrupt &rArr; Stepper_SetSpeed &rArr; DL_Timer_setCaptCompUpdateMethod
+<BR><BR>[Stack]<UL><LI>Max Depth = 56<LI>Call Chain = StepperFeedback_HandleGpioInterrupt &rArr; Stepper_SetSpeed &rArr; DL_Timer_setCaptCompUpdateMethod
 </UL>
 <BR>[Calls]<UL><LI><a href="#[45]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Stepper_SetSpeed
 </UL>
@@ -1235,8 +1237,8 @@ Global Symbols
 <LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Competition_Update
 </UL>
 
-<P><STRONG><a name="[45]"></a>Stepper_SetSpeed</STRONG> (Thumb, 292 bytes, Stack size 24 bytes, stepper_driver.o(.text.Stepper_SetSpeed))
-<BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = Stepper_SetSpeed &rArr; DL_Timer_setCaptCompUpdateMethod
+<P><STRONG><a name="[45]"></a>Stepper_SetSpeed</STRONG> (Thumb, 296 bytes, Stack size 32 bytes, stepper_driver.o(.text.Stepper_SetSpeed))
+<BR><BR>[Stack]<UL><LI>Max Depth = 40<LI>Call Chain = Stepper_SetSpeed &rArr; DL_Timer_setCaptCompUpdateMethod
 </UL>
 <BR>[Calls]<UL><LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DL_Timer_setCaptCompUpdateMethod
 <LI><a href="#[79]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DL_Timer_setCaptureCompareValue
@@ -1255,7 +1257,7 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> startup_mspm0g350x_uvision.o(RESET)
 </UL>
-<P><STRONG><a name="[17]"></a>TIMG7_IRQHandler</STRONG> (Thumb, 112 bytes, Stack size 24 bytes, stepper_driver.o(.text.TIMG7_IRQHandler))
+<P><STRONG><a name="[17]"></a>TIMG7_IRQHandler</STRONG> (Thumb, 116 bytes, Stack size 24 bytes, stepper_driver.o(.text.TIMG7_IRQHandler))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = TIMG7_IRQHandler &rArr; DL_Timer_setCaptCompUpdateMethod
 </UL>
 <BR>[Calls]<UL><LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DL_Timer_setCaptCompUpdateMethod
@@ -1272,7 +1274,7 @@ Global Symbols
 <BR>[Address Reference Count : 1]<UL><LI> startup_mspm0g350x_uvision.o(RESET)
 </UL>
 <P><STRONG><a name="[10]"></a>UART1_IRQHandler</STRONG> (Thumb, 48 bytes, Stack size 16 bytes, app_main.o(.text.UART1_IRQHandler))
-<BR><BR>[Stack]<UL><LI>Max Depth = 52<LI>Call Chain = UART1_IRQHandler &rArr; Camera_FeedByte
+<BR><BR>[Stack]<UL><LI>Max Depth = 48<LI>Call Chain = UART1_IRQHandler &rArr; Camera_FeedByte
 </UL>
 <BR>[Calls]<UL><LI><a href="#[a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Camera_FeedByte
 <LI><a href="#[a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Control_GetTickCount
@@ -1280,7 +1282,7 @@ Global Symbols
 <BR>[Address Reference Count : 1]<UL><LI> startup_mspm0g350x_uvision.o(RESET)
 </UL>
 <P><STRONG><a name="[27]"></a>main</STRONG> (Thumb, 180 bytes, Stack size 0 bytes, app_main.o(.text.main))
-<BR><BR>[Stack]<UL><LI>Max Depth = 236<LI>Call Chain = main &rArr; oled_show_mode_select &rArr; OLED_ShowTenths &rArr; OLED_ShowChar &rArr; oled_cursor
+<BR><BR>[Stack]<UL><LI>Max Depth = 244<LI>Call Chain = main &rArr; oled_show_mode_select &rArr; OLED_ShowTenths &rArr; OLED_ShowChar &rArr; oled_cursor
 </UL>
 <BR>[Calls]<UL><LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Competition_Update
 <LI><a href="#[ac]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Button_Update
@@ -1315,7 +1317,7 @@ Global Symbols
 <LI><a href="#[8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;TIMG8_IRQHandler
 </UL>
 
-<P><STRONG><a name="[f5]"></a>__aeabi_idiv</STRONG> (Thumb, 434 bytes, Stack size 8 bytes, aeabi_sdivfast.o(.text_divfast), UNUSED)
+<P><STRONG><a name="[f6]"></a>__aeabi_idiv</STRONG> (Thumb, 434 bytes, Stack size 8 bytes, aeabi_sdivfast.o(.text_divfast), UNUSED)
 
 <P><STRONG><a name="[53]"></a>__aeabi_fcmpge</STRONG> (Thumb, 0 bytes, Stack size 8 bytes, fcmp.o(i._fgeq))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = __aeabi_fcmpge
@@ -1384,7 +1386,7 @@ Global Symbols
 <LI><a href="#[ba]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_fgeq
 </UL>
 
-<P><STRONG><a name="[f6]"></a>__aeabi_cfcmple</STRONG> (Thumb, 0 bytes, Stack size 8 bytes, flef.o(x$fpl$fleqf), UNUSED)
+<P><STRONG><a name="[f7]"></a>__aeabi_cfcmple</STRONG> (Thumb, 0 bytes, Stack size 8 bytes, flef.o(x$fpl$fleqf), UNUSED)
 
 <P><STRONG><a name="[be]"></a>_fcmple</STRONG> (Thumb, 78 bytes, Stack size 8 bytes, flef.o(x$fpl$fleqf), UNUSED)
 <BR><BR>[Calls]<UL><LI><a href="#[33]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__fpl_fcmp_InfNaN
@@ -1403,7 +1405,7 @@ Global Symbols
 <LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LineFollow_Update
 </UL>
 
-<P><STRONG><a name="[f7]"></a>_fmul</STRONG> (Thumb, 172 bytes, Stack size 16 bytes, fmul.o(x$fpl$fmul), UNUSED)
+<P><STRONG><a name="[f8]"></a>_fmul</STRONG> (Thumb, 172 bytes, Stack size 16 bytes, fmul.o(x$fpl$fmul), UNUSED)
 
 <P><STRONG><a name="[4b]"></a>__aeabi_fsub</STRONG> (Thumb, 0 bytes, Stack size 16 bytes, faddsub.o(x$fpl$fsub))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = __aeabi_fsub
@@ -1420,13 +1422,13 @@ Global Symbols
 Local Symbols
 </H3>
 <P><STRONG><a name="[aa]"></a>oled_show_mode_select</STRONG> (Thumb, 956 bytes, Stack size 72 bytes, app_main.o(.text.oled_show_mode_select))
-<BR><BR>[Stack]<UL><LI>Max Depth = 236<LI>Call Chain = oled_show_mode_select &rArr; OLED_ShowTenths &rArr; OLED_ShowChar &rArr; oled_cursor
+<BR><BR>[Stack]<UL><LI>Max Depth = 244<LI>Call Chain = oled_show_mode_select &rArr; OLED_ShowTenths &rArr; OLED_ShowChar &rArr; oled_cursor
 </UL>
 <BR>[Calls]<UL><LI><a href="#[b6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Control_GetLineError
-<LI><a href="#[b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LineSensor_IsOnline
+<LI><a href="#[b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Balance_GetOutput
+<LI><a href="#[b4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Balance_GetTarget
+<LI><a href="#[b3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LineSensor_IsOnline
 <LI><a href="#[75]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LineSensor_ReadRaw
-<LI><a href="#[b4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Balance_GetOutput
-<LI><a href="#[b3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Balance_GetTarget
 <LI><a href="#[b2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Balance_GetTargetAb
 <LI><a href="#[b1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Stepper_GetPosition
 <LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;StepperFeedback_GetSnapshot
@@ -1446,8 +1448,8 @@ Local Symbols
 <BR>[Called By]<UL><LI><a href="#[27]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[58]"></a>start_task</STRONG> (Thumb, 248 bytes, Stack size 8 bytes, competition_mode.o(.text.start_task))
-<BR><BR>[Stack]<UL><LI>Max Depth = 56<LI>Call Chain = start_task &rArr; BalanceTask_Start &rArr; Balance_SelectQ3Direction
+<P><STRONG><a name="[58]"></a>start_task</STRONG> (Thumb, 256 bytes, Stack size 8 bytes, competition_mode.o(.text.start_task))
+<BR><BR>[Stack]<UL><LI>Max Depth = 56<LI>Call Chain = start_task &rArr; Balance_Disable &rArr; Stepper_SetSpeed &rArr; DL_Timer_setCaptCompUpdateMethod
 </UL>
 <BR>[Calls]<UL><LI><a href="#[3b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;BalanceTask_Start
 <LI><a href="#[b9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Balance_SelectPidProfile
@@ -1466,7 +1468,7 @@ Local Symbols
 <BR>[Called By]<UL><LI><a href="#[56]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Competition_Update
 </UL>
 
-<P><STRONG><a name="[7c]"></a>oled_cursor</STRONG> (Thumb, 580 bytes, Stack size 28 bytes, oled_driver.o(.text.oled_cursor))
+<P><STRONG><a name="[7c]"></a>oled_cursor</STRONG> (Thumb, 592 bytes, Stack size 28 bytes, oled_driver.o(.text.oled_cursor))
 <BR><BR>[Stack]<UL><LI>Max Depth = 28<LI>Call Chain = oled_cursor
 </UL>
 <BR>[Called By]<UL><LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;OLED_ShowChar
