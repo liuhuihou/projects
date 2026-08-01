@@ -7,8 +7,10 @@
  * Competition mode state machine.
  *
  * BLS button:
- *   single-click = start the selected sub-question (or stop / clear result)
+ *   Q2 single-click = start the selected sub-question
+ *   Q3/Q4/Q5/Q6 long-press 1 s = level, then single-click = start
  *   double-click = switch to the next sub-question (only while idle)
+ *   running single-click = stop; done single-click = clear result
  *
  * RESET is the hardware reset pin and reboots the MCU.
  */
@@ -23,7 +25,9 @@ typedef enum {
 } CompetitionQuestion;
 
 typedef enum {
-    STATE_IDLE = 0,   /* Idle: single-click starts, double-click switches mode */
+    STATE_IDLE = 0,   /* Select mode; Q3-Q6 wait for a long press */
+    STATE_LEVELING,   /* Q3-Q6 moving the fixed startup pose to horizontal */
+    STATE_READY,      /* Tube horizontal and locked; short click starts */
     STATE_RUNNING,    /* Task executing */
     STATE_DONE        /* Task finished, showing the result */
 } CompetitionState;

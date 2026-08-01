@@ -69,6 +69,8 @@ static volatile float s_previous_line_error;
 static volatile int s_previous_heading_error;
 static volatile float s_last_line_correction;
 static volatile uint32_t s_control_ticks;
+static volatile uint32_t s_start_ramp_duration_ms;
+static volatile float s_start_ramp_scale;
 
 static const LineControlParams *get_line_params(void)
 {
@@ -152,11 +154,15 @@ void Control_Init(void)
     s_control_ticks = 0U;
     s_line_lost_ticks = 0U;
     s_curve_base_rpm = 0.0f;
+    s_start_ramp_duration_ms = 0U;
+    s_start_ramp_scale = 0.0f;
     Motor_Stop();
 }
 
 void Control_SetMode(ControlMode mode)
 {
+    const ControlMode previous_mode = s_mode;
+
     if (mode != s_mode) {
         s_left_integral = 0.0f;
         s_right_integral = 0.0f;
@@ -165,7 +171,12 @@ void Control_SetMode(ControlMode mode)
         s_last_line_correction = 0.0f;
     }
     s_mode = mode;
-    if (mode == CTRL_STOP) Motor_Brake();
+    if (mode == CTRL_STOP) {
+        s_start_ramp_scale = 0.0f;
+        Motor_Brake();
+    } else if (previous_mode == CTRL_STOP) {
+        s_start_ramp_scale = (s_start_ramp_duration_ms == 0U) ? 1.0f : 0.0f;
+    }
 }
 ControlMode Control_GetMode(void) { return s_mode; }
 void Control_SetLineProfile(ControlLineProfile profile)
@@ -187,6 +198,13 @@ void Control_SetLineProfile(ControlLineProfile profile)
 }
 ControlLineProfile Control_GetLineProfile(void) { return s_line_profile; }
 void Control_SetBaseSpeed(float rpm) { s_base_rpm = (rpm > 0.0f) ? rpm : 0.0f; }
+void Control_SetStartRamp(uint32_t duration_ms)
+{
+    __disable_irq();
+    s_start_ramp_duration_ms = duration_ms;
+    s_start_ramp_scale = (duration_ms == 0U) ? 1.0f : 0.0f;
+    __enable_irq();
+}
 float Control_GetLeftRpm(void) { return s_left_rpm; }
 float Control_GetRightRpm(void) { return s_right_rpm; }
 float Control_GetBaseSpeedRpm(void) { return s_base_rpm; }
@@ -267,8 +285,20 @@ void Control_Tick(void)
         s_left_speed_counts = 0;
         s_right_speed_counts = 0;
         s_speed_sample_ticks = 0U;
+        s_start_ramp_scale = 0.0f;
         Motor_Brake();
         return;
+    }
+
+    /* Apply the start ramp at the fixed 10 ms control cadence. The scale is
+     * later applied to complete left/right targets, including steering, so a
+     * line error cannot bypass the acceleration limit on one wheel. */
+    if (s_start_ramp_duration_ms == 0U) {
+        s_start_ramp_scale = 1.0f;
+    } else if (s_start_ramp_scale < 1.0f) {
+        s_start_ramp_scale += (float)CONTROL_PERIOD_MS /
+                              (float)s_start_ramp_duration_ms;
+        if (s_start_ramp_scale > 1.0f) s_start_ramp_scale = 1.0f;
     }
 
     if (s_mode == CTRL_STRAIGHT) {
@@ -332,6 +362,8 @@ void Control_Tick(void)
 
     target_left = (target_left > 0.0f) ? target_left : 0.0f;
     target_right = (target_right > 0.0f) ? target_right : 0.0f;
+    target_left *= s_start_ramp_scale;
+    target_right *= s_start_ramp_scale;
     s_left_target_rpm = target_left;
     s_right_target_rpm = target_right;
 

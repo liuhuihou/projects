@@ -21,6 +21,9 @@ ControlMode Control_GetMode(void);
 void Control_SetLineProfile(ControlLineProfile profile);
 ControlLineProfile Control_GetLineProfile(void);
 void Control_SetBaseSpeed(float rpm);
+/* Linearly ramp both wheel targets from zero to their requested values over
+ * duration_ms. A duration of zero preserves the original immediate start. */
+void Control_SetStartRamp(uint32_t duration_ms);
 float Control_GetLeftRpm(void);
 float Control_GetRightRpm(void);
 float Control_GetBaseSpeedRpm(void);

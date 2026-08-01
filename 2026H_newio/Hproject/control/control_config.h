@@ -71,7 +71,7 @@
 /* AB count at the measured horizontal position and the permanent mechanical
  * travel window. Positive STEP increases AB and raises the tube's positive
  * (front) end. */
-#define BALANCE_LEVEL_AB_COUNT          (270)
+#define BALANCE_LEVEL_AB_COUNT          (300)
 #define BALANCE_TRAVEL_AB_MIN           (50)
 #define BALANCE_TRAVEL_AB_MAX           (1050)
 

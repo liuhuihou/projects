@@ -7,7 +7,8 @@
 typedef enum {
     BTN_EVENT_NONE = 0,
     BTN_EVENT_SINGLE_CLICK,
-    BTN_EVENT_DOUBLE_CLICK
+    BTN_EVENT_DOUBLE_CLICK,
+    BTN_EVENT_LONG_PRESS
 } ButtonEvent;
 
 /* Button IDs
@@ -23,7 +24,8 @@ void Button_Init(void);
 /* Call every 10ms from control tick or main loop */
 void Button_Update(uint32_t now_ms);
 
-/* Poll for pending event (clears after read) */
+/* Poll for pending event (clears after read). A long press is reported once
+ * after one second and its release does not generate a single click. */
 ButtonEvent Button_GetEvent(ButtonId id);
 
 #endif

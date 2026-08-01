@@ -10,6 +10,22 @@
 #define APP_SPEED_Q4_CM_S          (25.0f)   /* A->B with balance (Q4: <=8s) */
 #define APP_SPEED_Q5_CM_S          (22.0f)   /* Full lap with balance (Q5: <=30s) */
 
+/* Smooth-start duration for ball-carrying modes. Q4 has the tightest time
+ * budget, so it reaches cruise speed sooner; Q5/Q6 can use a gentler ramp. */
+#define APP_START_RAMP_Q4_MS       (1000U)
+#define APP_START_RAMP_Q5_MS       (1500U)
+#define APP_START_RAMP_Q6_MS       (1500U)
+
+/* Q3/Q4/Q5/Q6 initial tube levelling. The mechanism always powers up at the
+ * same physical pose, where the incremental AB feedback is initialised to 0.
+ * A one-second BLS hold moves it slowly to the calibrated horizontal count;
+ * only a later short click starts the vehicle. */
+#define APP_LEVEL_SPEED_STEPS_S    (300)
+#define APP_LEVEL_TOLERANCE_AB     (3)
+#define APP_LEVEL_STABLE_MS        (300U)
+#define APP_LEVEL_TIMEOUT_MS       (8000U)
+#define APP_LEVEL_START_AB_MIN     (0)
+
 /* ============ Stop Line Detection ============ */
 /* Eight probes are numbered 1..8 from left to right after the driver
  * normalises the sensor byte. Accept the centred 3456 pattern or either

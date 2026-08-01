@@ -6,7 +6,6 @@
 
 #include "ti_msp_dl_config.h"
 #include "board_hardware.h"
-#include "app_config.h"
 #include "control_config.h"
 
 /* Drivers */
@@ -35,16 +34,12 @@ static uint32_t app_time_ms(void)
     return Control_GetTickCount() * CONTROL_PERIOD_MS;
 }
 
-static int32_t rpm_to_cm_s_x10(float rpm)
-{
-    float value = rpm * APP_WHEEL_CIRCUMFERENCE_CM * 10.0f / 60.0f;
-    return (int32_t)((value >= 0.0f) ? (value + 0.5f) : (value - 0.5f));
-}
-
 static const char *state_str(CompetitionState st)
 {
     switch (st) {
         case STATE_IDLE:    return "IDLE  ";
+        case STATE_LEVELING:return "LEVEL ";
+        case STATE_READY:   return "READY ";
         case STATE_RUNNING: return "RUN   ";
         case STATE_DONE:    return "DONE  ";
         default:            return "???   ";
@@ -65,21 +60,8 @@ static void oled_show_mode_select(void)
     OLED_ShowTenths(5, 0, (int32_t)(display_elapsed / 100U), 3);
     OLED_ShowString(10, 0, "S          ");
 
-    /* K230 protocol diagnostics, kept on the otherwise unused row 1:
-     * H = AA55 headers, F = CRC-valid ball frames, E = CRC failures,
-     * G = sequence gaps. In a clean link H and F advance together while
-     * E/G stay at zero. */
-    {
-        const CameraStats *stats = Camera_GetStats();
-        OLED_ShowString(0, 1, "H:");
-        OLED_ShowNum(2, 1, stats->headers % 1000U, 3);
-        OLED_ShowString(5, 1, " F:");
-        OLED_ShowNum(8, 1, stats->rx_frames % 1000U, 3);
-        OLED_ShowString(11, 1, " E:");
-        OLED_ShowNum(14, 1, stats->crc_errors % 100U, 2);
-        OLED_ShowString(16, 1, " G:");
-        OLED_ShowNum(19, 1, stats->seq_gaps % 100U, 2);
-    }
+    /* Protocol counters are no longer part of the competition display. */
+    OLED_ShowString(0, 1, "                     ");
 
     /* Row 2: selected sub-question */
     switch (mode) {
@@ -124,7 +106,10 @@ static void oled_show_mode_select(void)
         }
     }
 
-    if (mode == COMP_Q3) {
+    /* Rows 4/5 are reserved for the balance mechanism in every camera-ball
+     * mode.  Wheel-speed telemetry was removed because no competition mode
+     * uses it for setup or judging. */
+    if (mode != COMP_Q2) {
         StepperFeedbackSnapshot feedback;
         StepperFeedback_GetSnapshot(&feedback);
         OLED_ShowString(0, 4, "STEP:");
@@ -136,20 +121,17 @@ static void oled_show_mode_select(void)
         OLED_ShowSignedInt(12, 5, (int)Balance_GetTargetAb(), 5);
         OLED_ShowString(18, 5, "   ");
     } else {
-        /* Rows 4/5: measured vs target wheel speed in cm/s. */
-        OLED_ShowString(0, 4, "L:");
-        OLED_ShowTenths(2, 4, rpm_to_cm_s_x10(Control_GetLeftRpm()), 2);
-        OLED_ShowString(8, 4, "T:");
-        OLED_ShowTenths(10, 4, rpm_to_cm_s_x10(Control_GetLeftTargetRpm()), 2);
-
-        OLED_ShowString(0, 5, "R:");
-        OLED_ShowTenths(2, 5, rpm_to_cm_s_x10(Control_GetRightRpm()), 2);
-        OLED_ShowString(8, 5, "T:");
-        OLED_ShowTenths(10, 5, rpm_to_cm_s_x10(Control_GetRightTargetRpm()), 2);
+        OLED_ShowString(0, 4, "                     ");
+        OLED_ShowString(0, 5, "                     ");
     }
 
-    /* Q3 uses the lower rows for visual-loop telemetry. */
-    if (mode == COMP_Q3) {
+    /* Levelling prompts take priority over Q3's normal visual telemetry. */
+    if (state == STATE_LEVELING) {
+        OLED_ShowString(0, 6, "LEVELING SHORT:STOP  ");
+    } else if (state == STATE_READY) {
+        OLED_ShowString(0, 6, "READY 1CLK:RUN       ");
+    } else if (mode == COMP_Q3 &&
+               (state == STATE_RUNNING || state == STATE_DONE)) {
         const CameraData *cam = Camera_GetData();
         OLED_ShowString(0, 6, "P:");
         OLED_ShowSignedInt(2, 6, (int)cam->ball_pos_mm, 4);
@@ -160,6 +142,9 @@ static void oled_show_mode_select(void)
         OLED_ShowString(0, 6, "T:");
         OLED_ShowTenths(2, 6, (int32_t)(elapsed / 100), 3);
         OLED_ShowString(8, 6, "S      ");
+    } else if (mode == COMP_Q3 || mode == COMP_Q4 ||
+               mode == COMP_Q5 || mode == COMP_Q6) {
+        OLED_ShowString(0, 6, "HOLD1S:LEVEL 2CLK:SW ");
     } else {
         OLED_ShowString(0, 6, "1CLK:RUN 2CLK:SW");
     }

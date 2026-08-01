@@ -14,6 +14,7 @@
  */
 #define DEBOUNCE_MS         (30U)
 #define MULTI_CLICK_MS      (300U)
+#define LONG_PRESS_MS       (1000U)
 
 typedef struct {
     uint8_t  stable;            /* Debounced level: 1 = pressed */
@@ -22,6 +23,8 @@ typedef struct {
     uint8_t  click_count;       /* Completed clicks in the current window */
     uint32_t window_start;      /* Timestamp of the last completed click */
     uint8_t  window_open;       /* A multi-click window is in progress */
+    uint32_t press_start;       /* Debounced press start time */
+    uint8_t  long_reported;     /* Long event emitted for this hold */
     ButtonEvent pending_event;
 } ButtonState;
 
@@ -46,6 +49,8 @@ void Button_Init(void)
         b->click_count = 0U;
         b->window_start = 0U;
         b->window_open = 0U;
+        b->press_start = 0U;
+        b->long_reported = 0U;
         b->pending_event = BTN_EVENT_NONE;
     }
 }
@@ -67,14 +72,35 @@ void Button_Update(uint32_t now_ms)
 
             b->stable = raw;
 
+            if (was_pressed == 0U && raw != 0U) {
+                b->press_start = now_ms;
+                b->long_reported = 0U;
+            }
+
             /* Release completes a click. */
             if (was_pressed != 0U && raw == 0U) {
-                if (b->click_count < 255U) {
-                    b->click_count++;
+                /* A reported long press is a complete, mutually-exclusive
+                 * gesture.  Its release must not become a later single click
+                 * that could start the vehicle accidentally. */
+                if (b->long_reported == 0U) {
+                    if (b->click_count < 255U) {
+                        b->click_count++;
+                    }
+                    b->window_start = now_ms;
+                    b->window_open = 1U;
                 }
-                b->window_start = now_ms;
-                b->window_open = 1U;
             }
+        }
+
+        /* Report once as soon as the debounced hold reaches one second.
+         * Discard any unfinished click sequence so long, single and double
+         * gestures remain mutually exclusive. */
+        if (b->stable != 0U && b->long_reported == 0U &&
+            (uint32_t)(now_ms - b->press_start) >= LONG_PRESS_MS) {
+            b->pending_event = BTN_EVENT_LONG_PRESS;
+            b->long_reported = 1U;
+            b->click_count = 0U;
+            b->window_open = 0U;
         }
 
         /* --- Resolve the multi-click window --- */
