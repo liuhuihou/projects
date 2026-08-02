@@ -16,6 +16,12 @@
 #define APP_START_RAMP_Q5_MS       (2000U)
 #define APP_START_RAMP_Q6_MS       (2000U)
 
+/* Q4-Q6 linearly reduce both wheel targets before the final short brake.
+ * Keep these independent because their time budgets and ball targets differ. */
+#define APP_STOP_RAMP_Q4_MS        (2000U)
+#define APP_STOP_RAMP_Q5_MS        (2000U)
+#define APP_STOP_RAMP_Q6_MS        (2000U)
+
 /* Q3/Q4/Q5/Q6 initial tube levelling. The mechanism always powers up at the
  * same physical pose, where the incremental AB feedback is initialised to 0.
  * A one-second BLS hold moves it slowly to the calibrated horizontal count;
@@ -49,9 +55,10 @@
 #define APP_STOP_ODOMETRY_ARM_CM         \
     (APP_TRACK_LAP_LENGTH_CM * APP_STOP_ODOMETRY_ARM_RATIO)
 
-/* Q4/Q5/Q6 use odometry as the actual stop trigger. Q4 stops after the
- * requested 1.6 m. Q5/Q6 deliberately run 110% of the nominal lap so the
- * vehicle has passed A before braking even with moderate under-counting. */
+/* Q4/Q5/Q6 use odometry as their desired final stopped distance. The line
+ * task automatically starts each soft-stop ramp early by its predicted travel
+ * during deceleration. Q4 stops at 1.8 m; Q5/Q6 deliberately run 110% of the
+ * nominal lap. */
 #define APP_STOP_Q4_DISTANCE_CM           (180.0f)
 #define APP_STOP_Q5_Q6_DISTANCE_RATIO     (1.10f)
 #define APP_STOP_Q5_Q6_DISTANCE_CM        \

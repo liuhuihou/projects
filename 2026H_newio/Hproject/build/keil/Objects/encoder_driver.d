@@ -1,19 +1,10 @@
 ../build/keil/objects/encoder_driver.o: ..\drivers\encoder_driver.c \
-  ..\drivers\encoder_driver.h \
-  E:\MDK_ARM\Keil_v5\ARM\ARMCLANG\include\stdint.h \
-  ..\board\board_hardware.h ..\ti_msp_dl_config.h \
-  ..\generated\ti_msp_dl_config.h \
+  ..\drivers\encoder_driver.h ..\board\board_hardware.h \
+  ..\ti_msp_dl_config.h ..\generated\ti_msp_dl_config.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\devices\msp\msp.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\devices\DeviceFamily.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\devices\msp\m0p\mspm0g350x.h \
-  E:\MDK_ARM\Keil_v5\ARM\ARMCLANG\include\stdbool.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\third_party\CMSIS\Core\Include\core_cm0plus.h \
-  E:\ti\mspm0_sdk_2_01_00_03\source\third_party\CMSIS\Core\Include\cmsis_version.h \
-  E:\ti\mspm0_sdk_2_01_00_03\source\third_party\CMSIS\Core\Include\cmsis_compiler.h \
-  E:\ti\mspm0_sdk_2_01_00_03\source\third_party\CMSIS\Core\Include\cmsis_armclang.h \
-  E:\MDK_ARM\Keil_v5\ARM\ARMCLANG\include\arm_compat.h \
-  E:\MDK_ARM\Keil_v5\ARM\ARMCLANG\include\arm_acle.h \
-  E:\ti\mspm0_sdk_2_01_00_03\source\third_party\CMSIS\Core\Include\mpu_armv7.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\devices\msp\peripherals\hw_adc12.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\devices\msp\peripherals\hw_aes.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\devices\msp\peripherals\hw_comp.h \
@@ -42,12 +33,10 @@
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\devices\msp\peripherals\m0p\sysctl\hw_sysctl_mspm0g1x0x_g3x0x.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\driverlib.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\dl_adc12.h \
-  E:\MDK_ARM\Keil_v5\ARM\ARMCLANG\include\math.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\dl_common.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\m0p\dl_factoryregion.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\m0p\dl_core.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\dl_aes.h \
-  E:\MDK_ARM\Keil_v5\ARM\ARMCLANG\include\stddef.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\dl_aesadv.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\dl_comp.h \
   E:\ti\mspm0_sdk_2_01_00_03\source\ti\driverlib\dl_crc.h \

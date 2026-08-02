@@ -63,6 +63,15 @@
 #define LINE_Q5_Q6_RIGHT_DECEL_STEP_RPM     (10.0f)
 #define LINE_Q5_Q6_INTEGRATE_STEER_MAX      (5.0f)
 
+/* Q5/Q6 curve-exit wheel-speed synchronisation. A large steering command
+ * arms the detector; returning near straight starts a short measured-RPM
+ * matching window. Q2/Q4 leave this feature disabled. */
+#define LINE_Q5_Q6_EXIT_SYNC_ENTER_RPM       (8.0f)
+#define LINE_Q5_Q6_EXIT_SYNC_RELEASE_RPM     (3.0f)
+#define LINE_Q5_Q6_EXIT_SYNC_KP              (0.35f)
+#define LINE_Q5_Q6_EXIT_SYNC_LIMIT_RPM       (6.0f)
+#define LINE_Q5_Q6_EXIT_SYNC_DURATION_MS     (300U)
+
 /* ============ Straight Heading Correction ============ */
 #define STRAIGHT_KP             (0.20f)
 #define STRAIGHT_KD             (0.70f)
@@ -116,6 +125,9 @@
 #define BALANCE_Q4_START_FF_AB           (30.0f)
 #define BALANCE_Q4_START_FF_LIMIT_AB     (80.0f)
 #define BALANCE_Q4_FF_SLEW_AB            (15.0f)
+#define BALANCE_Q4_STOP_FF_AB            (0.0f)
+#define BALANCE_Q4_STOP_FF_LIMIT_AB      (80.0f)
+#define BALANCE_Q4_STOP_FF_SLEW_AB       (3.0f)
 
 #define BALANCE_Q5_POSITION_KP          (1.80f)
 #define BALANCE_Q5_POSITION_KI          (0.80f)
@@ -130,10 +142,16 @@
 #define BALANCE_Q5_START_FF_AB          (34.0f)
 #define BALANCE_Q5_START_FF_LIMIT_AB    (80.0f)
 #define BALANCE_Q5_FF_SLEW_AB           (12.0f)
+#define BALANCE_Q5_STOP_FF_AB           (-34.0f)
+#define BALANCE_Q5_STOP_FF_LIMIT_AB     (80.0f)
+#define BALANCE_Q5_STOP_FF_SLEW_AB      (3.0f)
 
 #define BALANCE_Q6_START_FF_AB          (6.0f)
 #define BALANCE_Q6_START_FF_LIMIT_AB    (40.0f)
 #define BALANCE_Q6_FF_SLEW_AB           (2.0f)
+#define BALANCE_Q6_STOP_FF_AB           (-6.0f)
+#define BALANCE_Q6_STOP_FF_LIMIT_AB     (40.0f)
+#define BALANCE_Q6_STOP_FF_SLEW_AB      (1.0f)
 
 /* Q6 static equilibrium map measured on the curved tube. Integer-centimetre
  * measurements are expanded to 0.5 cm steps. Q6 selects the nearest step for

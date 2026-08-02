@@ -8,7 +8,8 @@ typedef enum {
     LF_IDLE = 0,
     LF_STARTING,       /* Initial phase, ignore stop line */
     LF_CRUISING,       /* Normal line following */
-    LF_STOPPING,       /* Deceleration before stop */
+    LF_DECELERATING,   /* Linear wheel-target ramp to zero */
+    LF_BRAKING,        /* Final short brake and rebound settling */
     LF_COMPLETE
 } LfState;
 
@@ -18,6 +19,7 @@ static uint8_t s_stop_vote_history;
 static uint32_t s_last_update_ms;
 static uint32_t s_brake_start_ms;
 static uint32_t s_last_line_sample_sequence;
+static uint32_t s_stop_ramp_duration_ms;
 
 #if (LINE_SENSOR_COUNT != 8U)
 #error "Stop-line masks are defined for the current eight-channel sensor"
@@ -80,6 +82,16 @@ static float get_odometry_stop_distance_cm(LineFollowMode mode)
     return 0.0f;
 }
 
+static float get_stop_ramp_distance_cm(void)
+{
+    const float speed_cm_s = Control_GetBaseSpeedRpm() *
+                             APP_WHEEL_CIRCUMFERENCE_CM / 60.0f;
+    /* A linear speed ramp covers half the distance of constant-speed travel
+     * over the same interval. Trigger this far early so the final stopped
+     * position remains at the configured odometry target. */
+    return speed_cm_s * (float)s_stop_ramp_duration_ms / 2000.0f;
+}
+
 static void reset_stop_line_detector(void)
 {
     s_stop_vote_history = 0U;
@@ -87,11 +99,15 @@ static void reset_stop_line_detector(void)
 
 static void start_braking(uint32_t now_ms)
 {
-    /* Control_SetMode applies the explicit short brake immediately, in the
-     * same update that recognizes the stop line. */
-    Control_SetMode(CTRL_STOP);
-    s_brake_start_ms = now_ms;
-    s_lf_state = LF_STOPPING;
+    if (s_stop_ramp_duration_ms != 0U) {
+        Control_StartStopRamp(s_stop_ramp_duration_ms);
+        s_lf_state = LF_DECELERATING;
+    } else {
+        /* Q2 retains its proven immediate short-brake behaviour. */
+        Control_SetMode(CTRL_STOP);
+        s_brake_start_ms = now_ms;
+        s_lf_state = LF_BRAKING;
+    }
 }
 
 void LineFollow_Init(void)
@@ -102,6 +118,13 @@ void LineFollow_Init(void)
     s_last_update_ms = 0U;
     s_brake_start_ms = 0U;
     s_last_line_sample_sequence = 0U;
+    s_stop_ramp_duration_ms = 0U;
+}
+
+
+void LineFollow_SetStopRamp(uint32_t duration_ms)
+{
+    s_stop_ramp_duration_ms = duration_ms;
 }
 
 void LineFollow_Start(LineFollowMode mode)
@@ -124,6 +147,15 @@ uint8_t LineFollow_IsComplete(void)
 {
     return (s_lf_state == LF_COMPLETE) ? 1U : 0U;
 }
+
+
+void LineFollow_RequestStop(uint32_t now_ms)
+{
+    if (s_lf_state == LF_STARTING || s_lf_state == LF_CRUISING) {
+        start_braking(now_ms);
+    }
+}
+
 void LineFollow_Update(uint32_t now_ms)
 {
     if (s_lf_state == LF_IDLE || s_lf_state == LF_COMPLETE) return;
@@ -181,15 +213,29 @@ void LineFollow_Update(uint32_t now_ms)
             } else {
                 const float stop_distance_cm =
                     get_odometry_stop_distance_cm(s_mode);
+                float trigger_distance_cm = stop_distance_cm -
+                                            get_stop_ramp_distance_cm();
+
+                if (trigger_distance_cm < 0.0f) {
+                    trigger_distance_cm = 0.0f;
+                }
 
                 if (stop_distance_cm > 0.0f &&
-                    get_average_wheel_distance_cm() >= stop_distance_cm) {
+                    get_average_wheel_distance_cm() >= trigger_distance_cm) {
                     start_braking(now_ms);
                 }
             }
             break;
 
-        case LF_STOPPING:
+        case LF_DECELERATING:
+            if (Control_GetStopRampScale() <= 0.0f) {
+                Control_SetMode(CTRL_STOP);
+                s_brake_start_ms = now_ms;
+                s_lf_state = LF_BRAKING;
+            }
+            break;
+
+        case LF_BRAKING:
             /* Keep both bridges in short-brake long enough for wheel motion
              * and chassis rebound to settle before reporting completion. */
             if ((uint32_t)(now_ms - s_brake_start_ms) >=

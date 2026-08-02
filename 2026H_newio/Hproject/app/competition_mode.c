@@ -183,8 +183,10 @@ static void start_task(uint32_t now_ms)
             /* Pure line follow, fast lap */
             speed_rpm = mode_speed_cm_s(COMP_Q2) * 60.0f / APP_WHEEL_CIRCUMFERENCE_CM;
             Control_SetLineProfile(CTRL_LINE_PROFILE_Q2_Q4);
+            Control_SetCurveExitSyncEnabled(0U);
             Control_SetBaseSpeed(speed_rpm);
             Control_SetStartRamp(0U);
+            LineFollow_SetStopRamp(0U);
             Control_SetMode(CTRL_LINE);
             LineFollow_Start(LFMODE_FULL_LAP);
             break;
@@ -205,11 +207,13 @@ static void start_task(uint32_t now_ms)
             break;
 
         case COMP_Q4:
-            /* Line A->B with balance; odometry stop at 1.6 m */
+            /* Q4 line run with balance; final stopped distance is 1.80 m. */
             speed_rpm = mode_speed_cm_s(COMP_Q4) * 60.0f / APP_WHEEL_CIRCUMFERENCE_CM;
             Control_SetLineProfile(CTRL_LINE_PROFILE_Q2_Q4);
+            Control_SetCurveExitSyncEnabled(0U);
             Control_SetBaseSpeed(speed_rpm);
             Control_SetStartRamp(APP_START_RAMP_Q4_MS);
+            LineFollow_SetStopRamp(APP_STOP_RAMP_Q4_MS);
             LineFollow_Start(LFMODE_Q4_DISTANCE_STOP);
             Balance_SelectPidProfile(BALANCE_PID_PROFILE_Q4);
             BalanceTask_Start(BTASK_HOLD_CENTER);
@@ -220,8 +224,10 @@ static void start_task(uint32_t now_ms)
             /* Full lap + ball center; odometry stop at 110% lap */
             speed_rpm = mode_speed_cm_s(COMP_Q5) * 60.0f / APP_WHEEL_CIRCUMFERENCE_CM;
             Control_SetLineProfile(CTRL_LINE_PROFILE_Q5_Q6);
+            Control_SetCurveExitSyncEnabled(1U);
             Control_SetBaseSpeed(speed_rpm);
             Control_SetStartRamp(APP_START_RAMP_Q5_MS);
+            LineFollow_SetStopRamp(APP_STOP_RAMP_Q5_MS);
             LineFollow_Start(LFMODE_Q5_Q6_DISTANCE_STOP);
             Balance_SelectPidProfile(BALANCE_PID_PROFILE_Q5);
             BalanceTask_Start(BTASK_HOLD_CENTER);
@@ -233,8 +239,10 @@ static void start_task(uint32_t now_ms)
              * 110% odometry stop. */
             speed_rpm = mode_speed_cm_s(COMP_Q6) * 60.0f / APP_WHEEL_CIRCUMFERENCE_CM;
             Control_SetLineProfile(CTRL_LINE_PROFILE_Q5_Q6);
+            Control_SetCurveExitSyncEnabled(1U);
             Control_SetBaseSpeed(speed_rpm);
             Control_SetStartRamp(APP_START_RAMP_Q6_MS);
+            LineFollow_SetStopRamp(APP_STOP_RAMP_Q6_MS);
             LineFollow_Start(LFMODE_Q5_Q6_DISTANCE_STOP);
             Balance_SelectPidProfile(BALANCE_PID_PROFILE_Q6);
             BalanceTask_Start(BTASK_HOLD_POSITION);
@@ -251,6 +259,15 @@ static void stop_task(void)
     Control_SetMode(CTRL_STOP);
     Balance_Disable();
     reset_q6_ball_capture();
+    s_state = STATE_DONE;
+}
+
+static void finish_vehicle_task_with_balance(void)
+{
+    /* The wheel controller has already completed its ramp and short brake.
+     * Keep BalanceTask and the stepper driver enabled in DONE so the ball is
+     * still actively corrected after the chassis has stopped. */
+    Control_SetMode(CTRL_STOP);
     s_state = STATE_DONE;
 }
 
@@ -316,7 +333,13 @@ static void update_q6_ready(uint32_t now_ms, ButtonEvent ev)
 }
 void Competition_ForceStop(void)
 {
-    stop_task();
+    Control_SetMode(CTRL_STOP);
+    if ((s_mode == COMP_Q4 || s_mode == COMP_Q5 || s_mode == COMP_Q6) &&
+        Balance_IsEnabled() != 0U) {
+        finish_vehicle_task_with_balance();
+    } else {
+        stop_task();
+    }
 }
 
 void Competition_Update(uint32_t now_ms)
@@ -371,20 +394,37 @@ void Competition_Update(uint32_t now_ms)
             }
 
             if (s_mode != COMP_Q3 && LineFollow_IsComplete()) {
-                stop_task();
+                if (s_mode == COMP_Q4 || s_mode == COMP_Q5 ||
+                    s_mode == COMP_Q6) {
+                    finish_vehicle_task_with_balance();
+                } else {
+                    stop_task();
+                }
             } else if (ev == BTN_EVENT_SINGLE_CLICK) {
-                /* Manual stop */
-                stop_task();
+                /* Q4-Q6 manual stops use the same controlled deceleration as
+                 * their automatic endpoint. Q2/Q3 retain an immediate stop. */
+                if (s_mode == COMP_Q4 || s_mode == COMP_Q5 ||
+                    s_mode == COMP_Q6) {
+                    LineFollow_RequestStop(now_ms);
+                } else {
+                    stop_task();
+                }
             }
             break;
 
         case STATE_DONE:
-            if (s_mode == COMP_Q3) {
+            if ((s_mode == COMP_Q3 || s_mode == COMP_Q4 ||
+                 s_mode == COMP_Q5 || s_mode == COMP_Q6) &&
+                Balance_IsEnabled() != 0U) {
                 BalanceTask_Update(now_ms);
             }
             /* Clear the result and return to idle. */
             if (ev == BTN_EVENT_SINGLE_CLICK) {
-                if (s_mode == COMP_Q3) Balance_Disable();
+                if (s_mode == COMP_Q3 || s_mode == COMP_Q4 ||
+                    s_mode == COMP_Q5 || s_mode == COMP_Q6) {
+                    Balance_Disable();
+                }
+                reset_q6_ball_capture();
                 s_state = STATE_IDLE;
             }
             break;

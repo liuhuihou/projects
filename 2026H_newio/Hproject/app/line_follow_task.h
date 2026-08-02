@@ -11,7 +11,9 @@ typedef enum {
 } LineFollowMode;
 
 void LineFollow_Init(void);
+void LineFollow_SetStopRamp(uint32_t duration_ms);
 void LineFollow_Start(LineFollowMode mode);
+void LineFollow_RequestStop(uint32_t now_ms);
 void LineFollow_Update(uint32_t now_ms);
 uint8_t LineFollow_IsComplete(void);
 

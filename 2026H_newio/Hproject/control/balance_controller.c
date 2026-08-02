@@ -482,33 +482,62 @@ void Balance_Tick(uint32_t now_ms)
         s_tracking = 1;
     }
 
-    /* Q4-Q6 launch feed-forward. Their linear vehicle ramps have known
-     * positive longitudinal acceleration, so act before the camera sees the
-     * ball move. Q4, Q5 and Q6 each have independent tuning parameters.
-     * Slewing both edges avoids an abrupt beam-target step at ramp boundaries. */
+    /* Q4-Q6 vehicle-acceleration feed-forward. Launch and braking accelerate
+     * the chassis in opposite directions, so each profile has independent
+     * start and stop commands. PID remains active throughout; feed-forward
+     * only acts before the delayed camera position shows the disturbance. */
     {
         float requested_ff = 0.0f;
         float ff_limit = BALANCE_Q4_START_FF_LIMIT_AB;
         float ff_slew = BALANCE_Q4_FF_SLEW_AB;
+        const uint8_t stop_ramp_active = Control_IsStopRampActive();
+        const uint8_t stop_or_hold =
+            (stop_ramp_active != 0U || Control_GetMode() == CTRL_STOP) ?
+            1U : 0U;
         const uint8_t ramp_active =
             (Control_GetMode() != CTRL_STOP &&
              Control_GetStartRampScale() < 1.0f) ? 1U : 0U;
 
         if (s_pid_profile == BALANCE_PID_PROFILE_Q5) {
-            ff_limit = BALANCE_Q5_START_FF_LIMIT_AB;
-            ff_slew = BALANCE_Q5_FF_SLEW_AB;
-            if (ramp_active != 0U) {
+            if (stop_or_hold != 0U) {
+                ff_limit = BALANCE_Q5_STOP_FF_LIMIT_AB;
+                ff_slew = BALANCE_Q5_STOP_FF_SLEW_AB;
+                if (stop_ramp_active != 0U) {
+                    requested_ff = BALANCE_Q5_STOP_FF_AB;
+                }
+            } else if (ramp_active != 0U) {
+                ff_limit = BALANCE_Q5_START_FF_LIMIT_AB;
+                ff_slew = BALANCE_Q5_FF_SLEW_AB;
                 requested_ff = BALANCE_Q5_START_FF_AB;
+            } else {
+                ff_limit = BALANCE_Q5_START_FF_LIMIT_AB;
+                ff_slew = BALANCE_Q5_FF_SLEW_AB;
             }
         } else if (s_pid_profile == BALANCE_PID_PROFILE_Q6) {
-            ff_limit = BALANCE_Q6_START_FF_LIMIT_AB;
-            ff_slew = BALANCE_Q6_FF_SLEW_AB;
-            if (ramp_active != 0U) {
+            if (stop_or_hold != 0U) {
+                ff_limit = BALANCE_Q6_STOP_FF_LIMIT_AB;
+                ff_slew = BALANCE_Q6_STOP_FF_SLEW_AB;
+                if (stop_ramp_active != 0U) {
+                    requested_ff = BALANCE_Q6_STOP_FF_AB;
+                }
+            } else if (ramp_active != 0U) {
+                ff_limit = BALANCE_Q6_START_FF_LIMIT_AB;
+                ff_slew = BALANCE_Q6_FF_SLEW_AB;
                 requested_ff = BALANCE_Q6_START_FF_AB;
+            } else {
+                ff_limit = BALANCE_Q6_START_FF_LIMIT_AB;
+                ff_slew = BALANCE_Q6_FF_SLEW_AB;
             }
-        } else if (s_pid_profile == BALANCE_PID_PROFILE_Q4 &&
-                   ramp_active != 0U) {
-            requested_ff = BALANCE_Q4_START_FF_AB;
+        } else if (s_pid_profile == BALANCE_PID_PROFILE_Q4) {
+            if (stop_or_hold != 0U) {
+                ff_limit = BALANCE_Q4_STOP_FF_LIMIT_AB;
+                ff_slew = BALANCE_Q4_STOP_FF_SLEW_AB;
+                if (stop_ramp_active != 0U) {
+                    requested_ff = BALANCE_Q4_STOP_FF_AB;
+                }
+            } else if (ramp_active != 0U) {
+                requested_ff = BALANCE_Q4_START_FF_AB;
+            }
         }
         if (requested_ff > ff_limit) {
             requested_ff = ff_limit;

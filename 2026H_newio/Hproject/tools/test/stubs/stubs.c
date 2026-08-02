@@ -66,3 +66,6 @@ void StepperFeedback_GetSnapshot(StepperFeedbackSnapshot *snapshot)
 
 ControlMode Control_GetMode(void) { return CTRL_STOP; }
 float Control_GetStartRampScale(void) { return 1.0f; }
+void Control_StartStopRamp(uint32_t duration_ms) { (void)duration_ms; }
+uint8_t Control_IsStopRampActive(void) { return 0U; }
+float Control_GetStopRampScale(void) { return 1.0f; }

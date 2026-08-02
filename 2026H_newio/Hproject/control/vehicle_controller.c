@@ -71,6 +71,16 @@ static volatile float s_last_line_correction;
 static volatile uint32_t s_control_ticks;
 static volatile uint32_t s_start_ramp_duration_ms;
 static volatile float s_start_ramp_scale;
+static volatile uint32_t s_stop_ramp_duration_ms;
+static volatile float s_stop_ramp_scale;
+static volatile uint8_t s_stop_ramp_active;
+static volatile uint8_t s_curve_exit_sync_enabled;
+static volatile uint8_t s_curve_exit_armed;
+static volatile uint16_t s_curve_exit_sync_ticks;
+
+#define Q5_Q6_EXIT_SYNC_TICKS \
+    ((LINE_Q5_Q6_EXIT_SYNC_DURATION_MS + CONTROL_PERIOD_MS - 1U) / \
+     CONTROL_PERIOD_MS)
 
 static const LineControlParams *get_line_params(void)
 {
@@ -156,6 +166,12 @@ void Control_Init(void)
     s_curve_base_rpm = 0.0f;
     s_start_ramp_duration_ms = 0U;
     s_start_ramp_scale = 0.0f;
+    s_stop_ramp_duration_ms = 0U;
+    s_stop_ramp_scale = 1.0f;
+    s_stop_ramp_active = 0U;
+    s_curve_exit_sync_enabled = 0U;
+    s_curve_exit_armed = 0U;
+    s_curve_exit_sync_ticks = 0U;
     Motor_Stop();
 }
 
@@ -173,9 +189,13 @@ void Control_SetMode(ControlMode mode)
     s_mode = mode;
     if (mode == CTRL_STOP) {
         s_start_ramp_scale = 0.0f;
+        s_stop_ramp_scale = 0.0f;
+        s_stop_ramp_active = 0U;
         Motor_Brake();
     } else if (previous_mode == CTRL_STOP) {
         s_start_ramp_scale = (s_start_ramp_duration_ms == 0U) ? 1.0f : 0.0f;
+        s_stop_ramp_scale = 1.0f;
+        s_stop_ramp_active = 0U;
     }
 }
 ControlMode Control_GetMode(void) { return s_mode; }
@@ -191,12 +211,22 @@ void Control_SetLineProfile(ControlLineProfile profile)
         s_right_integral = 0.0f;
         s_previous_line_error = 0.0f;
         s_last_line_correction = 0.0f;
+        s_curve_exit_armed = 0U;
+        s_curve_exit_sync_ticks = 0U;
         s_line_lost_ticks = 0U;
     }
     s_line_profile = profile;
     __enable_irq();
 }
 ControlLineProfile Control_GetLineProfile(void) { return s_line_profile; }
+void Control_SetCurveExitSyncEnabled(uint8_t enabled)
+{
+    __disable_irq();
+    s_curve_exit_sync_enabled = (enabled != 0U) ? 1U : 0U;
+    s_curve_exit_armed = 0U;
+    s_curve_exit_sync_ticks = 0U;
+    __enable_irq();
+}
 void Control_SetBaseSpeed(float rpm) { s_base_rpm = (rpm > 0.0f) ? rpm : 0.0f; }
 void Control_SetStartRamp(uint32_t duration_ms)
 {
@@ -206,6 +236,21 @@ void Control_SetStartRamp(uint32_t duration_ms)
     __enable_irq();
 }
 float Control_GetStartRampScale(void) { return s_start_ramp_scale; }
+void Control_StartStopRamp(uint32_t duration_ms)
+{
+    __disable_irq();
+    s_stop_ramp_duration_ms = duration_ms;
+    s_stop_ramp_scale = (duration_ms == 0U) ? 0.0f : 1.0f;
+    s_stop_ramp_active = 1U;
+    /* Stored positive duty from cruise would oppose the requested slowdown.
+     * Restart both PI integrators from zero and let speed feedback follow the
+     * descending targets without a windup tail. */
+    s_left_integral = 0.0f;
+    s_right_integral = 0.0f;
+    __enable_irq();
+}
+uint8_t Control_IsStopRampActive(void) { return s_stop_ramp_active; }
+float Control_GetStopRampScale(void) { return s_stop_ramp_scale; }
 float Control_GetLeftRpm(void) { return s_left_rpm; }
 float Control_GetRightRpm(void) { return s_right_rpm; }
 float Control_GetBaseSpeedRpm(void) { return s_base_rpm; }
@@ -302,6 +347,16 @@ void Control_Tick(void)
         if (s_start_ramp_scale > 1.0f) s_start_ramp_scale = 1.0f;
     }
 
+    if (s_stop_ramp_active != 0U && s_stop_ramp_scale > 0.0f) {
+        if (s_stop_ramp_duration_ms == 0U) {
+            s_stop_ramp_scale = 0.0f;
+        } else {
+            s_stop_ramp_scale -= (float)CONTROL_PERIOD_MS /
+                                 (float)s_stop_ramp_duration_ms;
+            if (s_stop_ramp_scale < 0.0f) s_stop_ramp_scale = 0.0f;
+        }
+    }
+
     if (s_mode == CTRL_STRAIGHT) {
         const int heading_error = (int)(s_left_distance - s_right_distance);
         correction = STRAIGHT_KP * (float)heading_error
@@ -359,12 +414,48 @@ void Control_Tick(void)
         target_right = limit_target_decrease(s_right_target_rpm,
                                              target_right,
                                              line_params->right_decel_step_rpm);
+
+        /* Q5/Q6 curve-exit recovery. The line controller decides the path;
+         * this short secondary term removes residual wheel-speed mismatch once
+         * steering has returned near zero. Reducing the faster wheel target and
+         * raising the slower one avoids a harsh one-wheel brake that would also
+         * disturb the ball. */
+        if (s_curve_exit_sync_enabled != 0U &&
+            s_stop_ramp_active == 0U && s_line_valid != 0U) {
+            const float steer_mag = (correction >= 0.0f) ?
+                                    correction : -correction;
+
+            if (steer_mag >= LINE_Q5_Q6_EXIT_SYNC_ENTER_RPM) {
+                s_curve_exit_armed = 1U;
+                s_curve_exit_sync_ticks = 0U;
+            } else if (s_curve_exit_armed != 0U &&
+                       steer_mag <= LINE_Q5_Q6_EXIT_SYNC_RELEASE_RPM) {
+                s_curve_exit_armed = 0U;
+                s_curve_exit_sync_ticks = (uint16_t)Q5_Q6_EXIT_SYNC_TICKS;
+            }
+
+            if (s_curve_exit_sync_ticks != 0U) {
+                float sync = LINE_Q5_Q6_EXIT_SYNC_KP *
+                             (s_left_rpm - s_right_rpm);
+                sync = clamp_float(sync,
+                                   -LINE_Q5_Q6_EXIT_SYNC_LIMIT_RPM,
+                                   LINE_Q5_Q6_EXIT_SYNC_LIMIT_RPM);
+                target_left -= sync;
+                target_right += sync;
+                --s_curve_exit_sync_ticks;
+            }
+        } else {
+            s_curve_exit_armed = 0U;
+            s_curve_exit_sync_ticks = 0U;
+        }
     }
 
     target_left = (target_left > 0.0f) ? target_left : 0.0f;
     target_right = (target_right > 0.0f) ? target_right : 0.0f;
     target_left *= s_start_ramp_scale;
     target_right *= s_start_ramp_scale;
+    target_left *= s_stop_ramp_scale;
+    target_right *= s_stop_ramp_scale;
     s_left_target_rpm = target_left;
     s_right_target_rpm = target_right;
 
